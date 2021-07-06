@@ -7,7 +7,7 @@ spec:
   - name: appcontainer
     image: busybox
     command: ['sh', '-c', 'echo The app is running! && sleep 3600']
-  initContainers:
+  initContainers: #init containerin multicontainerdan farki container basligi altindan ayri bir baslik olarak tanimlanmasi
   - name: initcontainer
     image: busybox
-    command: ['sh', '-c', "until nslookup myservice; do echo waiting for myservice; sleep 2; done"]
+    command: ['sh', '-c', "until nslookup myservice; do echo waiting for myservice; sleep 2; done"] #sh calistir icinde nslookup ile myservice ismine bak eger cevab donmezse ekrana waiting for myservice yaz ve sonra 2 dk bekle
