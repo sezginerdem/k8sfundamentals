@@ -1,23 +1,23 @@
-apiVersion: v1
-kind: Pod
-metadata:
+apiVersion: v1 # podun hangi api de oldugu
+kind: Pod #yaratacagimiz object in cinsi
+metadata: #isim verdim
   name: multicontainer
-spec:
+spec: #pod un ozellikleri
   containers:
-  - name: webcontainer
-    image: nginx
+  - name: webcontainer #frontend containeri
+    image: nginx #container image
     ports:
-      - containerPort: 80
-    volumeMounts:
-    - name: sharedvolume
-      mountPath: /usr/share/nginx/html
-  - name: sidecarcontainer
+      - containerPort: 80 #port numarasi
+    volumeMounts: #hangi colume mount olacagi
+    - name: sharedvolume #volume ismi
+      mountPath: /usr/share/nginx/html #mount olacak klasor
+  - name: sidecarcontainer #ikinci container
     image: busybox
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do wget -O /var/log/index.html https://raw.githubusercontent.com/ozgurozturknet/hello-world/master/index.html; sleep 15; done"]
+    command: ["/bin/sh"] #command i shell ile calistir
+    args: ["-c", "while true; do wget -O /var/log/index.html https://raw.githubusercontent.com/ozgurozturknet/hello-world/master/index.html; sleep 15; done"] #basit bir while dongusu calisacak wget calisacak link indirilecek ve index.html olarak kaydedilecek 15 sn bekleyecek ve tekrar bekleyerek tekrar indirecek ve her seferinde en yeni versiyonunu indirecek
     volumeMounts:
     - name: sharedvolume
-      mountPath: /var/log
-  volumes:
+      mountPath: /var/log #bu klasor ile yukaridaki html klasoru ayni yere bakiyor olacak
+  volumes: #volume tanimladim
   - name: sharedvolume
     emptyDir: {}
