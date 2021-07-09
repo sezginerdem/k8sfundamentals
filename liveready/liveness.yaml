@@ -9,10 +9,10 @@ spec:
   - name: liveness
     image: k8s.gcr.io/liveness
     args:
-    - /server
+    - /server #container in calistiracagi uygulama
     livenessProbe:
       httpGet:
-        path: /healthz
+        path: /healthz #endpoint ine httpGet istegi gonderiyorum eger uygulama calisiyorsa http 200 geri donecek yanlisa sorgunun sonucu 400 donecek ve liveness fail edecek
         port: 8080
         httpHeaders:
         - name: Custom-Header
