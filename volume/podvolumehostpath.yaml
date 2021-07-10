@@ -16,21 +16,21 @@ spec:
       periodSeconds: 5
     volumeMounts:
     - name: directory-vol
-      mountPath: /dir1
+      mountPath: /dir1 #durectory volu container icerisindeki /dir1 klasoruna mount ediyorum.
     - name: dircreate-vol
       mountPath: /cache
     - name: file-vol
       mountPath: /cache/config.json       
   volumes:
   - name: directory-vol
-    hostPath:
-      path: /tmp
-      type: Directory
+    hostPath: #hostpath olarak tanimyalabildigim uc cesit tanim var.
+      path: /tmp #bu volume worker nodeun uzerindeki /tmp folderini temsil ediyor
+      type: Directory #volume tipi: su demek bu volume bu worker node uzerinde zaten var. var olan bu folderi volume olarak tanimliyorum 
   - name: dircreate-vol
     hostPath:
-      path: /cache
-      type: DirectoryOrCreate
+      path: /cache #worker node uzerindeki klasore baglamak istiyorum
+      type: DirectoryOrCreate #eger bu folder varsa bunu kullan yoksa bunu olustur
   - name: file-vol
     hostPath:
-      path: /cache/config.json
+      path: /cache/config.json #isimli dosyayi mount ediyoruz. dosya varsa kullan yoksa yarat
       type: FileOrCreate
