@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  namespace: production
+  name: junior-prod-role
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: [""] # "services", "endpoints", "pods", "pods/log" etc.
+  verbs: ["get", "list"] # "get", "list", "watch", "create", "update", "patch", "delete"
+
