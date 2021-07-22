@@ -5,7 +5,7 @@
 * ### Kube-apiserver: Resepsiyon ornegi
 Kubernetes ile alaki tum komponentlerin ve dis dunyadan kubernetes platformu ile iletisim kuran tum servislerin ortak giris noktasidir. Api server tum komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Tum iletisim api server uzerinden gerceklestirilir. Kube-apiserver k8s de kaynak olusturma islemlerinde api dogrulamasindan sorumludur. Kullanicilar kubectl komut satiri istemcisi veya rest-api cagrilari araciligiyla api-server ile iletisim kurabilirler. Kisacasi disaridan istek gerceklestirmek icin api-server a ulasir authantication ve authorization islemlerini gercektlestirir ve kubernetese ulasirsiniz. Diger tum komponenetler de isteklerini api server uzerinden gerceklestirir.
 
-* ### Etcd: 
+* ### Etcd:
 Tum cluster verisi metadata bilgileri ve k8s de olusturulan tum objelerin bilgilerinin tutuldugu anahtar-deger “key-value” veri deposudur. Clusterin mevcut durumu ile ilgili bilgiyi uzerinde barindirir. Kisacasi k8s in calismasi icin ihtiyac duyulan tum bilgiler etcd uzerinde tutulur. Api-server haric baska hicbir komponent etcd ile dogrudan haberlesemezler. Etcd ile iletisim kurmak istediklerinde bunu api-vserver uzerinden gerceklestirirler. 
 
 * ### Kube-scheduler: uretim planlama
