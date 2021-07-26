@@ -373,5 +373,8 @@ $ kubectl create secret docker-registry "secret_ismi" --docker-server="registry_
 
 Daha sonra pod tanimimin icine imagePullSecret yazarak ve tanimladigim secret ismini alta yazarak authenticate islemini tamamliyorum.
 
-**2. Yol ise:** Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari imagePullPolicy altinda tanimliyoruz. Eger bunun altinda always yazili ise her pod olusturulmaya calisildiginda her seferinde cekilecek makinede olup olmadigi onemli degil. Never secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. IfNotPresent da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. imagePullPolicy always olarak set ediliyor. Fakat latest disinda bir sey kullaniliyorsa imagePullPolicy set edilmedi ise IfNotPresent olarak set edilir. 
+**2. Yol ise:** Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari imagePullPolicy altinda tanimliyoruz. Eger bunun altinda always yazili ise her pod olusturulmaya calisildiginda her seferinde cekilecek makinede olup olmadigi onemli degil. Never secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. IfNotPresent da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. imagePullPolicy always olarak set ediliyor. Fakat latest disinda bir sey kullaniliyorsa imagePullPolicy set edilmedi ise IfNotPresent olarak set edilir.
+
+
+
 
