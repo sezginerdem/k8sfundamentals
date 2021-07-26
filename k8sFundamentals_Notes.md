@@ -360,3 +360,18 @@ Iki ingress controller one cikmis durumda nginx ve traefik. Her ingressin kurulu
 
 Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile expose ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uyguamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adrsine giderse b uygulamasi tarafindan sayfa gosteriyliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku dns de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gor url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer . Bunun yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var. 
 Bu iki sorun da ingress controller ve ingress objeleri ile cozulmektedir. 
+
+## ImagePullPolicy and Image Secret
+Private registry lerde image lari tuttugunuz zaman bunlara authenticate olmak gerekir. Bu islemi yapmadan image cekilememektedir. 
+Bu authenticate icin oncelikle bir secret olusturacagim. Bu secret tipi "docker-registry" olacak.
+
+```
+$ kubectl create secret docker-registry "secret_ismi" --docker-server="registry_url" --docker-username="kullanıcı_adı" --docker-password="şifre"
+
+Ör: kubectl create secret docker-registry regscrt --docker-server=ozgurozturkregistry.azurecr.io --docker-username=ozgurozturkregistry --docker-password=wqRjEDdVhrM9Hj4D=gWwvV3YXyq9Y4ID
+```
+
+Daha sonra pod tanimimin icine imagePullSecret yazarak ve tanimladigim secret ismini alta yazarak authenticate islemini tamamliyorum.
+
+**2. Yol ise:** Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari imagePullPolicy altinda tanimliyoruz. Eger bunun altinda always yazili ise her pod olusturulmaya calisildiginda her seferinde cekilecek makinede olup olmadigi onemli degil. Never secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. IfNotPresent da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. imagePullPolicy always olarak set ediliyor. Fakat latest disinda bir sey kullaniliyorsa imagePullPolicy set edilmedi ise IfNotPresent olarak set edilir. 
+
