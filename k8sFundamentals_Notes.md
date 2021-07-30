@@ -375,3 +375,8 @@ Daha sonra pod tanimimin icine imagePullSecret yazarak ve tanimladigim secret is
 
 **2. Yol ise:** Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari imagePullPolicy altinda tanimliyoruz. Eger bunun altinda always yazili ise her pod olusturulmaya calisildiginda her seferinde cekilecek makinede olup olmadigi onemli degil. Never secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. IfNotPresent da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. imagePullPolicy always olarak set ediliyor. Fakat latest disinda bir sey kullaniliyorsa imagePullPolicy set edilmedi ise IfNotPresent olarak set edilir. 
 
+## Static Pod
+
+Kubelet in belirlediginiz bir dosyasina yaml dosyalarini koyarak kubeletin pod yaratma islemine static pod denir.
+Boylelikle api serverla konusmadan yalnizca dosyalari klasore ekleyerek pod yaratma islemini gerceklestirmis oluruz.
+Neden static pod? Kubernetes kendi de podlarlardan olusmaktadir. Kubernetes kurulumunda ilk once kubelet kurulur bunu da kubeletin default manifest dosyalarinin bulundugu klasorden yapar. Bu dosyanin bulungu yere yaml dosyalarini koyarsak bu dosyalardan pod olusturulur. Daha sonra kubenetes api uzerinde de aynisini olusturur. Gercek hayatta cok isimize yaramiyor ancak bunu bilmek ve k8s in nasil ayaga kalktigini bilmek adina onemlidir.
