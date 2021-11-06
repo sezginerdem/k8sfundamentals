@@ -11,6 +11,8 @@
 
 ## Control Plane-Master Node
 
+Control-plane yani yonetim kismi master node uzerinde calisir. Bu componentlerin hepsi tek bir linux isletim sistemine kurulabilecegi gibi highly availibility icin birden fazla sisteme de kurulabilir. Etcd tamamen bu yapidan ayri bir sekilde konuslandirilarak daha yuksek bir erisim saglanabilir iken ama genellikle etcd de api-server in kostugu yerde durur. Ornegin 3 sunucu uzerinde 3 api-server kurulup diger componentler bu sistemlere dagitilabilir. Bu uzerinde control-plane componentlerinin kostugu sistemlere cluster altinda master node deriz. Master nodelar sadece bu sistemleri barindirmak icin bulunur ve production ortaminda herhangi bir is yukumuzu bu sistemler uzerinde calistirmayiz. Bunlarda sadece cluster in yonetim altyapisini kostururuz. Is yuklerimiz ise worker nodelar uzerinde calistirilir. Bunlar uzerinde bir container run time barindiran ve clustera dahil edilmis sistemlerdir. 
+
 ###  1. Kube-apiserver: Resepsiyon ornegi
 Kube-apiserver, Kubernetes API'ini ortaya cikaran Kubernetes control plane'in en oneli bileseni ve giris noktasidir. Tum diger komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Kubernetes ile alaki tum komponentlerin ve dis dunyadan kubernetes platformu ile iletisim kuran tum servislerin ortak giris noktasidir. API server tum komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Tum iletisim api server uzerinden gerceklestirilir. Kube-apiserver k8s de kaynak olusturma islemlerinde API dogrulamasindan sorumludur. Kullanicilar kubectl komut satiri istemcisi veya rest-api cagrilari araciligiyla api-server ile iletisim kurabilirler. Kisacasi disaridan istek gerceklestirmek icin api-server a ulasir authantication ve authorization islemlerini gercektlestirir ve kubernetese ulasirsiniz. Diger tum komponenetler de isteklerini api server uzerinden gerceklestirir.
 
@@ -23,39 +25,143 @@ Yaratilmak istenen podlarin gereksinimlerini kontrol ederek o podun en uygun cal
 ### 4. Kube-controller-manager: vardiya amiri
 Tek bir binary olarak bulunsa da icinden birden fazla kontroller bulundurur. K8s mevcut durumu istenilen durumla mevcut durum arasindaki karsilastirmada uygulama yonetimi saglar. Kube-controller altindaki controller managerlar k8s den istenilen durumla mevcut durum arasinda fark olup olmadigi gozlerler. Kube-api araciligiyla etcd de saklanan cluster durumunu inceler ve eger mevcut durum ile istenilen durum arasinda fark varsa iste bu farki olusturan kaynaklari gerektigi gibi olustururak, guncelleyerek veya silerek bu durumu esitler. Ornegin siz k8s e uygulamanizin 3 pod olarak calismanizi bildirdiniz. K8s de bunu gerceklestirdi ve uygulamanizin kostugu 3 pod calismaya basladi ama sonra bir tanesi silindi iste controller-manager bu podun yeniden olusturulmasini saglar. 
 
-Control-plane yani yonetim kismi master node uzerinde calisir. Bu componentlerin hepsi tek bir linux isletim sistemine kurulabilecegi gibi birden fazla sisteme de kurulabilir. etcd tamamen bu yapidan ayri bir sekilde konuslandirilarak daha yuksek bir erisim saglanabilir iken ama genellikle etcd de api-server in kostugu yerde durur. Ornegin 3 sunucu uzerinde 3 api-server kurulup diger componentler bu sistemlere dagitilabilir. Bu uzerinde control-plane componentlerinin kostugu sistemlere cluster altinda master node deriz. Master nodelar sadece bu sistemleri barindirmak icin bulunur ve production ortaminda herhangi bir is yukumuzu bu sistemler uzerinde calistirmayiz. Bunlarda sadece cluster in yonetim altyapisini kostururuz. Is yuklerimiz ise worker nodelar uzerinde calistirilir. Bunlar uzerinde bir container run time barindiran ve clustera dahil edilmis sistemlerdir. 
-
 ## WORKER NODE
 ---
 Her worker node da 3 temel component bulunur. Ilk ve en onemli component containerlarin calismasini saglayacak bir container run time dir. Default olarak bu docker dir ancak k8s docker container run time destegini birakarak bazen containerd ye gecmistir.
 
-- ### kubelet: ustabasi
+### 1. Kubelet: ustabasi
 Her worker node'da bulunur. Kubelet api-server araciligiyla etcd yi kontrol eder. Scheduler tarafindan bulundugu node uzerinde calismasi gereken bir pod belirtildi ise kubelet bu podu o sistemde yaratir. Conatinerd ye haber gonderir ve belirlenen ozelliklerde bir container in o sistemde calismasini saglar.
 
-- ### kube-proxy: lojistik elemani
-Olusturulan podlarin tcp, udp ve etcdp trafik akislarini yonetir. ag kurallarini yonetir. Kisaca network proxy gorevi gorur.
-Bunlarin disinda dns ya da gui hizmeti saglayan cesitli servisler entegre edilebilen servislerdir fakat bunlar core componentler olarak adlandirilmaz.
+### 2. Kube-proxy: lojistik elemani
+Her worker node da calisir. Olusturulan podlarin tcp, udp ve etcdp trafik akislarini yonetir, ag kurallarini yonetir. Kisaca network proxy gorevi gorur.
+Bunlarin disinda DNS ya da gui hizmeti saglayan cesitli servisler entegre edilebilen servislerdir fakat bunlar core componentler olarak adlandirilmaz.
 
 # Kubectl Kurulumu
 ---
-Kubernetes e komut vermek icin bunu api-server uzerinden yapiyoruz. 
+Kubernetes e komut vermek icin bunu API-server uzerinden yapiyoruz. 
 Bunun 3 yontemi var. 
 
-- #### Rest cagrilari
+- ### **Rest cagrilari:**
 Uygulamalarin ya da scriptlerin icinde kullanilir.
-- #### Gui istemcileri
+- ### **Gui istemcileri:**
 Grafiksel arayuz ile iletisim kurmak. Resmi gui araci dashboard, oktant, land en bilinen araclardir. Gui istemciler en temel araclar degildir. 
-- #### kubectl
+- ### **Kubectl:**
 Shell uzerinden apiserver a komutlar gonderdigimiz k8s in resmi cli aracidir. k8s cluster olusturulmadan once ilk olarak kubectl yuklenmesi gerekir.
+- #### Kubectl kurulum
+Linux icin oncelikle ```brew``` kurulumu
+Sonrasinda ```brew install kubectl`` ile kubectl kurulumu tamamlaniyor
 
-## kubectl config dosyasi
+## Kubectl config dosyasi
 - kubectl araci baglanacagi kubernetes cluster bilgilerine config dosyalari araciligiyla erisir.
 - config dosyasinin icerisinde kubernetes cluster baglanti bilgilerini ve oraya baglanirken kullanmak istedigimiz kullanicilari belirtiriz.
-- Daha sonra bu baglanti bilgileri ve kullanicilari ve ek olarak namespace bilgileirni de olusturarak contextler yaratiriz.
+- Daha sonra bu baglanti bilgileri ve kullanicilari ve ek olarak namespace bilgilerini de olusturarak contextler yaratiriz.
 - kubectl varsayilan olarak $HOME/.kube/ altindaki config isimli dosyaya bakar.
 - kubectl varsayilan olarak $HOME/.kube/ altindaki config dosyasina bakar ama bunu KUBECONFIG environment variable degerini degistirerek guncelleyerebilirsiniz.
+-  Context kismi kubeconfig dosyasindaki baglanmask istedigimiz cluster a hangi user ile baglanacagimizi ve hangi namespace e erisecegimizi contextler yaratarak belirleriz. Kullanici ile serverlarin birlestirildigi bir kisimdir context.
 
-# pod
+# Kubeadm ile Cluster Kurulumu
+
+**Kubernetes Kurulum** konusuyla ilgili dosyalara buradan erişebilirsiniz.
+
+## kubeadm kurulum
+
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+
+**0:** sanal makine oluşturma
+```
+$ multipass launch --name master -c 2 -m 2G -d 10G
+$ multipass launch --name node1 -c 2 -m 2G -d 10G
+```
+
+**1:** Iptables bridged traffic ayarı
+
+```
+$ cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+br_netfilter
+EOF
+```
+
+```
+$ cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+```
+
+```
+$ sudo sysctl --system
+```
+
+**2:** containerd kurulumu
+
+```
+$ cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+```
+
+```
+$ sudo modprobe overlay
+$ sudo modprobe br_netfilter
+```
+
+```
+$ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+```
+
+```
+$ sudo sysctl --system
+```
+
+```
+$ sudo apt-get update
+$ sudo apt-get upgrade -y
+$ sudo apt-get install containerd -y
+$ sudo mkdir -p /etc/containerd
+$ sudo su -
+$ containerd config default  /etc/containerd/config.toml
+$ exit
+$ sudo systemctl restart containerd
+```
+
+**3:** kubeadm kurulumu
+
+
+```
+$ sudo apt-get update
+$ sudo apt-get install -y apt-transport-https ca-certificates curl
+$ sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+$ echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+$ sudo apt-get update
+$ sudo apt-get install -y kubelet kubeadm kubectl
+$ sudo apt-mark hold kubelet kubeadm kubectl
+```
+
+**4:** kubernetes cluster kurulumu
+
+```
+$ sudo kubeadm config images pull
+
+$ sudo kubeadm init --pod-network-cidr=172.31.1.64/16 --apiserver-advertise-address=<ip> --control-plane-endpoint=172.31.1.64
+```
+
+```
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+```
+$ kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+$ kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+```
+
+# Pod
 ---
 - Kubernetes icinde yaratilan en temel objedir.
 - Kubernetesde olusturabileceginiz en kucuk birimlerdir.
