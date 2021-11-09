@@ -251,38 +251,149 @@ $ kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.ya
 - Ayni pod icersindeki containerlar ayni node ustunde calistirilir ve bu containerlar birbirleriyle localhost ustunden haberlesebilirler.
 - Kubectl ile kube-api ile haberleserek k8s uzerinde pod yaratma islemi gerceklestirilir. Api-server bu poda bizim tanimladigimiz bilgileri atar ve bir pod yaratir ve etcd veri tabanina kaydedilir. Kube-scheduler componenti surekli burayi gozler ve herhangi bir worker node uzerinde atamasi yapilmamis pod tanimi yapilmamissa o podun calismasi icin uygun bir worker node secer ve bu bilgiyi pod tanimina ekler. Sonrasinda worker node uzerinde calisan kubelet servisi de bu etcd yi surekli gozledigi icin bu pod tanimini gorur ve bu tanimda belirtilen container o worker node uzerinde olusturulur ve boylece pod olusturulma asamalari tamamlanir.
 
+Imperative yöntemle pod oluşturma.
+
+```
+$ kubectl run "pod_ismi" --image="image_ismi" --restart=Never
+
+Ör: kubectl run firstpod --image=nginx --restart=Never
+```
+***
+Bir objenin ayrıntılı özelliklerini görmek. 
+```
+$ kubectl describe "obje_tipi" "obje_ismi"
+
+Ör: kubectl describe pods firstpod
+```
+***
+Bir pod objesinin loglarını görüntüleme. _(-f opsiyonu çıktıya yapışmanızı ve anlık olarak üretilen logları görmenizi sağlar)_
+```
+$ kubectl logs "pod_ismi"
+
+Ör: kubectl logs firstpod
+Ör: kubectl logs -f firstpod
+```
+***
+Pod'da komut çalıştırma. _(Eğer pod içerisinde birden fazla container varsa **-c "container_ismi"** opsiyonu ile komutun çalıştırılması istenilen container belirtilebilir)_
+```
+$ kubectl exec "pod_ismi" -- "komut"
+
+Ör: kubectl exec firstpod -- printenv
+Ör: kubectl exec firstpod -c container1 --printenv
+```
+***
+Pod'a shell bağlantısı oluşturma. _(Eğer pod içerisinde birden fazla container varsa **-c "container_ismi"** opsiyonu ile komutun çalıştırılması istenilen container belirtilebilir)_
+```
+$ kubectl exec -it "pod_ismi" -- "shell_konumu-yada-komutu"
+
+Ör: kubectl exec -it firstpod -- /bin/sh
+Ör: kubectl exec -it firstpod -c container1 -- /bin/sh
+```
+***
+Bir Kubernetes objesini silme. 
+```
+$ kubectl delete "obje_tipi" "obje_ismi"
+
+Ör: kubectl delete pods firstpod
+```
+***
+Json ya da Yaml formatında hazırlanmış bir konfigurasyon dosyası aracılığıyla yeni obje oluşturma. 
+```
+$ kubectl apply -f "dosya_yolu/dosya_ismi"
+
+Ör: kubectl apply -f ./pod1.yaml
+```
+***
+Oluşturulan objeyi dosya kullanarak silme
+```
+$ kubectl delete -f "dosya_yolu/dosya_ismi"
+
+Ör: kubectl delete -f ./pod1.yaml
+```
+***
+Label ve port konfigurasyonlarını da ekleyerek bir pod oluşturma. 
+```
+$ kubectl run "pod_ismi" --image="image_ismi" --port="port_numarası" --labels"anahtar:değer_eşlenikleri" --restart=Never
+
+Ör: kubectl run secondpod --image=nginx --port=80 --labels="app=front-end,team=developer" --restart=Never
+```
+***
+Cluster'da bulunan bir Kubernetes objesini varsayılan text editörü ile açarak özelliklerini güncelleme. 
+```
+$ kubectl edit "obje_tipi" "obje_ismi"
+
+Ör: kubectl edit pods firstpod
+```
+***
+kubectl komutları sonucu oluşan çıktıyı tek seferlik görmek yerine değişiklikleri izleyebilme imkanına **-w** opsiyonu ile kavuşuruz _(linux dünyasındaki **watch** komutunun yaptığı işin bir benzerini **-w** opsiyonu sağlar)_
+```
+$ kubectl "komut" -w
+
+Ör: kubectl get pods -w
+```
+***
+kubectl'in çalıştırıldığı bilgisayar üzerinden cluster'da bulunan bir objeye tünel açılarak bağlantı kontrolü yapılması "detaylarına network konusunda geleceğiz"
+```
+$ kubectl port-forward "obje_tipi"/"obje_ismi" "local_port":"hedef_port"
+
+Ör: kubectl port-forward pod/multicontainer 8080:80
+```
+
+```yaml
+apiVersion: v1 # obje tipinin hangi API de tanimlandigi (her objenin belli bir API i var ve bunu bilerek buraya yazmak gerekiyor) Nasil bilebiliriz? dokumantasyondan veya explain ile
+kind: Pod # obje tipi
+metadata: # unique bilgiler tanimlanir
+  name: firstpod
+  labels: # labellar tanimlaniyor (objenin betimlendigi alan)
+    app: frontend
+spec: # objenin ozellikleri (her objeye gore farklilasir)
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+```
+
+
 ## Pod Yasam Dongusu
-- ### pending
-Pod yaratmak icin gonderilen yaml dosyasi kube-api tarafindan alinir ve varsayilan ayarlari da ekleyerek poda bir unique id atar ve tum bunlari etcd ye kaydeder. Bu asamadan sonra pod olusturulmustur ve bu asamadan sonra pending asamasina gecer. Eger bir podun statusu pending durumunda ise bunun anlami sudur: birisi bir pod olusturdu podla ilgili tanimlar yapildi ve veri tabanina kaydedildi ama pod herhangi bir node uzerinde olusturulmadi. 
+### pending
+Pod yaratmak icin gonderilen yaml dosyasi kube-api tarafindan alinir ve varsayilan ayarlari da ekleyerek poda bir unique id atar ve tum bunlari etcd ye kaydeder. Bu asamadan sonra pod olusturulmustur ve bu asamadan sonra pending asamasina gecer. 
+Eger bir podun statusu pending durumunda ise bunun anlami sudur: birisi bir pod olusturdu podla ilgili tanimlar yapildi ve veri tabanina kaydedildi ama pod herhangi bir node uzerinde olusturulmadi. 
 
-- ### creating
-Kube-scheduler api-server araciligiyla surekli etcd yi gozler. Eger burada yeni yaratilmis ve herhangi bir node atamasi yapilmamis bir pod gorurse calismaya baslar. Algoritmasi ve secme kriterlerine gore podun calismasinin en uygun olacagi node u secer ve veri tabanindaki pod objesine node bilgisini ekler. Bu noktadan itibaren pod yasam dongusunde creating asamasina gecer. Eger bir pod creating asamasina gecemiyorsa bu kube-scheduler in uygun bir node bulamadigi anlamina gelir. Bunun pek cok nedeni olabilir: cluster da bu podun gereksinimlerini karsilayabilecek node bulunmuyor olabilir veya nodelar uzerinde cpu ve memory gibi kaynaklar tukenmis olabilir. 
+### creating
+Kube-scheduler api-server araciligiyla surekli etcd yi gozler. Eger burada yeni yaratilmis ve herhangi bir node atamasi yapilmamis bir pod gorurse calismaya baslar. Algoritmasi ve secme kriterlerine gore podun calismasinin en uygun olacagi node u secer ve veri tabanindaki pod objesine node bilgisini ekler. Bu noktadan itibaren pod yasam dongusunde creating asamasina gecer. Eger bir pod creating asamasina gecemiyorsa bu kube-scheduler in uygun bir node bulamadigi anlamina gelir. Bunun pek cok nedeni olabilir: cluster da bu podun gereksinimlerini karsilayabilecek uygun bir node bulunmuyor olabilir veya nodelar uzerinde cpu ve memory gibi kaynaklar tukenmis olabilir. 
 
-- ### ImagePullBackOff
-Nodelar uzerinde kubelet adli bir servis calisir. Bu servis ayni kube-scheduler gibi surekli etcd veri tabanini gozler ve bulundugu node a atanmis nodelari tespit eder ve hemen islemlere baslar. Ilk olarak pod taniminda olusturulacak containerlara bakar ve bu containerlarda olusturulacak image lari sisteme indirmeye baslar. Eger bir sekilde image indirilemezse pod erimagepull ve ardindan da imagepullbackoff asamasina gecer. Eger podun statusunda imagepullbackoff gorurseniz bu node un image i repository den cekemedigi ve bunu tekrar tekrar devam ettigi anlamina gelir. Bunun birkac nedeni olabilir: en sik karsilasilan neden pod tanimlanmasinda image isminin yanlis yazilmasidir. Image ismi yanlis yazildigi icin image cekilemeyecektir ya da image i cekmek icin sisteme kaydolmak gerektigi ve bu authentication islemlerinde hata yapilmasidir. Bu nedenle image cekilemeyecektir. Bu gibi bir hata olmamasi durumda ise diger asamaya gecer.
+### ImagePullBackOff
+Clusterdaki tum nodelar uzerinde kubelet adli bir servis calisir. Bu servis ayni kube-scheduler gibi surekli etcd veri tabanini gozler ve bulundugu node a atanmis podlari tespit eder ve hemen islemlere baslar. Ilk olarak pod taniminda olusturulacak containerlara bakar ve bu containerlarda olusturulacak image lari sisteme indirmeye baslar. Eger bir sekilde image indirilemezse oncelikle pod erimagepull ve ardindan da imagepullbackoff asamasina gecer. Eger podun statusunda `imagepullbackoff` gorurseniz bu node un image i repository den cekemedigi ve bunu tekrar tekrar denemeye devam ettigi anlamina gelir. Bunun birkac nedeni olabilir: en sik karsilasilan neden pod tanimlanmasinda image isminin yanlis yazilmasidir. Image ismi yanlis yazildigi icin image cekilemeyecektir ya da image i cekmek icin sisteme kaydolmak gerektigi ve bu authentication islemlerinde hata yapilmasidir. Bu nedenle image cekilemeyecektir. Bu gibi bir hata olmamasi durumda ise diger asamaya gecer.
 
-- ### Runnig
+### Runnig
 Islemlerin sorunsuz bir sekilde ilerlemesi halinde kubelet node da bulunan container engine ile haberlesir ve ilgili containerlarin olusturulmasini saglar ve containerler running durumuna gecer. Bu noktadan itibaren artik pod olusturulmus olur.
 
-- Containerlarla ilgili temel kural: container icindeki uygulama calistigi surece container calisir. Uygulama calismayi birakirsa container durdurulur. Uygulamanin da durdurulmasi 3 sekilde olur: 1) isi bittigi icin hata vermeden otomatik olarak kapanir. 2) Kullanicinin istegi uzerine komut gonderilir ve hata vermeden kapanir. 3) hata verir, sikinti cikar, hata kodu olusturarak kapanir. Ornegin nginx image uzerinden bir container yarattigimizi dusunelim. Bu uygulama bir deamon bir servis yani siz onu durdurana ya da hata cikip cokene kadar calismaya devam eder. O calistigi surece de container calismaya devam eder. Fakat diyelim ki siz bir image yarattiniz ve bu image in varsayiln uygulamasi da bir script ya da basit bir komut. Container baslayinca bu script calisiyor isini yapiyor ve isi bitince kapaniyor yani container da kapaniyor yani illa ki hata vermeden kapanmasina gerek yok.
+**- Containerlarla ilgili temel kural:** Container icindeki uygulama calistigi surece container calisir. Uygulama calismayi birakirsa container durdurulur. Uygulamanin da durdurulmasi 3 sekilde olur: 1) isi bittigi icin hata vermeden otomatik olarak kapanir. 2) Kullanicinin istegi uzerine komut gonderilir ve hata vermeden kapanir. 3) hata verir, sikinti cikar, hata kodu olusturarak kapanir. Ornegin nginx image uzerinden bir container yarattigimizi dusunelim. Bu uygulama bir deamon bir servis yani siz onu durdurana ya da hata cikip cokene kadar calismaya devam eder. O calistigi surece de container calismaya devam eder. Fakat diyelim ki siz bir image yarattiniz ve bu image in varsayiln uygulamasi da bir script ya da basit bir komut. Container baslayinca bu script calisiyor isini yapiyor ve isi bitince kapaniyor yani container da kapaniyor yani kapanmasi icin illa ki hata vermeden kapanmasina gerek yok.
 Bu gibi sorunlar nedeni ile containerlar icin restart policy tanimi yapilir. Restart policy 3 adet deger alabilir:
-- ---Always---: Default degerdir. Pod un icerindeki container her durumda durdurulursa durdurulsun her sartta yeniden baslat anlamina gelir. 
-- ---On-failure---: Sadece hata alip kapanirsa yeniden baslatilir.
-- ---Never---: Pod hicbir zaman yeniden baslatilmaz.
+- **Always:** Default degerdir. Pod un icerindeki container her durumda durdurulursa durdurulsun her sartta yeniden baslat anlamina gelir. 
+- **On-failure:** Sadece hata alip kapanirsa yeniden baslatilir.
+- **Never:** Pod hicbir zaman yeniden baslatilmaz.
 
-- ### Succeed
+### Succeed
 Podun altindaki containerlar calismaya devam ettikce status running olarak devam eder. Eger containerlarin hepsi hata vermeden dogal olarak kapanirsa ve restart policy never veya onfailure olarak set edildi ise podun statusu succeed statusune gecer ve pod yasam dongusunu tamamlar. Yani bir diger degisle completed, basarili olarak pod un yasam dongusu tamamlanir. 
 
-- ### Failed
+### Failed
 Never ya da Onfailure olarak policy tanimlandi ve containerlardan biri hata verip kapandi ise bu sefer pod un statusu failed olarak isaretlenir ve yasam dongusunu boyle tamamlar. 
 
 - ### CrashLoopBackOff
-Fakat restart policy always olarak set edildi ise pod hicbir zaman succeed ya da failed durumuna gecmez. Bunun yerine podun icerisindeki container yeniden baslatilir ve running state de devam eder. Fakat kubernetes bu yeniden baslatma islemini belirli bir siklikla yapiyorsa bazi seylerin ters gittigine kanaat getirilir ve pod u CrashLoopBackOff adini verdigimiz bir state e sokar. Bunun anlami sen bir pod olusturdun ama bu pod un icerisindeki container ikide bir kapaniyor ama gene kapaniyor buna bir bak. Bu pod da sunlar olur: k8s container in icerisinde birseylerin ters gittigini anlar ve pod un statusunu crashloopbackoff a cevirir. Surekli restart etme yerine restart eder 10 sn bekler eger 10 sn icinde yeniden cokerse 20 sn bekler yeniden cokerse 40 sn bekler sonra 80 sn bekler ve bu durum 5dk lik araliga cikana kadar boyle devam eder ve ondan sonra her 5dk da bir tekrar eder. Bu arada container cokmeyi birakir ve 10dk sure ile sorunsuz bir sekilde calismaya devam ederse. Kubelet container i crashloopbackoff dan cikarir ve running e dondurur. Eger bu olmaz ve siz mudahale etmezseniz bu durum sonsuza kadar boyle devam eder. Ozetle crashloopbackoff mudahaleyi gerektirir ve bakilmasi gerekmektedir. 
+Fakat restart policy always olarak set edildi ise pod hicbir zaman succeed ya da failed durumuna gecmez. Bunun yerine podun icerisindeki container yeniden baslatilir ve running state de devam eder. Fakat kubernetes bu yeniden baslatma islemini belirli bir siklikla yapiyorsa bazi seylerin ters gittigine kanaat getirir ve pod u `CrashLoopBackOff` adini verdigimiz bir state e sokar. Bunun anlami sen bir pod olusturdun ama bu pod un icerisindeki container ikide bir kapaniyor buna bir bak. Bu pod da sunlar olur: k8s container in icerisinde birseylerin ters gittigini anlar ve pod un statusunu `crashloopbackoff` a cevirir. Surekli restart etme yerine; restart eder 10 sn bekler eger 10 sn icinde yeniden cokerse 20 sn bekler yeniden cokerse 40 sn bekler sonra 80 sn bekler ve bu durum 5dk lik araliga cikana kadar boyle devam eder ve ondan sonra her 5dk da bir tekrar eder. Bu arada container cokmeyi birakir ve 10dk sure ile sorunsuz bir sekilde calismaya devam ederse. Kubelet container i crashloopbackoff dan cikarir ve running e dondurur. Eger bu olmaz ve siz mudahale etmezseniz bu durum sonsuza kadar boyle devam eder. Ozetle crashloopbackoff mudahaleyi gerektirir ve bakilmasi gerekmektedir. 
 
 ## Multicontainer pod (sightcar container)
 Bir frontend ve bir de backend den olusan two tier yani cift katmanli bir uygulama yazdik. Cok populer olan ornegin wordpress uygulamasi. WordPress uygulamasini deploy etmek istedigimizi varsayalim. Bildigimiz uzere wordpress php tabanli bir frontend ve bu uygulamanin verilerinin tutuldugu bir mysql veri tabanina sahip. Bu uygualamyi container haline getirmek istiyorum. Bu uygulamayi icinde mysql ve wordpress halinde calisan tek bir container haline getirebilir miyim? Teknik olarak evet. Fakat bunu yapmiyoruz. Her iki uygulama icin de ayri iki container kullaniyoruz. Bunun iki nedeni var 1) container in temel mantigi izolasyon bu iki uygulamayi da ayni container icine koymak bu izolasyondan mahrum olmak demek. 2) Iki uygulamayi scale etmek istemeniz durumunda yatay buyume yapamiyorsunuz. Bunu soyle dusunun ben 2 sunucudan olusan bir ortam kurdum. Hem wordpress hem de mysql uygulmasini ayni container icine kurdum ve tek bir uygulama olarak calistirmaya basladim. Sayfama yogun bir istek oldugunda wordpress in frontend katmani bu isteklere cevap verememeye basladi ben de yeniden bir container daha olusturarak load balancer arkasina almak ve kaynaklarimi cogaltmak istedim ki bu problemi cozebileyim. Ama bunu yaptigim zaman ortamda 2 frontend 2 tane de mysql veri tabani olacak. Ancak benim veri tabanimda veri sikintisi yoktu. Ikisi de ayni container da oldugu icin bunu coklamam gerektiginde ikisini birden cokladim. Hatta 2. containeri deploy ettikten sonra mysql baglanti ayarlarini degistirdim ve 1. container icindeki mysql e baglanmasi icin ayar yaptim cunku simdiye kadar olusturdugum her sey o veri tabaninda. Bunun 100 container a kadar scale edilen bir ortam oldugunu dusunun. Sirf 2 uygulamayi da ayni container icine gomdugum icin sikintilar yasadim. Bunun yerine bir mysql ve bir de wordpress olmak uzere 2 ayri image yaratsa idim bu sefer 1 tane mysql container yaratilirdi benim de istedigim kadar wordpress scale edebilme imkanim olusurdu. Bu nedenlerden dolayi en onemli best practice bir container icine 1 tane uygulama koymak. 
 Kubernetes icinde ise wordpress icin bir pod mysql icin bir pod olusturulmali. Fakat istersem bir pod icinde birden fazla container da koyabilirim ama bu da bir container icine iki uygulama koymak ile ayni sey cunku k8s de scale ettigimiz sey pod. Her container da tek bir uyguama her pod da bir container. 
----Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?--- Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ayni pod icerisinde 2 container calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide sightcar container denmektedir. 
+***Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?*** Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node 1 uzerinde yeterli kaynagim yok diye node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ana uygulamaya bagimli, onunla network seviyesinde izolasyon olmadan ve gerektigi durumda ayni izolasyon altyapisini kullanabilecek ayni pod icerisinde 2 container olarak calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide **sightcar** container denmektedir. 
+
+Bir pod icerisinde birden fazla container calistirdigimiz zaman:
+1. Ayni pod icerisinde tnaimlanmis tum containerlar ayni worker node uzerinde olsturuluyorlar.
+2. Containerlar ayri birer unitedir fakat pod un lifecycle i icinde yonetilir. Yani pod olusturulunca iki container birden olusturulur ve silirse de iki container birden silinir.
+3. Bu containerlar arasinda network izolasyonu bulunmaz yani ayni pod icerisinde bulunan a ve b containerlari birbirlerine localhost uzerinden ulasabilirler. Bunlar network bakimindan sanki ayni makinada calisan processlerdir.
+4. Tek bir volume yaratilatak her iki containera da mount edilebilir boylelikle ayni dosyalar uzerinde calisabilirsiniz.
 
 ## init container
 Init container da bir pod icerisinde birde fazla pod yaratilmasina imkan verir. Fakat app containerlardan farkli olarak init containerlar pod un yasam dongusu boyunca calismaz. Siz bir pod tanimina init container tanimi koydugunuz zaman pod olusturuldugu zaman bu init container calistirilir. Init container calisir icindeki uygulama ne yapacaksa onu yapar ve ardindan kapanir bu init containerlar islerini tamamlayip kapanana kadar da app containerlar calismaya baslamaz. 

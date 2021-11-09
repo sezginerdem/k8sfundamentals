@@ -8,7 +8,7 @@ spec: #pod un ozellikleri
     image: nginx #container image
     ports:
       - containerPort: 80 #port numarasi
-    volumeMounts: #hangi colume mount olacagi
+    volumeMounts: #mount olacagi volume bilgileri
     - name: sharedvolume #volume ismi
       mountPath: /usr/share/nginx/html #mount olacak klasor
   - name: sidecarcontainer #ikinci container
