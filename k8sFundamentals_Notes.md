@@ -141,8 +141,6 @@ $ kubectl explain "obje_tipi"
 
 # Kubeadm ile Cluster Kurulumu
 
-**Kubernetes Kurulum** konusuyla ilgili dosyalara buradan erişebilirsiniz.
-
 ## kubeadm kurulum
 
 https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
@@ -250,6 +248,10 @@ $ kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.ya
 - Her pod essiz bir ip adresine sahiptir.
 - Ayni pod icersindeki containerlar ayni node ustunde calistirilir ve bu containerlar birbirleriyle localhost ustunden haberlesebilirler.
 - Kubectl ile kube-api ile haberleserek k8s uzerinde pod yaratma islemi gerceklestirilir. Api-server bu poda bizim tanimladigimiz bilgileri atar ve bir pod yaratir ve etcd veri tabanina kaydedilir. Kube-scheduler componenti surekli burayi gozler ve herhangi bir worker node uzerinde atamasi yapilmamis pod tanimi yapilmamissa o podun calismasi icin uygun bir worker node secer ve bu bilgiyi pod tanimina ekler. Sonrasinda worker node uzerinde calisan kubelet servisi de bu etcd yi surekli gozledigi icin bu pod tanimini gorur ve bu tanimda belirtilen container o worker node uzerinde olusturulur ve boylece pod olusturulma asamalari tamamlanir.
+
+// Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run)
+
+`kubectl run nginx --image=nginx --dry-run=client -o yaml`
 
 Imperative yöntemle pod oluşturma.
 
@@ -387,7 +389,7 @@ Fakat restart policy always olarak set edildi ise pod hicbir zaman succeed ya da
 ## Multicontainer pod (sightcar container)
 Bir frontend ve bir de backend den olusan two tier yani cift katmanli bir uygulama yazdik. Cok populer olan ornegin wordpress uygulamasi. WordPress uygulamasini deploy etmek istedigimizi varsayalim. Bildigimiz uzere wordpress php tabanli bir frontend ve bu uygulamanin verilerinin tutuldugu bir mysql veri tabanina sahip. Bu uygualamyi container haline getirmek istiyorum. Bu uygulamayi icinde mysql ve wordpress halinde calisan tek bir container haline getirebilir miyim? Teknik olarak evet. Fakat bunu yapmiyoruz. Her iki uygulama icin de ayri iki container kullaniyoruz. Bunun iki nedeni var 1) container in temel mantigi izolasyon bu iki uygulamayi da ayni container icine koymak bu izolasyondan mahrum olmak demek. 2) Iki uygulamayi scale etmek istemeniz durumunda yatay buyume yapamiyorsunuz. Bunu soyle dusunun ben 2 sunucudan olusan bir ortam kurdum. Hem wordpress hem de mysql uygulmasini ayni container icine kurdum ve tek bir uygulama olarak calistirmaya basladim. Sayfama yogun bir istek oldugunda wordpress in frontend katmani bu isteklere cevap verememeye basladi ben de yeniden bir container daha olusturarak load balancer arkasina almak ve kaynaklarimi cogaltmak istedim ki bu problemi cozebileyim. Ama bunu yaptigim zaman ortamda 2 frontend 2 tane de mysql veri tabani olacak. Ancak benim veri tabanimda veri sikintisi yoktu. Ikisi de ayni container da oldugu icin bunu coklamam gerektiginde ikisini birden cokladim. Hatta 2. containeri deploy ettikten sonra mysql baglanti ayarlarini degistirdim ve 1. container icindeki mysql e baglanmasi icin ayar yaptim cunku simdiye kadar olusturdugum her sey o veri tabaninda. Bunun 100 container a kadar scale edilen bir ortam oldugunu dusunun. Sirf 2 uygulamayi da ayni container icine gomdugum icin sikintilar yasadim. Bunun yerine bir mysql ve bir de wordpress olmak uzere 2 ayri image yaratsa idim bu sefer 1 tane mysql container yaratilirdi benim de istedigim kadar wordpress scale edebilme imkanim olusurdu. Bu nedenlerden dolayi en onemli best practice bir container icine 1 tane uygulama koymak. 
 Kubernetes icinde ise wordpress icin bir pod mysql icin bir pod olusturulmali. Fakat istersem bir pod icinde birden fazla container da koyabilirim ama bu da bir container icine iki uygulama koymak ile ayni sey cunku k8s de scale ettigimiz sey pod. Her container da tek bir uyguama her pod da bir container. 
-***Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?*** Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node 1 uzerinde yeterli kaynagim yok diye node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ana uygulamaya bagimli, onunla network seviyesinde izolasyon olmadan ve gerektigi durumda ayni izolasyon altyapisini kullanabilecek ayni pod icerisinde 2 container olarak calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide **sightcar** container denmektedir. 
+***Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?*** Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node 1 uzerinde yeterli kaynagim yok diye node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ana uygulamaya bagimli, onunla network seviyesinde izolasyon olmadan ve gerektigi durumda ayni izolasyon altyapisini kullanabilecek ayni pod icerisinde 2 container olarak calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide `sightcar` container denmektedir. 
 
 Bir pod icerisinde birden fazla container calistirdigimiz zaman:
 1. Ayni pod icerisinde tnaimlanmis tum containerlar ayni worker node uzerinde olsturuluyorlar.
@@ -494,6 +496,18 @@ Bir uygulamamizi production ortaminda deploy ettigimizi varsayalim. Uygulamamizi
 Deloyment bir veya birden fazla pod u bizim belirledigimiz desire state e gore olusturan ve sonrasinda bu desire state i yani istenilen durumu mevcut durumla surekli karsilastirip gerekli duzeltmeleri yapan bir obje turudur. Bizler bir deployment objesi olusturmak icin tanim yapar ve bu tanim icinde olusturmak istedigimiz pod un hangi ozellliklere sahip olacagini ve kac adet olusturmak istedigimizi belirtiriz. Bu deployment objesi olusturuldugu zaman bu tanim ve adette pod olusturulur. Ornegin nginx image indan 3 tane pod olusturan bir deployment yaratiriz. Deployment bunu desire state olarak alir ve bu 3 pod olusturulur ve deployment controller devreye girer. Ornegin bu podlardan birini sildim. Deployment kontroller desire state ile current state i karsilastirir ve sonrasinda esitler. Bunun yaninda deployment objeleri bize kurallar sayesinde pod larda guncelleme yapmamiza imkan tanir. Onceki ornektei gibi uygulamanin yeni versiyonunu yazip bundan yeni bir image olusturmustuk. Ama bunu deploy etmek istedigimiz zaman tek tek pod taminlarinda bu isleri manuel yapmistik. Deployment da ise sadece desire state tanimimizla image kismini guncelleyerek bu isi halledebiliriz. Deployment yeni desired state tanimini alir ve tek tek buna gore podlari olusturmaya baslar. Hatta bunu kontrollu bir sekilde yapmasi icin ek parametreler belirleme sansini da verir. Yani yeni image bu podlari guncelle ama birden butun podlari silip yenilerini olusturmaya calisma. Bir tane sil sonra yenisini olustur 30 sn bekle ikincisini sil seklinde rollout u kontrollu bir sekilde yapmamizi saglayabilir. Boylelikle uygulamanin yeni versiyonu deploy ederken kesintisiz gecis imkani saglar. Bunun yaninda sikinti cikan durumlarda eskiye donmeyi de kolay bir sekilde yapabilmemize imkan saglar. Yani gunceller ama bir seylerin yanlis gittigini de gorursek eski haline dondurmeyi tek bir komutla halledebiliriz. Bizler aslinda k8s uzerinde her ne kadar pod olustursak da bu podlari yalnizca pod olarak olusturmayiz. Olusturulmak istenen podlari daha ust seviyede objeler ile olustururuz ve bu sayede uzun vadede yapacagimiz islemleri otomatize etmis oluruz. Deployment bunlarin icinde en sik kullanilandir hatta is yuklerimizin tamami deployment objeleri halinde deploy edilir. 
 Best practice olarak yek bir pod bile yaratacak olsaniz deployment ile yaratmak gerekir.
 
+// Generate Deployment YAML file (-o yaml). Don't create it(--dry-run)
+`kubectl create deployment --image=nginx nginx --dry-run=client -o yaml`
+
+// Generate Deployment YAML file (-o yaml). Don't create it(--dry-run) with 4 Replicas (--replicas=4)
+`kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml`
+Save it to a file, make necessary changes to the file (for example, adding more replicas) and then create the deployment.
+
+// In k8s version 1.19+, we can specify the --replicas option to create a deployment with 4 replicas.
+`kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml`
+
+
+
 // deployment yarat
 kubectl create deployment firstdeployment --image=nginx:latest --replicas=2
 
@@ -507,10 +521,18 @@ Deployment yaml dosyalarinda template kisimlari deployment in ozelliklerinin yaz
 Selector kismi ise deployment objesininn yakalayacagi (sahip oldugu) podlarin labellerini deployment a bildirmek icin kullanilir. Template kisminda labels in altinda bunu tanimliyorum ki secme isi tamamlansin. 
 
 ## replicaset
+Replication Controller replicaset in eski bir teknolojisi ve artik kulanilmiyor.
 Bir replicasetin amaci herhangi bir zamanda calisan kararli bir replica pod setini surdurmektir. Bu nedenle, genellikle belirli sayida ozdes pod un kullanilabilirligini garanti etmek icin kullanilir. Deployment bizim istedigimiz ozelliklerde podu kendi olusturmaz. Replicaset bizim istedigimiz ozelliklerde replicaset objesi olusturur ve podlar bu replicaset objesi tarafindan olsturulur. 
 K8s ilk ciktiginda replication-controller adinda bir objesi vardi halen var ancak kullanilmiyor. Replication controller birden fazla ayni tipte pod olusturmak icin kullaniliyordu fakat deploy ettigi podlarla ilgili degisiklik yapmak istedigimiz zaman bazi sikintilar cikariyorudu. Bu sikintilari cozmek icin de soyle bir yola gidildi. Bu replication controller in sagladigi ozellikler deployment ve replicaset adinda 2 objeye bolundu. Replicaset objesinin temel gorevi su oldu: belirledigimiz ozelliklere gore belirledigimiz sayida pod olusturmak ve bunun desired state de kalmasini saglamak. Deployment ise bunun bir ust seviye objesi olarak dizayn edildi ve pod taniminda bir guncelleme yaparsak bu guncellemenin belirledigimiz kurallara ve sirayla uygulanmasini saglamak oldu. Ozetle biz bir deployment objesi olusturdugumuz zaman bu kendi yonettigi bir replicaset objesi olusturur ve bu replicaset objesi de podlari yaratir ve yonetir. Bir deployment taniminda bir degisiklik yaparsak ornegin kullanilan image i guncellersek deployment bu yeni tanimla yeni bir replicaset objesi daha yaratir. Ilk yaratilan replicaset objesi yavas yavas kendi olusturdugu podlari silmeye baslar ve yeni replicaset de yeni podlari yaratir. Burada silme ve yaratma isleminin neye gore olacagini bizler belirleyebiliriz. Bu bize herhangi bir kesinti olmadan uygulama guncelleme ve yeni versiyon gecisi yapma imkani saglar.
 Replicaset ile deployment yaml ayni arasindaki tek farf kind kisminda birisinde replicaset yazarken digerinde deployment yazar. Geri kalan tum satirlar ayni kalmaktadir. Replicaset yerine deployment olusturmak rollout ve rollback yapmamizi sagliyor. Bunu replicasetler ile yapamiyoruz. Replicaset ler ile bir kere olusturulan pod un imagei bir daha degistirilemiyor.
 Replicaset ile deployment yaml dosyalari arasinda bir fark yok sadece isim kismi deployment yerine replicaset yazmak yeterli.
+
+`kubectl create -f replicaset-definition.yaml`
+`kubectl get replicaset`
+`kubectl delete replicaset myapp-replicaset`
+`kubectl replace -f replicaset-definition.yaml`
+`kubectl scale -replicas=6 -f replicaset-definition.yaml` 
+
 
 ## Rollout and Rollback
 Deployment yaml dosyalarinda spec altinda strategy anahtari ile bizler bu deploymenti guncelledigimiz zaman rollout islemlerinin nasil yapilacagini belirleriz. 
@@ -642,12 +664,54 @@ Siz aksini belirtmediginiz surece containerlar uzerinde calistirdiginiz sistemin
 - ***cpu:*** cpu kisitlamalari su sekilde uygulanir her uygulamanin belirli cpu kaynaklari vardir. Bu kaynaklar cloud uzerinde ya da sanal olarak calisan sistemlerde `vcp` olarak bare metal sunucularda da `hyperthread` olarak hesaplanir. Kisacasi core saysindan bahsediyorum. Ben bir pod tanimina cpu: "1" tanimi eklersem. O podun calistigi node uzerindeki corelardan sadece bir tanesini kullanabilecegi anlamina gelir. Bunun bir baska yazim sekli daha vardir. Her pod 1000 ms yani 1000 cpu luk bir guc demektir. Ben eger cpu 100m tanimi yaparsam pod calistigi node uzerindeki bir core un 10 da 1 lik gucune erisebilir anlamina gelecektir. Yani cpu 1 ile cpu 1000m ayni keza 0.1 cpu ile 100m de ayni.
 - ***memory:*** Clusterda mevcut durumda kullanilabilir bellek varsa, bir container belirlenen bellek istegini asabilir. Ancak bir container bellek sinirindan fazlasini kullanmasina izin verilmez. Bir container, sinirindan daha fazla bellek ayirirsa, container sonlandirma icin aday olur. Container, limitinin otesinde bellek tuketmeye devam ederse, container sonlandirilir Sonlandirilmis bir container yeniden baslatilabiliyorsa diger herhangi bir runtime hatasi turunde oldugu gibi kubelet onu yeniden baslatir.
 Container in kullanacagi max memory i byte cinsinden tanimlayabilirsiniz. Ornegin memor 64m derseniz bu container in en fazla 64mbit memory kullanmaniza izin verdiginiz anlamina gelir. M megabayt, g gigabayt, k kilobaytin kisaltilmasi anlamina gelmektedir. Bunlarin yaninda 2 nin katlarini kullanan gosterim sekli olan  kibibayt KIB, mebibayt MIB, gibibayt GIB tanimlari da desteklenir. 
-yaml dosyasi icinde resource kisitlamalarini 2 ayri bolumde tanimlayabiliyoruz. 1. request: k8s bu podu olusturmaya basladigi zaman scheduler bu podun olusturulacagi bir node sececek bu secme asamasinda tanimlanan degerlerin bulungu bir node uzerinde schedule et yani bu pod un olusturulabilmesi icin node da minimum ne kadar kaynagin olmasi gerektigini belirtiyor, scheduler bu parametreleri dikkate alarak hangi node da scale edilecegini belirliyor eger burada kaynaklarin saglandigi bir node yoksa bu pod olusturulamacak. 2. limits: bu container in en fazla kullanacagi sistem kaynagi. cpu da belirlenen limitde fazlasina erisemez ancak memory degerinde tam olarak oyle degil. memory de belirlenen sayi container in kullanabilecegi max ram degeri fakat container bu degere geldigi zaman daha fazlasini kullanamayacak diye bir durum soz konusu degil. Memory allocation cpu gibi calismiyor. Bu sistemden daha fazla ram talebinde bulunabiliyor ve sistem varsayilan olarak bunu engelleme sansina sahip degil. container daha fazla memory istegine cevap alamadiginda ise bu durumda OOMKilled durumuna gelip restart edilecek.
+- Yaml dosyasi icinde resource kisitlamalarini 2 ayri bolumde tanimlayabiliyoruz. 1. request: k8s bu podu olusturmaya basladigi zaman scheduler bu podun olusturulacagi bir node sececek bu secme asamasinda tanimlanan degerlerin bulungu bir node uzerinde schedule et yani bu pod un olusturulabilmesi icin node da minimum ne kadar kaynagin olmasi gerektigini belirtiyor, scheduler bu parametreleri dikkate alarak hangi node da scale edilecegini belirliyor eger burada kaynaklarin saglandigi bir node yoksa bu pod olusturulamacak. 2. limits: bu container in en fazla kullanacagi sistem kaynagi. cpu da belirlenen limitde fazlasina erisemez ancak memory degerinde tam olarak oyle degil. memory de belirlenen sayi container in kullanabilecegi max ram degeri fakat container bu degere geldigi zaman daha fazlasini kullanamayacak diye bir durum soz konusu degil. Memory allocation cpu gibi calismiyor. Bu sistemden daha fazla ram talebinde bulunabiliyor ve sistem varsayilan olarak bunu engelleme sansina sahip degil. container daha fazla memory istegine cevap alamadiginda ise bu durumda OOMKilled durumuna gelip restart edilecek.
+
+```yaml
+containers:
+  - name: requestlimit
+    image: ozgurozturknet/stress
+    resources:
+      requests: # bu pod un olusturulmasi icin ne kadar bos kaynagin (node) olmasi gerektigini kubescedule a bildirdigimiz alan
+        memory: "64M"
+        cpu: "250m"
+      limits: # container node uzerinde kullanacagi kaynaklarin limitleri
+        memory: "256M"
+        cpu: "0.5"
+```
+
+
+// Kubernetes pod'lar üstünde cpu ve memory kullanımının kontrol edilmesi.
+$ kubectl top node 
+kubectl top node "node_ismi" ile tekil bakılabilir
+
+// Kubernetes pod'lar üstünde cpu ve memory kullanımının kontrol edilmesi.
+
+$ kubectl top pod 
+kubectl top pod "pod_ismi" ile tekil bakılabilir
+
 
 ## envrionment variable
-Ornegin bir web uygulamasi yaziyoruz ve bu web uygulamasi bir veri tabanina baglanarak uygulamalarini burada sakliyor. Bu uygulamanin baglandigi veri tabaninin sunucu adresini ve kullanici adi, sifre bilgilerini de bu uygulamanin icine gomduk ve bu uygulamayi container haline getirdik ve istedigimiz platformda calistiraya haziriz. Fakat bu senaryoda 2 sikintimiz var. Biz bu veritabani baglanti bilgilerini bu container icine hard-code olarak yazdik yani bir sekilde container image i ele gecerse bi bilgiler expose olabilir. Diger bir sorun ise ben bu image dan container olusturmaya calistigim zaman her defasinda ayni veri tabanina ayni kullanici adi ve sifre ile baglanmaya calisacak. Benim veri tabani adim test ortamimda ayri prod ortamimda ayri stage ortamimda ayri olabilir ben kullanici adi bilgilerini zaman icerisinde guncellemis olabilirim. Ya her ortam icin yeni bilgilerle image olusturacagim ya da container olusturduktan sonra bu bilgileri guncelleyecegim. Her seferinde bunu manuel olarak yapmak mumkun degil. Bunun verine environment variable lar tanimlariz.
+Ornegin bir web uygulamasi yaziyoruz ve bu web uygulamasi bir veri tabanina baglanarak uygulamalarini burada sakliyor. Bu uygulamanin baglandigi veri tabaninin sunucu adresini ve kullanici adi, sifre bilgilerini de bu uygulamanin icine gomduk ve bu uygulamayi container haline getirdik ve istedigimiz platformda calistiraya haziriz. Fakat bu senaryoda 2 sikintimiz var. Biz bu veritabani baglanti bilgilerini bu container imagee icine hard-code olarak yazdik yani bir sekilde container image i ele gecerse bi bilgiler expose olabilir. Diger bir sorun ise ben bu image dan container olusturmaya calistigim zaman her defasinda ayni veri tabanina ayni kullanici adi ve sifre ile baglanmaya calisacak. Benim veri tabani adim test ortamimda ayri prod ortamimda ayri olabilir ben kullanici adi bilgilerini zaman icerisinde guncellemis olabilirim. Ya her ortam icin yeni bilgilerle image olusturacagim ya da container olusturduktan sonra bu bilgileri guncelleyecegim. Her seferinde bunu manuel olarak yapmak mumkun degil. Bunun verine environment variable lar tanimlariz.
 K8s de disaridan bir poda direk olarak erisim saglayamayiz ya load balancer ya da nodeport araciligiyla olur fakat k8s soyle bir imkan sagliyor. kubetcl araciligiyla poda deployment a service e kendi bilgisayarimdan tunel acarak o objenin portuna trafigimi yonlendirebiliyorum. Iste testlerde hizli bir sekilde objelere baglanmamizi saglayan bu ozellige portforward diyoruz. 
-Kubectl port-forward pod/envpod 8080:80 komutu ile local hostumu envpod unun 80 portuna yonlendirdim.
+// Kubectl port-forward pod/envpod 8080:80 komutu ile local hostumu envpod unun 80 portuna yonlendirdim.
+kubectl port-forward <pod ismi> <source:target>
+kubectl port-forward pod/envpod 8080:80
+
+
+```yaml
+containers:
+  - name: envpod
+    image: ozgurozturknet/env:latest
+    ports:
+    - containerPort: 80
+    env:
+      - name: USER
+        value: "Ozgur"
+      - name: database
+        value: "testdb.example.com"
+```
+
+
 
 # Volume
 ***
