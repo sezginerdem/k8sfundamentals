@@ -738,53 +738,329 @@ Volume yaratirken ilk olarak spec altinda volume tanimi yapmak gerekir. Sonrasin
 
 ## secret
 Secretlar, parolalar, OAuth token ve ssh anahtarlari gibi hassas bilgileri depolamaniza ve yonetmenize olanak tanir. Gizli bilgileri bir secret icinde saklamak onu bir pod tanimina veya bir container imajina koymaktan daha guvenli ve esnektir.
-1. env variable lari yaml dosyalarinda tanimladigimizda bu dosyalara erisebilen herkes bu bilgilere de kolaylikla erisebiliyor.
-2. Verilerin degismesi sifrenin guncellenmesi gerektigi zaman yaml dosyasi icerisinde degisikliklere gitmem gerekiyor. Bu hassas bilgileri bu tanimlamalardan ayirmak gerekiyor bunu da secretlar ile saglayabiliyoruz.
+  1. env variable lari yaml dosyalarinda tanimladigimizda bu dosyalara erisebilen herkes bu bilgilere de kolaylikla erisebiliyor.
+  2. Verilerin degismesi sifrenin guncellenmesi gerektigi zaman yaml dosyasi icerisinde degisikliklere gitmem gerekiyor. Bu hassas bilgileri bu tanimlamalardan ayirmak gerekiyor bunu da secretlar ile saglayabiliyoruz.
 Verileri secret icerisinde saklar sonrasinda pod a ekleriz. Secretlar da diger objeler gibi yaratabiliriz.
 Secret ile pod ayni namespace icinde olmali.
-8 degisik tipte secret yaratabiliriz. Opaque bunlardan varsayilan olan turdur. Ama nerdeyse hicbir zaman Opaque disinda bir secret tipini kullanmayiz. 
+8 degisik tipte secret yaratabiliriz. Opaque bunlardan varsayilan olan turdur. Ama nerdeyse hicbir zaman `Opaque` disinda bir secret tipini kullanmayiz. 
 
-Bu secretlari pod a nasil ekleriz? 2 senecek var ya bunlari volume araciligiyla ya da env variable araciligiyla ekleriz.
+Basit bir secret.yaml dosyasi
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+type: Opaque
+stringData: #stringdata olarak yazarsaniz bu bilgileri ekranda oldugu gibi yazarsiniz data olarak yazarsaniz bunlarin data64 encoded halini yazmaniz gerekir
+  db_server: db.example.com
+  db_username: admin
+  db_password: P@ssw0rd!
+```
 
-Bu secretlar etcd de base64 olarak tutuluyor. Kendi yonettigimiz clusterlarda manuel olarak bu secretlari encrypt etmemiz gerekiyor. Cloud saglayicilar bunu bizim yerimize otomatik olarak yapiyor. 
+Bu secretlari pod a nasil ekleriz? 2 senecek var ya bunlari 1. volume araciligiyla ya da 2. env variable araciligiyla ekleriz.
 
-Siz bir secret olusturdugunuzda diger objelerde oldugu gibi diger kullanicilar da bu secretlara varsayilan olarak erisim hakkina sahip.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secretpodvolume
+spec:
+  containers:
+  - name: secretcontainer
+    image: ozgurozturknet/k8s:blue
+    volumeMounts:
+    - name: secret-vol
+      mountPath: /secret # colume u maount ettim boylelikle k8s secret icerisindeki tum anahttarlari birer dosya olarak bu path e koyacak. Bu dosya icerisinde de anahtarla atadigim degerler olacak dolayisiyla ben artik sunu dileybilecegim kullanici adina mi almak istiyorsun /secret altinda db_user_name dosyasina bakarak ogrenebilirsin.
+  volumes:
+  - name: secret-vol
+    secret: # volume u secrettan olusturdum
+      secretName: mysecret3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secretpodenv #env variable ile secret lari pod a eklemek
+spec:
+  containers:
+  - name: secretcontainer
+    image: ozgurozturknet/k8s:blue
+    env: # env anahtari ile environment variable tanimladim fakat degerleri yaml dosyasian yazmak yerine secrettan okutuyorum.
+      - name: username
+        valueFrom:
+          secretKeyRef:
+            name: mysecret3
+            key: db_username
+      - name: password
+        valueFrom:
+          secretKeyRef:
+            name: mysecret3
+            key: db_password
+      - name: server
+        valueFrom:
+          secretKeyRef:
+            name: mysecret3
+            key: db_server
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secretpodenvall #secretlarin icindeki env variable lardan pod a secret aktarmak
+spec:
+  containers:
+  - name: secretcontainer
+    image: ozgurozturknet/k8s:blue
+    envFrom: # yine env var olarak tanimliyorum ancak bu sefer her birini tek tek tanimlamak yerine git su scripte bak ve oradaki tum env degerlerini ata
+    - secretRef:
+        name: mysecret3
+```
+
+Bu secretlar etcd de base64 olarak tutuluyor. Kendi yonettigimiz clusterlarda manuel olarak bu secretlari encrypt etmemiz gerekiyor. Cloud saglayicilar bunu bizim yerimize otomatik olarak yapiyor. Kendi yonettigimiz clusterlarda bunu manuel olarak devreye almamiz gerekiyor. Siz bir secret olusturdugunuzda diger objelerde oldugu gibi diger kullanicilar da bu secretlara varsayilan olarak erisim hakkina sahip bunu engellemek icin de `rbac` kullaniyoruz.
+
+// Imperative olarak Secret objelerinin oluşturulması (Opaque de olsa imperative yazarken generic olarak yazmak gerekiyor)
+`kubectl create secret generic "secret_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
+Ör: `kubectl create secret generic mysecret --from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
+
+// Secret objelerinin listelenmesi
+`kubectl get secret`
+
+// Secret objelerinin silinmesi
+`kubectl delete secret "secret_ismi"`
+Ör: `kubectl delete secret my-secret`
+
+// Degerlerin dosyadan okunarak secret olusturulmasi
+`kubectl create secret generic mysecret --from-file=db_server=server.txt --from-file=db_username=username.txt --from-file=db_password=password.txt`
+
+// Imperative olarak ConfigMap objelerinin oluşturulması
+`kubectl create configmap "configmap_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
+Ör: `kubectl create configmap myconfigmap--from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
+
+//ConfigMap objelerinin listelenmesi
+`kubectl get configmap`
+
+ConfigMap objelerinin silinmesi
+
+```
+$ kubectl delete configmap "configmap_ismi"
+
+Ör: kubectl delete configmap my-configmap
+```
 
 ## configmap
 Gizli olmayan verileri anahtar/deger eslenikleri olarak depolamak icin kullanilan bir API nesnesidir. Podlar, ConfigMap'i environment variable, komut satiri argumanlari veya bir volume olarak baglanan yapilandirma dosyalari olarak kullanabilir.
 
-Secretlar ile ayni gorevi gorurler. olusturulan configmap dosyalarindaki key value ler ile verileri tutup bunlari env var olarak ya da volme olarak podlara aktarabiliriz. Olusturma adimlari da nerede ise birebir aynidir. Sadece secret yazilan yerlere configmap yazilir. 
+Secretlar ile ayni gorevi gorurler. Olusturulan configmap dosyalarindaki key value ler ile verileri tutup bunlari env var olarak ya da volme olarak podlara aktarabiliriz. Olusturma adimlari da nerede ise birebir aynidir. Sadece secret yazilan yerlere configmap yazilir. 
 
---Peki birebir ayni ise neden iki farkli obje tipi vardir?-- Secret hassas verileri saklamak icin kullanilan objelerdir. olusturulan secretler base64 encode edilerek etcd de saklanir ve ayar yaparsak etcd uzerinde encryptsiz sekilde durabilir. Config map de ise veriler base64 edilmez ve encrypt etmemize de gerek yoktur. Cunku bizler config map icerisinde gizli olmayan fakat yine de pod tanimimizdan ayirmamiz gereken configurasyon tarzi bilgileri tutariz yani uygulama disinda tutmaniz gereken veri sifre ssh anahtari gibi gizli bir veri ise secret degilse configmap uygun olacaktir. Bu ikisinin etcd de encoded olarak tutulmasi disinda birebir aynidir. Ilerde secretlarin guncellenmesinin otomatize edilmesi ya da ozel secret store larda ayri tutulmasi gibi ek ozellikler getirilebilir. Bu nedenle en bastan iki farkli obje tipi olusturmus k8s.
+- Peki birebir ayni ise neden iki farkli obje tipi vardir? Secret hassas verileri saklamak icin kullanilan objelerdir. Olusturulan secretler base64 encode edilerek `etcd` de saklanir ve ayar yaparsak `etcd` uzerinde encryptsiz sekilde durabilir. `ConfigMap` de ise veriler base64 edilmez ve encrypt etmemize de gerek yoktur. Cunku bizler config map icerisinde gizli olmayan fakat yine de pod tanimimizdan ayirmamiz gereken configurasyon tarzi bilgileri tutariz yani uygulama disinda tutmaniz gereken veri sifre ssh anahtari gibi gizli bir veri ise secret degilse `configMap` uygun olacaktir. Bu ikisinin etcd de encoded olarak tutulmasi disinda birebir aynidir. Ilerde secretlarin guncellenmesinin otomatize edilmesi ya da ozel secret store larda ayri tutulmasi gibi ek ozellikler getirilebilir. Bu nedenle en bastan iki farkli obje tipi olusturmus k8s.
 
-Yaml dosyasi secret gibi tek farki data kismina girmek istedigim bilgileri key value seklinde girmek ya da site.settings altinda oldugu gibi birden fazla degeri alt alta girebiliyorum. Poda aktarma kismi secret ile ayni. 
+Yaml dosyasi secret gibi tek farki data kismina girmek istedigim bilgileri key value seklinde girmek ya da settings altinda oldugu gibi birden fazla degeri alt alta girebiliyorum. Poda aktarma kismi secret ile ayni. Bir de secretsdaki gibi tip tanimi belirtmeye gerek yok.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myconfigmap
+data:
+  db_server: "db.example.com"
+  database: "mydatabase"
+  site.settings: |
+    color=blue # burada secerts dan farkli olarak daha fazle veri girebiliyorum
+    padding:25px
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmappod
+spec:
+  containers:
+  - name: configmapcontainer
+    image: ozgurozturknet/k8s:blue
+    env:
+      - name: DB_SERVER
+        valueFrom:
+          configMapKeyRef:
+            name: myconfigmap
+            key: db_server
+      - name: DATABASE
+        valueFrom:
+          configMapKeyRef:
+            name: myconfigmap
+            key: database
+    volumeMounts:
+      - name: config-vol
+        mountPath: "/config"
+        readOnly: true
+  volumes:
+    - name: config-vol
+      configMap:
+        name: myconfigmap
+```
+
+// Imperative olarak ConfigMap objelerinin oluşturulması
+`kubectl create configmap "configmap_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
+Ör: kubectl create configmap myconfigmap--from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json
+
+// ConfigMap objelerinin listelenmesi
+`kubectl get configmap`
+
+// ConfigMap objelerinin silinmesi
+`kubectl delete configmap "configmap_ismi"`
+Ör: kubectl delete configmap my-configmap
 
 ## Node affinity(yakinlik benzesme)
-Node affinity kavramsal olarak nodeSelector'a benzer ve nodelara atanan etiketlere gore podunuzun hangi node ustunde schedule edilmeye uygun oldugunu kisitlamaniza olanak tanir.
-Podlarimizin uygun worker nodelarda olusturulmasini saglayan k8s objesidir. Node selectora cok benzer bizler pod umuzu ekler ve podumuzun schedule edilecegi node uzerinde ekledigimiz label in olmasini bekleriz. Bunun yaninda bunun olmasini sart kosar ya da tercih ettigimizi belirtiriz.
-Yaml dosyasinda affinity tanimi affinity altinda yapiliyor burada iki secenek var bunlardan ilki `requiredDuringSchedulingIgnoredDuringExecution` tanimi su demek: Bu podu olustururken mutlaka altta yapmis oldugum eslesmeye uygun bir node bul ve bu podu orada olustur. Uygun node bulamazsan olusturma. Bu yaml dosyasini k8s api ye gonderirsem nodelarda label i blue olan bir node arayacak buna uygun bir node bulursa podumu orada schedule edecek. Tanim required oldugu icin eger buna uygun bir worker node bulamazsa da schedule etmeyecek pod pending olacak. Buradaki bir kac secenek nodeselectorden ayiriyor. yaml dosyasinda operator kisminda in yerine not in dese idim bu sefer pod app=blue tanimlanmamis bir node uzerinde olusturulacakti. Buna da antiaffinity diyoruz ya da operator olarak exist degerini girsem bu podu calistirmak icin uzerinde app anahtari olusturulmus herhangi bir worker node bul demek olacakti. Yani degeri onemli degil, app olsun da blue da olur. DoesNotExist ise uzerinde app anahtari olmayan bir worker node bul ve orada calistir. 
-Mesela podlarimin ssd li worker nodelarda calismasini isteyebilirim. Nodelara label olarak ssd atamasi yaparim ve required alanin da ssd olarak belirlerim ancak burada da sorun su ki bu worker nodelarin kapasitesi doldugu zaman ne yapacaksiniz? O zaman gene de olusturulsun derseniz prefer dir. 
-`preferredDuringSchedulingIgnoredDuringExecution` Prefer secenegi su anlama gelir bak burada tanim yapiyorum buna bak bu podu bu tanima uygun bir node uzerinde olustur. Fakat bu tanima uygun bir node bulamazsan da pending de bekleme baska bir node bul. Yine orada olustur prefer taniminda gordugunuz uzere weight de girebiliyorum. 1 ile 100 arasinda bir deger girilebiliyor hangisinin oncelikli olarak degerlendirilebicegi belirleniyor. Ornekte 1 ve 2 var sadece. Oncelikli olarak weight i yuksek olan yani 2 olan secenek uygulanacak yoksa 1 inci secenek uygulanacak o da yerine getirilemiyorsa uygun olan herhangi bir worker nodeda olusturulur. Ornegin pod calismaya basladikten sonra ben buradaki label i worker node dan sildim. `Ignoredduringexecution` ise label silinse de bu pod orada calismaya devam etsin anlamina gelmektedir. Bu secenegin baska bir alternatifi yok. 
+`Node affinity` kavramsal olarak nodeSelector'a benzer ve nodelara atanan etiketlere gore podunuzun hangi node ustunde schedule edilmeye uygun oldugunu kisitlamaniza olanak tanir.
+Podlarimizin uygun worker nodelarda olusturulmasini saglayan k8s ozelligidir. Node selectora cok benzer bizler pod umuzu ekler ve podumuzun schedule edilecegi node uzerinde ekledigimiz label in olmasini bekleriz. Bunun yaninda bunun olmasini sart kosar ya da tercih ettigimizi belirtiriz.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodeaffinitypod1
+spec:
+  containers:
+  - name: nodeaffinity1
+    image: ozgurozturknet/k8s
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: app
+            operator: In #In, NotIn, Exists, DoesNotExist
+            values:
+            - blue
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodeaffinitypod2
+spec:
+  containers:
+  - name: nodeaffinity2
+    image: ozgurozturknet/k8s
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - blue
+      - weight: 2
+        preference:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - red
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodeaffinitypod3
+spec:
+  containers:
+  - name: nodeaffinity3
+    image: ozgurozturknet/k8s
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: app
+            operator: Exists #In, NotIn, Exists, DoesNotExist
+```
+
+Yaml dosyasinda `affinity` tanimi affinity altinda yapiliyor burada iki secenek var bunlardan ilki `requiredDuringSchedulingIgnoredDuringExecution` tanimi su demek: Bu podu olustururken mutlaka altta yapmis oldugum eslesmeye uygun bir node bul ve bu podu orada olustur. Uygun node bulamazsan olusturma. Bu yaml dosyasini k8s api ye gonderirsem nodelarda app=blue olan bir labelli node arayacak buna uygun bir node bulursa podumu orada schedule edecek. Tanim required oldugu icin eger buna uygun bir worker node bulamazsa da schedule etmeyecek pod `pending` olacak. Kisacasi bu anahtar bizim gerekli bir eslesme varsa onu belirttigimiz bir anahtar. Buradaki bir kac secenek `nodeselector`den ayiriyor. Yaml dosyasinda operator kisminda `in` yerine `not in` dese idim bu sefer pod app=blue tanimlanmamis bir node uzerinde olusturulacakti. Buna da `antiaffinity` diyoruz ya da operator olarak `exist` degerini girsem bu podu calistirmak icin uzerinde app anahtari olusturulmus herhangi bir worker node bul demek olacakti. Yani degeri onemli degil, app olsun da blue da olur. DoesNotExist ise uzerinde app anahtari olmayan bir worker node bul ve orada calistir demek olacakti. `Does not exist` ise uzerinde app anahtari olmayan bri node da calistir. Bu sevenekte buradaki sartlar gerceklesmez ise pod calismayacaktir ancak cogu zaman bunu istemem.
+Mesela podlarimin ssd li worker nodelarda calismasini isteyebilirim. Nodelara label olarak ssd atamasi yaparim ve required alanin da ssd olarak belirlerim ancak burada da sorun su ki bu worker nodelarin kapasitesi doldugu zaman ne yapacaksiniz? O zaman gene de olusturulsun derseniz `prefer` dir. 
+`preferredDuringSchedulingIgnoredDuringExecution` Prefer secenegi su anlama gelir bak burada tanim yapiyorum buna bak bu podu bu tanima uygun bir node uzerinde olustur. Fakat bu tanima uygun bir node bulamazsan da pending de bekleme baska bir node bul. Yine orada olustur prefer taniminda gordugunuz uzere `weight` de girebiliyorum. 1 ile 100 arasinda bir deger girilebiliyor hangisinin oncelikli olarak degerlendirilebicegi belirleniyor. Ornekte 1 ve 2 var sadece. Oncelikli olarak weight i yuksek olan yani 2 olan secenek uygulanacak yoksa 1 inci secenek uygulanacak o da yerine getirilemiyorsa uygun olan herhangi bir worker nodeda olusturulur. Ornegin pod calismaya basladikten sonra ben buradaki label i worker node dan sildim. `Ignoredduringexecution` ise label silinse de bu pod orada calismaya devam etsin anlamina gelmektedir. Bu secenegin baska bir alternatifi yok. Yani `preferedduringexecution` diye bir secenek yok.
 
 ## pod affinity
 Pod affinity podunuzun hangi node uzerinde olusturulmaya uygun oldugunu nodelardaki etiketlere gore degil halihazirda nodeda calismakta olan podlardaki etiketlere gore sinirlamaniza olanak tanir.
 Podun uzerinde calistiracagimiz worker node da calisan baska podlarin durumuna gore podun nerede calisip calismamasini isteyecegimiz durumlarda kullaniriz. 
 Ornegin bir azure uzerinde kosan 4 farkli worker node uzerinde 2 farkli AZ uzerinde kosan bir cluserimiz var. Ornegin frontend cache ve veri tabanindan olsan bir uygulamamiz var. Ilk olarak veri tabanimizi deploy edecek pod tanimimizi hazirladik ve k8s api uzerine gonderdik. K8s scheduler isini yapti ve bu podun calisacagi uygun bir node buldu ve varsayalim ki node1 node2 sonra frontend i deploy ettik onu da node3 de schedule etti. Son olarak da cache podumuzu schedule ettik onu da node4 de schedule etti. Buradaki sorun ise frontend ve backend podum ayri AZ uzerinde schedule edildiler. Benim frontend sunumum veri tabani ile surekli gorusuyor ve hemen hemen tum cloud providerlarda 2 AZ arasindaki veri transferi ucrete tabi. Yani ben bu iki podu da ayni AZ uzerinde bulunan worker nodelarda kostursa idim veri transferine para odemeyecektim. Bunun icin `nodeaffinity` yazarak podlari ayni yere toplayabilirim. Ancak bu sefer her seyi manuel ayarlamam gerekir. Eger ben front end tanimina podu olustururken DB poduna bak ve o pod hangi AZ de olustu ise onu da orda olustur der ve sorunu cozerdim. 
 Diger bir ornek de cache ile frontend podlari keske ayni makinada olsa cunku bu iki pod arasinda ne kadar az latency olursa performans artar. Eger ben cache pod tanimima frontend poduna bak eger o hangi node da olusturudu ise o node da olustur diye yazsa idim sorun cozulurdu. 
-Nasil node affinity de bir podun o node da olusturulup olusturulmamasi label lara gore secebiliyorsak bunu da o node uzerinde calisan pod olup olmadigina gore secebiliyoruz. 
-Nodelar uzerinde onceden tanimlanmis pek cok label bulunmaktadir. Her node uzerinde kubernetes.io/arch, kubernetes.io/hostname, kubernetes.io/os isimli labeller bulunmaktadir. kubernetes.io/arch anahtarinin degeri amd64 olabilir isletim sisteminin degerini gosterir. kubernetes.io/hostname nodeun hostname degerini alir minikube gibi. kubernetes.io/os ise linux degerini alabilir. Bunun yaninda cloud providerlarda topology.kubernetes.io/region=northeurope, topology.kubernetes.io/zone=northeurope-1 nodelarin hangi regionlada ve AZ lerde bulundugu bu labellarla belirtilir. Podun tanimlandigi yaml dosyasina bakildiginda. node affinity tanimlarindaki gibi hard yani required, soft yani prefered olmak uzere iki tanimlama yapilmaktadir. Tek fark burada topologykey diye bir deger girilir. topologykey kisminda kubernetes.io/hostname secersem bu podlari ayni hostname e sahip nodelar uzerinde calistir demek. Zone secseydim ayni worker node uzerinde olmasina gerek olmayacakti. O zaman ayni AZ deki herhangi bir node uzerinde calismasi gerektigi belirtilir. Prefer ise nodeaffinity ile ayni yani olsa iyi olur ancak bu sart durum degil. Pod affinity nin bir diger farki ise antiaffinity taniminin ayri olarak yapilmasidir. Nodeantiaffinity yi not in ile yapabliyorken pod antianffinity yi ozel olarak tanimlamamaiz gerekiyor. Bu da affinity nin tam tersi. 
+Nasil node affinity de bir podun o node da olusturulup olusturulmamasi label lara gore secebiliyorsak bunu da o node uzerinde calisan pod olup olmadigina gore secebiliyoruz.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontendpod
+  labels:
+    app: frontend
+    deployment: test
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cachepod
+spec:
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - frontend
+        topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: color
+              operator: In
+              values:
+              - blue
+          topologyKey: kubernetes.io/hostname
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: deployment
+              operator: In
+              values:
+              - prod
+          topologyKey: topology.kubernetes.io/zone
+  containers:
+  - name: cachecontainer
+    image: redis:6-alpine
+```
+
+Nodelar uzerinde onceden tanimlanmis pek cok label bulunmaktadir. Her node uzerinde `kubernetes.io/arch`, `kubernetes.io/hostname`, `kubernetes.io/os` isimli labeller bulunmaktadir. `kubernetes.io/arch` node un x64 ya da arch tabanli bir isletim sistemine sahip oldugunu belirtir. Anahtarinin degeri amd64 olabilir isletim sisteminin degerini gosterir. `kubernetes.io/hostname` nodeun hostname degerini alir minikube gibi. `kubernetes.io/os` ise isletim sistemini belirtir, linux degerini alabilir. Bunun yaninda cloud providerlarda `topology.kubernetes.io/region=northeurope`, `topology.kubernetes.io/zone=northeurope-1` nodelarin hangi regionlada ve AZ lerde bulundugu bu labellarla belirtilir. 
+
+Podun tanimlandigi yaml dosyasina bakildiginda. node affinity tanimlarindaki gibi hard yani `required`, soft yani `prefered` olmak uzere iki tanimlama yapilmaktadir. Tek fark burada `topologykey` diye bir deger girilir. topologykey kisminda `kubernetes.io/hostname` secersem bu podlari ayni hostname e sahip nodelar uzerinde calistir demek. Zone secseydim ayni worker node uzerinde olmasina gerek olmayacakti. O zaman ayni AZ deki herhangi bir node uzerinde calismasi gerektigi belirtilir. `Prefer` ise `nodeaffinity` ile ayni yani olsa iyi olur ancak bu sart durum degil. Pod affinity nin bir diger farki ise `antiaffinity` taniminin ayri olarak yapilmasidir. `Nodeantiaffinity` yi not in ile yapabliyorken `pod antianffinity yi ozel olarak tanimlamamaiz gerekiyor. Bu da affinity nin tam tersi. 
 Bu tanimlamalar buyuk clusterlarda sikca kullanilan bir ozelliktir. Kucuk cluster icin cok da gerekmemektedir.
 
 ## taint ve toleration
-Taint(leke) anlamina gelir. Siz bir node a anahtar veri eslenigi seklinde bir tanit ve bu tanitla birlikte noschedule, prefernoschedule ya da noexecute olmak uzere bir emir eklersiniz. Bu asamadan sonra bu node uzerinde sadece bu taint i yani bozuklugu tolere edebilecek nodelar calisabilir. 
-Worker1 blue olarak label landi. Worker2 ise green olarak label landi. Worker3 ise label lanmadi. Blue uygulamamizin blue label lanan node da green uygulamamizin green label lanan node da schedule edilmesini istiyoruz. Buna gore gerekli pod effinity ve node affinity tanimlamalarini yaptik ve uygulamalari deploy ettik. Baska bir ekip yeni bir pod schedule etti ve 3 pod tum nodelarda schedule edilmeye baslandi. 
+Taint(leke) anlamina gelir. Siz bir node a anahtar veri eslenigi seklinde bir `taint` ve bu `taint`la birlikte `noschedule`, `prefernoschedule` ya da `noexecute` olmak uzere bir emir eklersiniz. Bu asamadan sonra bu node uzerinde sadece bu taint i yani bozuklugu tolere edebilecek podlar calisabilir. 
+Worker1 blue olarak label landi. Worker2 ise green olarak label landi. Worker3 ise label lanmadi. Blue uygulamamizin blue label lanan node da green uygulamamizin green label lanan node da schedule edilmesini istiyoruz. Buna gore gerekli `pod effinity` ve `node affinity` tanimlamalarini yaptik ve uygulamalari deploy ettik. Baska bir ekip yeni bir pod schedule etti ve 3 pod tum nodelarda schedule edilmeye baslandi. 
 Mesela 10 tane nodeunuz var bunlardan 3 tanesi cok iyi makinalar ve bu 3 makina musteriye sunulan nodelar olsun istiyorsunuz kalan 7 node ise test ortami olarak kullanacaginiz uygulamalar olsun istiyorsunuz. Yani sadece belirli tipte podlar belirli nodelar uzerinde schedule edilebilsin. 
-Ornegin ben platform=production:NoSchedule isimli bi taint eklersem bu etiket eklenmemis hicbir pod bu taint uzerindeki nodelarda schedule edilemez. Ayni sekilde pod a bu labeli eklersem ve prefer noschedule yazarsam bu etiketi tolere edemeyen hicbir pod bu worker node uzerinde schedule edilemez. Ama bunun icin uygun baska bir node bulunamazsa da son secenek olarak bu worker node uzerinde calistirilabilir.
-Noexecute secenegi ise bu tainti tolere edemeyen hicbir pod bu node uzerinde schedule edilemeyecegi gibi mevcut durumda bu worker node uzerinde bu tainti tolere edemeyen podlar da varsa o podlar da o worker node uzerinden silinerek baska uygun nodelar uzerinde yeniden olusturulur. 
-Taint eklemek icin `kubectl taint node minikube platform=production:NoSchedule` 
-Taint silmek icin `kubectl taint node minikube platform`
+Ornegin ben `platform=production:NoSchedule` isimli bi taint eklersem bu etiket eklenmemis hicbir pod bu `taint` uzerindeki nodelarda schedule edilemez. Ayni sekilde pod a bu labeli eklersem ve `prefer noschedule` yazarsam bu etiketi tolere edemeyen hicbir pod bu worker node uzerinde schedule edilemez. Ama bunun icin uygun baska bir node bulunamazsa da son secenek olarak bu worker node uzerinde pod calistirilabilir.
+`Noexecute` secenegi ise bu tainti tolere edemeyen hicbir pod bu node uzerinde schedule edilemeyecegi gibi mevcut durumda bu worker node uzerinde bu tainti tolere edemeyen podlar da varsa o podlar da o worker node uzerinden silinerek baska uygun nodelar uzerinde yeniden olusturulur. 
+
+// Node'lara taint ekleme.
+`kubectl taint node "node_ismi" "anahtar=değer:eylem"`
+Ör: kubectl taint node minikube platform=production:NoSchedule
+
+//Node'lardan taint kaldırma.
+`kubectl taint node "node_ismi" "anahtar-"`
+Ör: kubectl taint node minikube platform-
+
 Yaml dosyasinda podun birebir tolere edebilmesi icin node da girilen tolerations kisminin aynisi pod daki yaml dosyasinda da olmali.
---Taint ve toleration node affinity nin yapmis oldugunu yapmaz. Yani bu ozelliklere gore git surada schedule ol demez. Yani bir pod surada olusturulsun node affinity, worker node umun uzerinde sadece su podlar calisabilsin taint and toleraion.--
+- Taint ve toleration node affinity nin yapmis oldugunu yapmaz. Yani bu ozelliklere gore git surada schedule ol demez. Yani bir pod surada olusturulsun node affinity, worker node umun uzerinde sadece su podlar calisabilsin taint and toleraion.
 Calisan podlar varken taint ayarlarini degistridigim zaman calisan podlar terminate olacaktir.
 
 ## DaemonSet
