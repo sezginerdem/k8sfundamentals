@@ -1060,40 +1060,273 @@ Ornegin ben `platform=production:NoSchedule` isimli bi taint eklersem bu etiket 
 Ör: kubectl taint node minikube platform-
 
 Yaml dosyasinda podun birebir tolere edebilmesi icin node da girilen tolerations kisminin aynisi pod daki yaml dosyasinda da olmali.
-- Taint ve toleration node affinity nin yapmis oldugunu yapmaz. Yani bu ozelliklere gore git surada schedule ol demez. Yani bir pod surada olusturulsun node affinity, worker node umun uzerinde sadece su podlar calisabilsin taint and toleraion.
-Calisan podlar varken taint ayarlarini degistridigim zaman calisan podlar terminate olacaktir.
+- Taint ve toleration node affinity nin yapmis oldugunu yapmaz. Yani bu ozelliklere gore git surada schedule ol demez. *Yani bir pod surada olusturulsun node affinity, worker node unun uzerinde sadece su podlar calisabilsin taint and toleration.*
+Calisan podlar varken taint ayarlarini degistirdigim zaman calisan podlar terminate olacaktir.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleratedpod1
+  labels:
+    env: test
+spec:
+  containers:
+  - name: toleratedcontainer1
+    image: ozgurozturknet/k8s
+  tolerations: # bu podun taint i toleration yapilabilmesi icin birebir ayni degerlerin girilmesi gerekiyor
+  - key: "platform"
+    operator: "Equal"
+    value: "production"
+    effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleratedpod2
+  labels:
+    env: test
+spec:
+  containers:
+  - name: toleratedcontainer2
+    image: ozgurozturknet/k8s
+  tolerations:
+  - key: "platform"
+    operator: "Exists" # eger platform ve noschedule olarak girilmis bir tanim varsa tolere et yani degeri onemli yeterki platform degerli olsun
+    effect: "NoSchedule"
+```
 
 ## DaemonSet
-DaemonSet, tum (veya bazi) nodelarin bir podun bir kopyasini calistirmasini saglar. Clustera yeni node eklendikce, onlara podlar da eklenir. Clusterdan node kaldirildiginda, bu podlar da kalidirilir. Bir DaemonSet in silinmesi, olusturdugu Podlari da temizleyecektir.
-Deployment objelerine oldukca benzeyen bir k8s objesidir. Bir daemonset objesi olusturdugunuz zaman daemonet sistemde template altinda belirttiginiz pod tanimina gore bir pod olusturur. Varsayilan olarak her node uzerinde bir pod olusturulur. Fakat siz bunu degistirerek sadece belirli nodelar uzerinde de olusturulmasini saglayabilirsiniz. Storage provisioinng ve log uygulamalari gibi uygulamalarin her node de kolayca deploye edilmesini saglar. Bu uygulamalar icin DaemonSet kullanmak su avantaji saglar: 1. is basitlesir 2. olarak yeni node geldiginde uygulamayi orada da olusturur. Yeniden bir islem yapmaniza gerek kalmaz. 
-Ornegin 20 worker nodedan olusan bir K8s clusterimiz var. Bizim bu worker nodelarin tamaminda calismasi gerekn bir uygulamamiz mevcut. Ornegin biz bu worker nodelarda olusan loglari merkezi bir log sunucusuna gondermek istiyoruz. Her bir worker nodda da bir uygulama calistiracagiz ve bu uygulama o worker node da olusan loglari toplayacak ve merkezi log sunucusuna gonderecek. Ilk olarak tum worker nodelara baglanarak bu uygulamayi kurabilirim ama bu imkansiz. Ikinci olarak bu uygulamayi container image i haline getiririm ardindan gerekli ayarlarin oldugu 20 pod tanimi yaparim. Her birine node affinity eklerim ve bu podlari ayri ayri worker nodelar uzerinde calisacak sekilde deploy ederim. Bu iki yontem de zahmetli bu durumda yeni node eklersem bu islemleri yeniden yapmak zorunda kalirim.
---Deployment la benzer yaml dosyalari vardir ancak rollout ozelliklerini kullanmiyoruz temel fark bu.-- 2 seye dikkat etmek gerekir. daemonset de de label selector tanimi vardir ve daemonset olusturacagi bu podlari bu selector a gore secer. Bu nedenle ayni label taniminin spec de de olmasi lazim. Minikube kurdugumuz icin bunu gormedik ama normalde kubeadm ile kendi kurdugumuz clusterlarda ya da cloud saglayicilarin  sagladigi clusterlarda master node uzerinde pod calistirmayiz. Master node larda `node-role.kubernets.io/master:NoSchedule` adinda bir taint eklidir. Dolayisiyla bunu tolere edecek bir tanim ekli degilse pod bu bu master node uzerinde schedule edilmez. Eger biz worker node un sadece daemon setlerde pod olusturmasini istiyorsak o zaman bir sey eklememize gerek yok. Ama bizim DaemonSet imizin master node larda da pod olusturmasini istiyorsak o zaman bu toleration u buraya eklemek zorndayiz. 
+`DaemonSet`, tum (veya bazi) nodelarin bir podun bir kopyasini calistirmasini saglar. Clustera yeni node eklendikce, onlara podlar da eklenir. Clusterdan node kaldirildiginda, bu podlar da kalidirilir. Bir DaemonSet in silinmesi, olusturdugu Podlari da temizleyecektir.
+Deployment objelerine oldukca benzeyen bir k8s objesidir. Bir `daemonset` objesi olusturdugunuz zaman daemonset sistemde template altinda belirttiginiz pod tanimina gore bir pod olusturur. Varsayilan olarak her node uzerinde bir pod olusturulur. Fakat siz bunu degistirerek sadece belirli nodelar uzerinde de olusturulmasini saglayabilirsiniz. Storage provisioinng ve log uygulamalari gibi uygulamalarin her node de kolayca deploye edilmesini saglar. Bu uygulamalar icin DaemonSet kullanmak su avantaji saglar: 
+  1. is basitlesir 
+  2. Yeni node geldiginde uygulamayi orada da olusturur. Yeniden bir islem yapmaniza gerek kalmaz. 
+Ornegin 20 worker nodedan olusan bir K8s clusterimiz var. Bizim bu worker nodelarin tamaminda calismasi gerekn bir uygulamamiz mevcut. Ornegin biz bu worker nodelarda olusan loglari merkezi bir log sunucusuna gondermek istiyoruz. Her bir worker nodeda da bir uygulama calistiracagiz ve bu uygulama o worker node da olusan loglari toplayacak ve merkezi log sunucusuna gonderecek. Ilk olarak tum worker nodelara baglanarak bu uygulamayi kurabilirim ama bu imkansiz. Ikinci olarak bu uygulamayi container image i haline getiririm ardindan gerekli ayarlarin oldugu 20 pod tanimi yaparim. Her birine node affinity eklerim ve bu podlari ayri ayri worker nodelar uzerinde calisacak sekilde deploy ederim. Bu iki yontem de zahmetli bu durumda yeni node eklersem bu islemleri yeniden yapmak zorunda kalirim.
+*Deployment la benzer yaml dosyalari vardir ancak rollout ozelliklerini kullanmiyoruz temel fark bu.* 2 seye dikkat etmek gerekir. daemonset de de `label selector` tanimi vardir ve `daemonset` olusturacagi bu podlari bu `selector` a gore secer. Bu nedenle ayni label taniminin `spec` de de olmasi lazim. Minikube kurdugumuz icin bunu gormedik ama normalde `kubeadm` ile kendi kurdugumuz clusterlarda ya da cloud saglayicilarin  sagladigi clusterlarda master node uzerinde pod calistirmayiz. Master node larda `node-role.kubernets.io/master:NoSchedule` adinda bir taint eklidir. Dolayisiyla bunu tolere edecek bir tanim ekli degilse pod bu master node uzerinde schedule edilmez. Eger biz worker node un sadece `daemonset`lerde pod olusturmasini istiyorsak o zaman bir sey eklememize gerek yok. Ama bizim `daemonSe`t imizin master node larda da pod olusturmasini istiyorsak o zaman bu toleration u buraya eklemek zorundayiz. 
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: logdaemonset
+  labels:
+    app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata:
+      labels:
+        name: fluentd-elasticsearch
+    spec:
+      tolerations:
+      # this toleration is to have the daemonset runnable on master nodes
+      # remove it if your masters can't run pods
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+      - name: fluentd-elasticsearch
+        image: quay.io/fluentd_elasticsearch/fluentd:v2.5.2
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+```
+
+// DaemonSet objelerinin listelenmesi
+`kubectl get daemonset`
+
+// DaemonSet objelerinin silinmesi
+`kubectl delete daemonset "daemonset_ismi"`
+Ör: kubectl delete daemonset my-daemonset
 
 ## Persistent Volume and Persistent Volume Claim
-Pod yasam suresinden daha fazla saklamamiz gereken verileri sakladigimiz ve cluster disinda tuttugumuz volumelere persistent volume diyoruz.
-3 nodelu bir cluster uzerinde mysql DB var. Tek deployment olacak bir replicaset tasarladik. Deployment in icerisinde mysql veri tabani dosyalarinin duracagi emptyDir volume olusturmasi icin tanim ekledik. Buna container a mount edecek tanimlari da olusturduktan sorna deployment objemizi de olusturduk. Mysql containlardan olusan podumuz uygun bir node uzerinde olusturuldu. Bu noktada container da sikinti olusturulursa container yeniden baslatilacak ve volume ekledigimiz icin verilerimize birsey olmayacak. Ancak diyelim ki podun calistigi worker node a birsey oldu ve terminate oldu. Podumuz uygun olan baska bir worker node uzerinde yeniden yaratilacak. Bu durum ephemeral uygulama icin sikinti yaratmazken mysql uygulamasi icin sikinti olusturabilir. Cunku mysql yeniden olusturabilecegimiz degil uzun sure barindirmak zorunda oldugumuz kayitlari tutuyor. Poda ne olursa olsun bu kayitlari kaybetmememiz gerekiyor. Podu olusturduk mysql calisti ve verileri emptyDir adli volume e yazmaya basladik. Bu volume fiziksel olarak o konteyner in calistigi worker node uzerinde duruyor artik o worker node a erisilemiyor. Dolayisiyla pod baska bir worker node uzerinde yeniden olusturuldugunda bu dosyalara erisilemeycek. Bunun cozumu clusterin disinda olan ancak tum worker nodelar tarafindan erisilebilen bir folder da olusturuyor olabilmemiz lazim. Bunu yaparsak veri devamliligi saglayabiliriz. 
-Bunun icin ilk once bir kac ayar yapmamiz gerekiyor: 1. Ilk olarak volume olarak ayarladigimiz birim ile clusterimizin konusabilmesi gerekiyor. Bunun icin de cluster uzerinde bu depolama biriminin driverlarinin yuklenmesi gerekiyor. Kubernetes nfs ve Isqz gbi universal protokollere ait driverlarin yaninda azure disk, azure file, Aws ebs, google persistent disk gibi pek cok storagelarin driverlarini bunyesinde barindirmaktadir. Yani K8s default olarak bunlarla konusabiliyor durumda ancak depolama cozumleri yalnizca bunlarla sinirli degil. K8s bunlarin da disindaki storagelarla konusabilecek cozumleri `Container Storage Interface (CSI)` ile sagliyor.
+Pod yasam suresinden daha fazla saklamamiz gereken verileri sakladigimiz ve cluster disinda tuttugumuz volumelere `persistent volume` diyoruz.
+3 nodelu bir cluster uzerinde mysql DB var. Tek deployment olacak bir replicaset tasarladik. Deployment in icerisinde mysql veri tabani dosyalarinin duracagi emptyDir volume olusturmasi icin tanim ekledik. Buna container a mount edecek tanimlari da olusturduktan sorna deployment objemizi de olusturduk. Mysql containlardan olusan podumuz uygun bir node uzerinde olusturuldu. Bu noktada container da sikinti olusturulursa container yeniden baslatilacak ve volume ekledigimiz icin verilerimize birsey olmayacak. Ancak diyelim ki podun calistigi worker node a birsey oldu ve terminate oldu. Podumuz uygun olan baska bir worker node uzerinde yeniden yaratilacak. Bu durum `ephemeral` volume kisminda anlattigim uygulama icin sikinti yaratmazken mysql uygulamasi icin sikinti olusturabilir. Cunku mysql yeniden olusturabilecegimiz degil uzun sure barindirmak zorunda oldugumuz kayitlari tutuyor. Poda ne olursa olsun bu kayitlari kaybetmememiz gerekiyor. Podu olusturduk mysql calisti ve verileri `emptyDir` tipindeki volume e yazmaya basladik. Bu volume fiziksel olarak o container in calistigi worker node uzerinde duruyor artik o worker node a erisilemiyor. Dolayisiyla pod baska bir worker node uzerinde yeniden olusturuldugunda bu dosyalara erisilemeycek. Bunun cozumu clusterin disinda olan ancak tum worker nodelar tarafindan erisilebilen bir klasorde da olusturuyor olabilmemiz lazim. Bunu yaparsak veri devamliligi saglayabiliriz. 
+Bunun icin ilk once bir kac ayar yapmamiz gerekiyor: 
+  1. Ilk olarak volume olarak ayarladigimiz depolama birimi ile clusterimizin konusabilmesi gerekiyor. Bunun icin de cluster uzerinde bu depolama biriminin volume driverlarinin yuklenmesi gerekiyor. Kubernetes `nfs` ve `Isqz` gbi universal protokollere ait driverlarin yaninda `azure disk`, `azure file`, `Aws ebs`, `google persistent` disk gibi pek cok storagelarin driverlarini bunyesinde barindirmaktadir. Yani K8s default olarak bunlarla konusabiliyor durumda ancak depolama cozumleri yalnizca bunlarla sinirli degil. K8s bunlarin da disindaki storagelarla konusabilecek cozumleri `Container Storage Interface (CSI)` ile sagliyor.
 CSI istege bagli blok ve dosya depolama sistemlerini K8s gibi Container Orchestration Systems (CO'ler) uzerindeki containerized is yuklerine maruz birakmak icin bir standart olarak gelistirilmistir. Container Stoarge Interface'in benimsenmesiyle K8s volume katmani gercekten genisletilebilir hale geldi. Ucuncu taraf depolama saglayicilari, CSI kullanarak cekirdek K8s koduna dokunmak zorunda kalmadan K8s te yeni depolama sistemlerini aciga cikaran eklentiler yazabilme imkanina kavustu. 
-CSI k8s storage altyapsinin nasil ayarlanmasi gerektigii belirten bir starndart. Depolama cozumu uretenler bu standarta uyan driverlar yazarak K8s in kendi altyapilari ile de konusabilmelerine imkan saglamaktadir. Ozetle baglanabilecegimiz depolama birimleri nfs, azure, aws, gcp gibi degilse bu sefer kullanilacak storage in csi driver ini sisteme yuklemek gerekiyor.
+CSI k8s storage altyapsinin nasil ayarlanmasi gerektigini belirten bir standart. Depolama cozumu uretenler bu standarta uyan driverlar yazarak K8s in kendi altyapilari ile de konusabilmelerine imkan saglamaktadir. Ozetle baglanabilecegimiz depolama birimleri nfs, azure, aws, gcp gibi degilse bu sefer kullanilacak storage in `csi` driver ini sisteme yuklemek gerekiyor.
 Ilk adim cluster ile depolama aracini birbirine bagliyoruz ve konusabilecek hale getiriyoruz. Sonra depolama birimleri uzerinde k8s de kullanmak uzere depolama birimleri yaratiyoruz. Sonra bu depolama birimlerinin k8s deki karsiliklarini k8s altinda persistent volume olarak bir obje seklinde olustururuz. 
-K8S clusterimiz altinda nfs tabanli bir depolama birimi oldugunu varsayalim. k8s altinda nfs driverlari bulundugu icin ek bir driver yuklememize gerek kalmadan bu iki ortam birbiriyle gorusebilir durumda. Sirada bu storage uzerinde bizim erisebilecegimiz bir depolama birimi yaratma isi var. nfs cihazina bagalaniyor ve tmp diye bir paylasim alani yaratiyorz. Sonrasinda bunun k8s deki karsiligini yaratma isi var bunun karsiligi k8s de persistent volume dur. Burada olusturulacak yaml dosyasindaki spec kismi baglanilacak driver a gore degisiyor. Driver a gore degismeyen 3 secenek var: 1. Capacity: bizim ne kadarlik bir volume yaratmak istedigimzi belirtiyor 5Gi yani 5 gibibayt gibi. accesModes: kisminda bu volume un ayni anda birden fazla volume e baglandigi zaman ne sekilde bir davranis sergileyecegini secbiliyrouz. Burada 3 senecek mevcut readWriteOce: okuma yazma -teknode, readOnlyMany: sadece okuma -birden fazla node, readWriteMany: okuma yazma - birden fazla node. Bu durum driver in yeteneklerine ve baglanilacak storage a degisebiliyor. persistentVolumeReclaimPolicy: secenegi ise podumuzun isi bitip birakildiktan sonra bu volume e nasil davranilacagini bildiriyoruz. Burada retain: volume kullanildiktan sonra oldugu gibi kaliyor. Bizler bu dosyalari manuel olarak tasiyoruz ve kurtarma imkanina sahip oluyoruz. recycle seceneginde icindeki bilgiler siliniyor ancak volume siliniyor. Volume tekrar kullanilabiliyor. Delete ise volume ile is bittiginde tamamen siliyor. 
-Volume olustugunda pod a nasil bagliyoruz. Direk olarak bir persistent volume bir pod ile bagalayamiyoruz. Oncelikle persistent volume claim kisaca pvc bizlerin sistemde bulunan pv lerden isimize yarayan bir tanesini secmemize yani bunu kullanmak adina talep yaratma objesidir. Neden bu talep etme farkli objede tanimlaniyor. Mesela ben developer olabilirim ve yonetme isi farkli bir yonetici tarafindan yapiliyor olabilir. Dolayisiyla o islemleri ben bilemiyor olabilirim. 
-Peki bu volumeleri pod nasil baglariz? Yaml dosyasinda volume tanimlarinin altinda yeni bir volume olustur ve bunun hedefini persistentVolumeClaim olarak belirler sonrasinda bunu pod altinda gerekli path e mount ederiz. Bu pod olusturuldugu anda bu path devreye girer. Bu podun olusturulacagi worker node uzerinde bu volume ile ilgili ayarlamalar yapilir. Sonucunda bu pod bu path ilgili volume baglanir ve bu path e yazilan dosyalar bu volume e yazilir.
-Pv yaratirken label onemli cunku pvc ler bu labellara gore istek yapilmaktadir. Pv lerin yaratilmasina kadar olan kisim system yoneticilerin daha sonra bu pvc nin kullanilmasi kismi ise developerlara ait olan bir kisim. 
-Volume u deployment in icinde tanimliyorum:
+K8S clusterimiz altinda `nfs` tabanli bir depolama birimi oldugunu varsayalim. k8s altinda nfs driverlari bulundugu icin ek bir driver yuklememize gerek kalmadan bu iki ortam birbiriyle gorusebilir durumda. Sirada bu storage uzerinde bizim erisebilecegimiz bir depolama birimi yaratma isi var. `nfs` cihazina bagalaniyor ve `tmp` diye bir paylasim alani yaratiyorz. Sonrasinda bunun k8s deki karsiligini yaratma isi var bunun karsiligi k8s de `persistent volume` dur. 
+
 ```yaml
-    volumes:
-    - name: mysqlvolume
-      persistentVolumeClaim:
-        claimName: mysqlclaim
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: mysqlpv
+   labels:
+     app: mysql
+spec: # depolama unitesine baglanirken kullanilacak driver a gore degisiyor
+  capacity:
+    storage: 5Gi # drive a gore degismez
+  accessModes: # driver a gore degismez
+    - ReadWriteOnce # birden fazla pod a 
+  persistentVolumeReclaimPolicy: Recycle
+  nfs:
+    path: /
+    server: 10.255.255.10
 ```
+
+Burada olusturulacak yaml dosyasindaki spec kismi baglanilacak driver a gore degisiyor. Driver a gore degismeyen 3 secenek var:  
+  1. `Capacity:` bizim ne kadarlik bir volume yaratmak istedigimzi belirtiyor 5Gi yani 5 gibibayt gibi. 
+  2. `accesModes:` kisminda bu volume un ayni anda birden fazla volume e baglandigi zaman ne sekilde bir davranis sergileyecegini secebiliyrouz. Burada 3 senecek mevcut `readWriteOce:` okuma yazma -teknode, `readOnlyMany:` sadece okuma -birden fazla node, `readWriteMany:` okuma yazma - birden fazla node. Buradki secenekler driver in yeteneklerine ve baglanilacak storage a degisebiliyor. 
+  3. `persistentVolumeReclaimPolicy:` Secenegi ise podumuzun isi bitip birakildiktan sonra bu volume e nasil davranilacagini bildiriyoruz. Burada `retain`: volume kullanildiktan sonra oldugu gibi kaliyor. Bizler bu dosyalari manuel olarak tasiyoruz ve kurtarma imkanina sahip oluyoruz. `recycle` seceneginde icindeki bilgiler siliniyor ancak volume silinmiyor. Volume tekrar kullanilabiliyor. `Delete` ise volume ile is bittiginde tamamen siliyor.
+   
+- Volume olustugunda pod a nasil bagliyoruz. Direk olarak bir persistent volume bir pod ile bagalayamiyoruz. Oncelikle persistent `volume claim` kisaca `pvc` bizlerin sistemde bulunan `pv` lerden isimize yarayan bir tanesini secmemize yani bunu kullanmak adina talep yaratma objesidir. Neden bu talep etme farkli objede tanimlaniyor. Mesela ben developer olabilirim ve yonetme isi farkli bir yonetici tarafindan yapiliyor olabilir. Dolayisiyla o islemleri ben bilemiyor olabilirim.
+  
+Peki bu volumeleri pod nasil baglariz? Yaml dosyasinda volume tanimlarinin altinda yeni bir volume olustur ve bunun hedefini persistentVolumeClaim olarak belirler sonrasinda bunu pod altinda gerekli path e mount ederiz. Bu pod olusturuldugu anda bu path devreye girer. Bu podun olusturulacagi worker node uzerinde bu volume ile ilgili ayarlamalar yapilir. Sonucunda bu pod bu path ilgili volume baglanir ve bu path e yazilan dosyalar bu volume e yazilir.
+`Pv` yaratirken label onemli cunku pvc ler bu labellara gore istek yapilmaktadir. Pv lerin yaratilmasina kadar olan kisim system yoneticilerin daha sonra bu `pvc` nin kullanilmasi kismi ise developerlara ait olan bir kisim. 
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysqlclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem # hangi mode ile baglanmak istiyorum
+  resources:
+    requests:
+      storage: 5Gi # ne kadarlik volume talep ediyorum
+  storageClassName: ""
+  selector:
+    matchLabels: # pvc ile pv yi label uzerinden eslestiriyorum
+      app: mysql # bu pvc bu etikete sahip pv tarafindan saglansin istiyorum.
+```
+
+- Pod tanimlarinda persistentVolume Claim altinda bir claim olusturuz ve bunu pod altinda gerekli path mount ederiz. Bu pod olusturuldugu anda pv deki tanima gore worker node uzerinde ayarlamalar yapilir. Storage cihazina baglanilir driver yapmasi gerekenleri yapar ve sonunda bu pod icerisindeki container ilgili pathin depolama cihazi uzerinde duran bu volume baglanir. Bu noktadan itibaren bu path e yazilan dosyalar aslinda bu volume e yazilir. Eger bu pod bulundugu node uzerinden baska bir node calisirilirsa ayni islemler burada da gerceklestirlir ve yeni pod a bu volume baglanir.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysqlsecret
+type: Opaque
+stringData:
+  password: P@ssw0rd!
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysqldeployment
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - mountPath: "/var/lib/mysql"
+              name: mysqlvolume
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysqlsecret
+                  key: password
+      volumes:
+        - name: mysqlvolume
+          persistentVolumeClaim:
+            claimName: mysqlclaim
+```
+
+// NFS Server 
+`docker volume create nfsvol`
+$ docker network create --driver=bridge --subnet=10.255.255.0/24 --ip-range=10.255.255.0/24 --gateway=10.255.255.10 nfsnet
+$ docker run -dit --privileged --restart unless-stopped -e SHARED_DIRECTORY=/data -v nfsvol:/data --network nfsnet -p 2049:2049 --name nfssrv ozgurozturknet/nfs:latest
+
+// Persistent Volume objelerinin listelenmesi
+`kubectl get pv`
+
+// Persistent Volume objelerinin silinmesi
+`kubectl delete pv "pv_ismi`
+Ör: kubectl delete pv mypv
+
+// Persistent Volume Claim objelerinin listelenmesi
+`kubectl get pvc`
+
+// Persistent Volume objelerinin silinmesi
+`kubectl delete pvc "pvc_ismi`
+Ör: kubectl delete pvc mypvc
+
 ## Storage Class
 Storage class yoneticilerin sunduklari depolama "siniflarini" tanimlamalari icin bir yol saglar. Farkli siniflar, hizmet kalitesi duzeylerine veya yedekleme ilkelerine veya cluster yoneticileri tarafindan belirlenen istege bagli ilkelere eslenebilir. k8s siniflarin neyi temsil ettigi konusunda fikir sahibi degildir. Bu kavram bazen diger depolama sistemlerinde "profiller" olarak adlandirilir. 
-10 ayri ekip yonetilen k8s cluser oldugunu dusunun 10larca farkli node ve 100lerce pod olusturuluyor. Uygulamalar surekli yaratiliyor siliniyor. Bu durumda her seferinde pvc ve pv olusturmamiz cok zahmetli olacaktir. Bu soruna cozum olarak storage class objesi olusturuldu. 
-Pv yi manuel olursturmak yerine claime gore dinamik olusturma imkani getirdi. Bu ozellikle cloud servis saglayicilarin dinamik ortamlarinda her seyi otomatize edebilirken sirf volume olusturma islemini manuel olusturma sacmaligini cozdu. Storage class objelerini baglantimiz olan depolama uretimi uzerinde ne cesit volume yaratacagimizi belirten templatel er olarak dusunebilrisiniz. Ornegin uzerinde hem ssd hem de hdd olan storage oldugunu dusunun. Bu durumda ben yavas diskler uzerinde otomatik volume yaratan yavas isimli bir storage class ve hizli diskler uzerinde volume yaratan hizli isimli 2. bir storage class yaratabilirim. Development ekipleri de uygulamalarinda kullanmak icin volume talep etmek adina olusturduklari pvc de uygulamalarinin ihtiyacina gore bu storage class lardan birini secerler ve istedikleri boyutta bir volume storage class objesi tarafindan otomatik olarak olusturulup pvc ye bind edilir.
-Sadece retain ve delete secenegi mevcut Immediate yaziyorsa hemen volume un olusturulup pod a atanmasini soyler. WaitForCounsumer ise pod yaratilana kadar beklemesi gerektigini soyler.
-Cloud ortaminda bu secenekleri bilmek gerekmiyor otomaik sagliyor ama bu detaylari kendi clusterinizi yaratiyorsaniz olabilir. Ama size saglayan format bunlari size belirtir. 
+10 ayri ekip yonetilen k8s cluser oldugunu dusunun 10'larca farkli node ve 100'lerce pod olusturuluyor. Uygulamalar surekli yaratiliyor siliniyor. Bu durumda her seferinde `pvc` ve `pv` olusturmamiz cok zahmetli olacaktir. Bu soruna cozum olarak `storage class` objesi olusturuldu. 
+Pv yi manuel olursturmak yerine claime gore dinamik olusturma imkani getirdi. Bu ozellikle cloud servis saglayicilarin dinamik ortamlarinda her seyi otomatize edebilirken sirf volume olusturma islemini manuel olusturma sacmaligini cozdu. Storage class objelerini baglantimiz olan depolama uniteleri uzerinde ne cesit volume yaratacagimizi belirten templateler olarak dusunebilirsiniz. Ornegin uzerinde hem ssd hem de hdd olan storage oldugunu dusunun. Bu durumda ben yavas diskler uzerinde otomatik volume yaratan yavas isimli bir storage class ve hizli diskler uzerinde volume yaratan hizli isimli 2. bir storage class yaratabilirim. Development ekipleri de uygulamalarinda kullanmak icin volume talep etmek adina olusturduklari `pvc` de uygulamalarinin ihtiyacina gore bu storage class lardan birini secerler ve istedikleri boyutta bir volume storage class objesi tarafindan otomatik olarak olusturulup `pvc` ye bind edilir.
+
+// storage class lari getir
+`kubectl get storageclass`
+
+Iki farkli depolama unitesi icin 4 farkli storage class olusturmus durumdayiz. Bu listedeki provisioner tanimi bizlera hangi tipde cihaz ustunde volume olusturdugumuzu belirtiyor. Kubernetes de default olarak nerdeyse tum cloud saglayicilarin ve bir cok standart protokolun provision tanimlarini kendi uzerinde barindiriyor yani kendi driverlarini kendi uzerinde barindiriyor. Fakat sizlerin baska tipde storage classlarniz varsa onlarin da kendi provisionlarina eklemenize imkan veriyor. Bir tane normal bir tane de premium disk olurturmus. Azure icin bu su demek standart daha yavas ve sla yi daha dusuk, premium ise daha hizli ve sla yi daha yuksek. Depolama urunlerinin sagladiklari turlere gore farkli turlerde volume yaratilmasina imkan sagliyor. Storage class bir template dir. Biz bu template i kullanarak otomatik volume yaraticaz. Ben bunu daha yavas bir sey yaratmak istersem `azurefile` kullan dicem daha hizli bir sey yaratmak istersem `azurefile-premium` kullanicam, yavas bir disk bazli bir storage yaratmak istersem `managed` disk yaraticam, hizli bir ssd yaratmak istersem `managed-premium` yaraticam. Bir cok storage class yaratarak ben depolama unitelerimin degisik ozelliklerine gore pv ler yaratilmasi icin sablonlar olusturabilirim. Diger bir husus `default (default)` yaziyor buna dikkat etmek lazim. `pvc` olusturdugumuz zaman hangi tipde volume istedigimizi storage class belirterek sagliyoruz fakat o kismi bos gecersek de varsayilan olarak hangi storage class kullanilsin secenegini bu sekildee default olarak atayarak saglabiliriz. Yani `pvc` nin icinde isim belirtmez iseniz `default (default)` isimli template kullanilacaktir. Isterseniz default u da degistirebilirsiniz. Diger bir husus `reclapimpolicy` yani bu storage class ile isimiz bittikten sonra ne olacak? Sadece `retain` ve `delete` secenegi mevcut, azure default olarak `delete` secmis. Son olarak `volumebindingmode` kisminda `Immediate` yaziyorsa hemen volume un olusturulup pod a atanmasini soyler. `WaitForCounsumer` ise pod yaratilana kadar beklemesi ve pod yaratildiktan sonra storage class in yaratulmasi gerektigini soyler.
+Cloud ortaminda bu secenekleri bilmek gerekmiyor clous servis saglayicilar bunlari otomatik sagliyor ama bu detaylari kendi clusterinizi yaratiyorsaniz olabilir. Ama size saglayan format bunlari size belirtir bilgi verir. 
 pv.yaml dosyalarindan tek farki burada label kullanmiyorum onun yerine kullanmak istedigim storafeClassName yerine statndarddisk yani diskin ozelligini yaziyorum. 
+
+Bu file ile kendime ait bir storage class olusturabiliyorum. Aslinda bunu cloud ortaminda calsiyorsaniz gerek yok. Azue in dokumantasyonundan bu ayarlari bakarak olusturdum. Admin olarak tek yapmam gerekiyor. 
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standarddisk
+parameters:
+  cachingmode: ReadOnly
+  kind: Managed
+  storageaccounttype: StandardSSD_LRS
+provisioner: kubernetes.io/azure-disk
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+```
+
+Pu pvc su manaya geliyor: git `standartdisk` tanimindaki ozelliklere gore bana 5Gi lik ve `accessModes` u `ReadWriteOnce` olan bir `pvc` olustur. Bu pvc yaml dosyasi ile artik selector ile hangi pv i kullanmam gerektigini secmiyorum. Onun yerine `storageClassName` alaninda storage class secmem gerekiyor. 
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysqlclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: "standarddisk"
+```
+
+
+
 
 ## StatefulSet
 1.StatefulSet tarafindan olusturulan her pod, stateful set taniminda belirlediginiz pvc'ye gore olusturulan bir pvye sahip olur yani her podun kendine ait bir pv si olur.
