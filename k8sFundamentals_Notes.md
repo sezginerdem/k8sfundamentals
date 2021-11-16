@@ -1325,28 +1325,209 @@ spec:
   storageClassName: "standarddisk"
 ```
 
-
-
-
 ## StatefulSet
-1.StatefulSet tarafindan olusturulan her pod, stateful set taniminda belirlediginiz pvc'ye gore olusturulan bir pvye sahip olur yani her podun kendine ait bir pv si olur.
+1. `StatefulSet` tarafindan olusturulan her pod, stateful set taniminda belirlediginiz pvc'ye gore olusturulan bir pvye sahip olur yani her podun kendine ait bir pv si olur.
 2. StatefulSet altinda podlar sirayla olusturulup sirayla silinir. Ornegin 3 podlu bir stateful set olusturdugunuz zaman oncelikle pod olusturulur. Bu pod ayaga kalkip readiness ve liveness checklerinden gecip islemlerini tamamlamadan bir sonraki pod olusturulamaz. Ne zaman ki bu pod hazir running durumuna gecer o zaman bir sonraki pod olusturulur. Ayni sekilde 3.pod da 2. pod tamamlanmadan olusturulamaz. Tam tersi durumda da bu gecerlidir. Siz 3 podlu bir statefullseti 2. poda indirirseniz k8s random bir pod secip onu silme yoluna gitmez. En son yaratilan pod hangisi ise ilk olarak o silinir.
 3. StefulSet tarafindan olusturulan her poda statefulsetin adi 0-1-2-3 seklinde devam eden sabit bir isim verilir. Isimler random secilmez ve bu isimler ayni zamanda containerin hostname'i olarak da atandigi icin her uygulama bu isimle ulasilabilir.
-3 pod olusturacak bir deployment var. Bu obje bir replicaset olusturuyordu ve bu replicaset de bizim belirledigimiz tanima gore de random isimler verilen podlar olusturuyordu. Scale out ile scale in ile bunlarla oynayabiliyorum ama k8s bunlardan hangisi once yaratilip yaratilmadigina bakmiyor siliyor. Podlar uzerinde bir state tutmadigi icin bu durum sikinti yaratmiyor. Ancak yeni bir sql veri tabani deploy etmek istiyorsunuz. Bir tane master instance olusturur ve bunun uzerinden cluster olsuturur ardindan bu clustera yeni instancelar eklersiniz. Yazma islemlerini bu master uzerinden yaparken sorgulari herhangi bir isntance a gonderebilirsiniz. Tum veri bu instancelar uzerinde dagitik bir sekilde durur. Boyle bir veri tabani olan apche cassandra yi 3 instance dan olusacak bir cluster olacak sekilde su ana kadar ogrendigimiz obje sekilleri ile k8s e deploy etmeye calisalim. Ilk olarak bu cassandra master instance i deploy edecegiz ardindan buna baglanarak ya da baslangic komutlari ile bunu master haline donusturecek sekilde bir cluster haline getirecegiz. Sonrasinda 2. instance i olusturacagiz ve ardaindan 2. instance a baglanip 1. instance daki cassandra cluster a bu 2. instance i dahil edecek ayarlari yapacagiz. sonra 3. instance da da ayni islemleri yapacagiz. Ilk olarak singleton pod olacak sekilde olusturmaya karar verdik. Master olacak pod tanimini yaptik icine pvc tanimini ekledik ki cassandra verileri tutabilecek pv ye sahip olabilsin. Pod ayaga kalkti bunu master haline getirecek komutlari ya baslangic olarak ya da sonradan baglanarak halletik. Ardindan 2. bir pod tanimi daha yaptik. Bunu da 2. instance olarak ayaga kaldirdik. Sonra 3. derken cluster ayaga kalkti. Sorun 1: her seyi manuel yaptim. Sonra singleton pod olusturduk bu da fail durumu kontrol eden bir mekanizma yok. Son olrak 4. bir instance eklersem yeni pod ve maneul ekleme olacak. Bu sorunu deployment la dener isem bu hepsi birbirinin ayni pod u olusturdu ve hepsi ayni anda olustu ve bu nedenle hangisinin once olsutugunu bilmiyorum neyse birine manuel baglandim ve birini master a cevirdim digerlerini de worker yaparak cluster a kattim. Aradan zaman gecti pod lardan birine ulasilamiyor sonra yeniden olustu ama o zaman bu master pod olursa o zaman cluster coker. Bunlarin hepsi cassandra gibi statefull objelerde sorun yaratiyor. Bunun cozumu ise StatefulSet objesidir.
-Deploymenta cok benzeyen bir obje temelde 3 farki var 1) statefull tarafindan olustutulan her pod statefulset taniminda belirlediginiz pvc ye gore olusturulan bir pv ye sahip olur. Yani her pod un kendine ait bir pv si bulunur. Bunun yaninda stateful altinda pod lar sirayla olusturulurp sirayla silinir. Pod lar silinirken de bu durum aynisidir. Random olarak yapmaz ve son yaratilan pod ilk olarak silinir. Her pod a statefulun adi-0 ve sirayla olaack sekilde sabit bir isim verilir. isimler ayni zamanda container hostname olarak atandigi icin her uygulama bunlara ulasabilir. Bu 3 ozellik sayesinde stateful objesi ile yaratmamiz kolaylasir. 
-Senaryomu statefulset objesi ile yapmak istedigimde senaryo soyle ilerleyecektir:
-3 pod olusturacak bir stateful deployment objesi deploy ettim. K8s hemen ilk podu ayaga kaldirdi. Ben bu poda bir baslangic scripti eklemistim. Bu script ortamda benim belirledigim isimde bir cluster var mi yok mu bunu konrtole ediyor. Yoksa da bu isimde cluster yaratiyor. Liveness ve readiness prob tamamlandi ve hem cluster ve pod hazir. 1. pod saglikli bir sekilde calismaya basladiginda 2. pod olusturulmaya baslandi bunda da script var ancak simdi ortamda cluster mevcut. Dolayisiyla mevcut clustera dahil oldu liveness ve readiness problar tamamlandi ve bu pod da hazir. 3. pod sonrasinda cluster tamamlandi. Peki cassandra-1 podu silinirse stateful objesi ayni podu ayni isimle ayni persistent volume u atayarak ayaga kaldiracak ve sorun olmayacak. Yeni pod eklersem ne olacak yeni olusturacak ve cluster a dahil olacak. Scale down oldugu zaman da en son yaratilan pod silinecek.
-Yaml dosyasinda volumeClaimTemplates kisminda her pod icin pvc olusturulmasini soyluyorum. Bu pvc lerde standart isimli storage class i kullanarak her bir pod icin birer pv olusturacak. Yani her podun ayni pv ye baglanmasi yerine her poda ayri bir pv yaratilacak. Bunu da yaratacak pvc leri de tempate ile yaratiyouz. Bu template i buraya yaziyoruz ki pvc ler olusturulsun o pvc lerde pv leri olusturacak sonrasinda o podlara tek tek baglayacak. Servis tanimlanmasinda ise clusterIp none diyoruz. Buna headless servis diyoruz. Bunu olusturdugumuz anda clusterIp tipi bir servis olusturulacak fakat ona bir ip atanmayacak bu bana su sekilde yardimci oluyor. Ben ne zaman bu servis ismine gormek istersem o bana bu servis altindaki podlardan bir tanesinin ip sini donecek bunun yaninda her bir pod a da pod ismi.servis ismi seklinde erisme imkani da verecek. Podlar 0 dan baslayarak isimlendirilir. Ready olduktan sonra diger pod olusturulur.
+Sorun: 3 pod olusturacak bir deployment var. Bu obje bir `replicaset` olusturuyordu ve bu replicaset de bizim belirledigimiz tanima gore de random isimler verilen podlar olusturuyordu. `Scale out` ile `scale in` ile bunlarla oynayabiliyorum ama k8s bunlardan hangisi once yaratilip yaratilmadigina bakmiyor randomly siliyor. Podlar uzerinde bir state tutmadigi icin bu durum sikinti yaratmiyor. Ancak yeni bir nosql veri tabani deploy etmek istiyorsunuz. Bir tane master instance olusturur ve bunun uzerinden cluster olsuturur ardindan bu clustera yeni instancelar eklersiniz. Yazma islemlerini bu master uzerinden yaparken sorgulari herhangi bir isntance a gonderebilirsiniz. Tum veri bu instancelar uzerinde dagitik bir sekilde durur. Boyle bir veri tabani olan apche cassandra yi 3 instance dan olusacak bir cluster olacak sekilde su ana kadar ogrendigimiz obje sekilleri ile k8s e deploy etmeye calisalim. Ilk olarak bu cassandra master instance i deploy edecegiz ardindan buna baglanarak ya da baslangic komutlari ile bunu master haline donusturecek sekilde bir cluster haline getirecegiz. Sonrasinda 2. instance i olusturacagiz ve ardindan 2. instance a baglanip 1. instance daki cassandra cluster a bu 2. instance i dahil edecek ayarlari yapacagiz. sonra 3. instance da da ayni islemleri yapacagiz. Ilk olarak `singleton pod` olacak sekilde olusturmaya karar verdik. Master olacak pod tanimini yaptik icine pvc tanimini ekledik ki cassandra verileri tutabilecek pv ye sahip olabilsin. Pod ayaga kalkti bunu master haline getirecek komutlari ya baslangic olarak ya da sonradan baglanarak halletik. Ardindan 2. bir pod tanimi daha yaptik. Bunu da 2. instance olarak ayaga kaldirdik. Sonra 3. derken cluster ayaga kalkti. Sorun 1: her seyi manuel yaptim. Sonra `singleton pod` olusturduk bu da fail durumu kontrol eden bir mekanizma yok. Son olarak 4. bir instance eklersem yeni pod ve maneul ekleme olacak. Bu sorunu deployment la dener isem bu hepsi birbirinin ayni pod u olusturdu ve hepsi ayni anda olustu ve bu nedenle hangisinin once olsutugunu bilmiyorum neyse birine manuel baglandim ve birini master a cevirdim digerlerini de worker yaparak cluster a kattim. Aradan zaman gecti pod lardan birine ulasilamiyor sonra yeniden olustu ama o zaman bu master pod olursa o zaman cluster coker. Bunlarin hepsi cassandra gibi `stateful` objelerde sorun yaratiyor. Bunun cozumu ise `StatefulSet` objesidir.
+`Stateful` objesi deploymenta cok benzeyen bir obje temelde 3 farki var 1) stateful tarafindan olusturulan her pod `statefulset` taniminda belirlediginiz pvc ye gore olusturulan bir pv ye sahip olur. Yani her pod un kendine ait bir `pv` si bulunur. Bunun yaninda `stateful` altinda pod lar sirayla olusturulurp sirayla silinir. Pod lar silinirken de bu durum aynisidir. Random olarak yapmaz ve son yaratilan pod ilk olarak silinir. Her pod a statefulun adi-0 ve sirayla olaack sekilde sabit bir isim verilir. Isimler ayni zamanda container hostname olarak atandigi icin her uygulama bunlara ulasabilir. Geriye kalan tum ozellikleri deploymentla aynidir. Bu 3 ozellik sayesinde stateful objesi ile yaratmamiz kolaylasir. 
+- Senaryomu `statefulset` objesi ile yapmak istedigimde senaryo soyle ilerleyecektir:
+3 pod olusturacak bir `stateful` objesi deploy ettim. K8s hemen ilk podu ayaga kaldirdi. Ben bu poda bir baslangic scripti eklemistim. Bu script ortamda benim belirledigim isimde bir cluster var mi yok mu bunu konrtole ediyor. Yoksa da bu isimde cluster yaratiyor. Cluster yaratildi. `Liveness` ve `readiness` prob tamamlandi ve hem cluster ve pod hazir. 1. pod saglikli bir sekilde calismaya basladiginda 2. pod olusturulmaya baslandi bunda da script var ancak simdi ortamda cluster mevcut. Dolayisiyla mevcut clustera dahil oldu `liveness` ve `readiness` problar tamamlandi ve bu pod da hazir. 3. pod sonrasinda cluster tamamlandi. Peki cassandra-1 podu silinirse `stateful` objesi ayni podu ayni isimle ayni persistent volume u atayarak ayaga kaldiracak ve sorun olmayacak. Yeni pod eklersem ne olacak yeni olusturacak ve cluster a dahil olacak. Scale down oldugu zaman da en son yaratilan pod silinecek.
+
+Stateful tanimlanmasi deployment a cok benziyor. Relica sayisini belirtiyor ve label selevtor u yaziyoruz. Template kisminda olusturulmak istenen pod tanimini yaziyoruz. Yaml dosyasinda `volumeClaimTemplates` kisminda her pod icin pvc olusturulmasini soyluyorum. Bu pvc lerde standart isimli storage class i kullanarak her bir pod icin birer pv olusturacak. Yani her podun ayni pv ye baglanmasi yerine her poda ayri bir pv yaratilacak. Bunu da yaratacak pvc leri de tempate ile yaratiyouz. Bu template i buraya yaziyoruz ki pvc ler olusturulsun o pvc lerde pv leri olusturacak sonrasinda o podlara tek tek baglayacak. Servis tanimlanmasinda ise clusterIp none diyoruz. Buna `headless` servis diyoruz. Bunu olusturdugumuz anda clusterIp tipi bir servis olusturulacak fakat ona bir ip atanmayacak bu bana su sekilde yardimci oluyor. Ben ne zaman bu servis ismine gormek istersem o bana bu servis altindaki podlardan bir tanesinin ip sini donecek bunun yaninda her bir pod a da `statefulset ismi-<pod olusturma sirasi>.statefulset ismi` ismi seklinde erisme imkani da verecek. Podlar 0 dan baslayarak isimlendirilir. Ready olduktan sonra diger pod olusturulur.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cassandra
+  name: cassandra
+spec:
+  clusterIP: None
+  ports:
+  - port: 9042
+  selector:
+    app: cassandra
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra
+  labels:
+    app: cassandra
+spec:
+  serviceName: cassandra
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cassandra
+  template:
+    metadata:
+      labels:
+        app: cassandra
+    spec:
+      terminationGracePeriodSeconds: 1800
+      containers:
+      - name: cassandra
+        image: gcr.io/google-samples/cassandra:v13
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7000
+          name: intra-node
+        - containerPort: 7001
+          name: tls-intra-node
+        - containerPort: 7199
+          name: jmx
+        - containerPort: 9042
+          name: cql
+        resources:
+          limits:
+            cpu: "500m"
+            memory: 1Gi
+          requests:
+            cpu: "500m"
+            memory: 1Gi
+        securityContext:
+          capabilities:
+            add:
+              - IPC_LOCK
+        lifecycle:
+          preStop:
+            exec:
+              command: 
+              - /bin/sh
+              - -c
+              - nodetool drain
+        env:
+          - name: MAX_HEAP_SIZE
+            value: 512M
+          - name: HEAP_NEWSIZE
+            value: 100M
+          - name: CASSANDRA_SEEDS
+            value: "cassandra-0.cassandra.default.svc.cluster.local"
+          - name: CASSANDRA_CLUSTER_NAME
+            value: "K8Demo"
+          - name: CASSANDRA_DC
+            value: "DC1-K8Demo"
+          - name: CASSANDRA_RACK
+            value: "Rack1-K8Demo"
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - /ready-probe.sh
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: cassandra-data
+          mountPath: /cassandra_data
+  volumeClaimTemplates:
+  - metadata:
+      name: cassandra-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 1Gi
+```
+
+
+// StatefulSet objelerinin listelenmesi
+`kubectl get statefulset`
+
+// StatefulSet objelerinin silinmesi
+`kubectl delete statefulset "statefulset_ismi"`
+Ör: kubectl delete statefulset my-statefulset
 
 ## job
-Bir job objesi, bir veya daha fazla pod olusturur ve belirli sayida pod basariyla sonlandirilana kadar pod yurutmeyi yeniden denemeye devam eder. Job belirtilen sayida podun basariyla tamamlanma durumunu izler. Belirtilen sayida basarili tamamlamaya ulasildiginda, job (yani gorev) tamamlanir. Bir Job un silinmesi olusturdugu podlari temizlemeyecektir. 
---Hangi durumlarda kullanilir?-- 1. Tek seferlik calisip yapmasi gerekeni yapip kapanan uygulamalari job olarak deploy edebiliriz. ornegin maintaince scriptler. 2. Bir kuyruk veya bir bucket da islenmesi gereken pek cok isimiz oldugunda bunlari eritme adina bunlar eriyene kadar calisacak uygulamali job seklinde deploy ederiz.
-apisi batch/v1, spec kismidna 4 secenek var. paralelelism: pod olusturulma islemini kacar kacar yapacagini. completions: job altinda kac tane basarili pod calismasini istiyoruz. template kisminda container bilgilerini yaziyoruz. Bu ikisinin hemen altinda backofflimit: podlar olusturulmaya baslandikten sonra kac sefer fail ederse job u fail et demek. ActiveDeadlineSeconds ise job u fail etmeyi second cinsinden belirtiyoruz. 
+Bir job objesi, bir veya daha fazla pod olusturur ve belirli sayida pod basariyla sonlandirilana kadar pod yurutmeyi yeniden denemeye devam eder. Job belirtilen sayida podun basariyla tamamlanma durumunu izler. Belirtilen sayida basarili tamamlamaya ulasildiginda, job (yani gorev) tamamlanir. Bir Job un silinmesi olusturdugu podlari temizlemeyecektir. Bu sayede podlar tarafindan olusturulmus loglar kontrol edilebilir.
+- Hangi durumlarda kullanilir? 
+  1. Tek seferlik calisip yapmasi gerekeni yapip kapanan uygulamalari job olarak deploy edebiliriz. ornegin maintaince scriptler. 
+  2. Bir kuyruk veya bir bucket da islenmesi gereken pek cok isimiz oldugunda bunlari eritme adina bunlar eriyene kadar calisacak uygulamalari job seklinde deploy ederiz.
+
+Apisi batch/v1, spec kismida 4 secenek var. `paralelism:` pod olusturulma islemini kacar kacar yapacagini. `completions:` job altinda kac tane basarili pod calismasini istiyoruz. Template kisminda container bilgilerini yaziyoruz. Bu ikisinin hemen altinda `backofflimit:` podlar olusturulmaya baslandikten sonra kac sefer fail ederse job u fail et demek. `ActiveDeadlineSeconds` ise job u fail etmeyi second cinsinden belirtiyoruz. 
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  parallelism: 2
+  completions: 10
+  backoffLimit: 5
+  activeDeadlineSeconds: 100
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: perl
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never #OnFailure 
+```
+
 Job yarattiktan sonra isi biten podlari manuel olarak silmek gerekiyor ki yer kaplamasin artik.
 
+// Job objelerinin listelenmesi
+`kubectl get job`#
+
+// Job objelerinin silinmesi
+`kubectl delete job "job_ismi`
+Ör: kubectl delete job myjob
+
+// CronJob objelerinin listelenmesi
+`kubectl get cronjob`
+
+//CronJob objelerinin silinmesi
+`kubectl delete cronjob "cronjob_ismi`
+Ör: kubectl delete cronjob mycronjob
+
 ## CronJob
-Bir CronJob objesi bir crontab (cron tablosu) dosyasinin bir satiri gibidir. Belirli bir zamanlamaya gire Cron formatinda yazilmis bir Jobu periyodik olarak calistirir.
+Bir `CronJob` objesi bir crontab (cron tablosu) dosyasinin bir satiri gibidir. Belirli bir zamanlamaya gire Cron formatinda yazilmis bir Jobu periyodik olarak calistirir.
+
 Job objesini manuel baslatmak yerine her pazar ya da her 5 dk da bir baslatilmasina imkan taniyan bir obje. Linuxdeki crontab in aynisi. 
+
+```yaml
+apiVersion: batch/v1beta1 # not stable until kubernetes 1.21.
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+  
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+#
+# ┌───────────── minute (0 - 59)
+# │ ┌───────────── hour (0 - 23)
+# │ │ ┌───────────── day of the month (1 - 31)
+# │ │ │ ┌───────────── month (1 - 12)
+# │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday;
+# │ │ │ │ │                                   7 is also Sunday on some systems)
+# │ │ │ │ │
+# │ │ │ │ │
+# * * * * *
+#
+# https://crontab.guru/
+```
 
 ## Authorization and authentication
 K8s kimlik dogrulama eklentileri araciligiyla API isteklerinin kimligini dogrulamak icin istemci sertifikalari tasiyici belirtecleri bir kimlik dogrulama proxy'si veya HTTP temel kimlik dogrulamasi kullanir.
@@ -1355,81 +1536,290 @@ Oradan, rol tabanli erisim denetimi (RBAC) alt sistemi, kullanicinin bir kaynak 
 
 Her platformun kullanici yaratma ve yonetme servisleri bulunur (IAM). Ancak K8s boyle bir hizmet sunmaz. Kullanici yaratamazsaniz. User objesi bulunmaz. Kimlik olusturma ve dogrulama isi cluster disinda yapilacak sekilde tasarlanmistir. 
 
-x509 client certs, static tiken file, openID connect tokens, webhook token authentication, authenticating proxy gibi altyapilari kullanarak bu isin disarida halledilmesine imkan saglar. K8s kurulumunda kubea-adm kuruluunda bunlardan hangisini kullanacaginizi belirlersiniz. Bu kimlik dogrulama isini bu altyapilara havala edersiniz. Bunun yaninda her k8s clusterinda bir kok sertifika yetkilisi yani root sertifika authority altyapisi da bulunur. Bu root sertifikalari tarafindan imzalanan x509 client certifikalari da authentication icin kullanilir. K8s bu ve benzeri uygulamalar tarafindan kimligi dogrulanmis kullanicilarin k8s ile gorusmesina imkan verir. Fakat kimligin dogrulanmasi bir kullanicinin cluster da her seyi yapabilcegi anlamina gelmez. Burada yetkilendirme yani autherization kavrami devreye girer. Manuel bir cluster kurmuyorsak bu islemler bizim adimiza otomatik olarak yapilir.
+x509 client certs, static tiken file, openID connect tokens, webhook token authentication, authenticating proxy gibi altyapilari kullanarak bu isin disarida halledilmesine imkan saglar. K8s kurulumunda kubea-adm ayarlamalarinda bu altyapilardan hangisini kullanacaginizi belirlersiniz. Bu kimlik dogrulama isini bu altyapilara havale edersiniz. Bunun yaninda her k8s clusterinda bir kok sertifika yetkilisi yani `root sertifika authority` altyapisi da bulunur. Bu root sertifikalari tarafindan imzalanan x509 client certifikalari da authentication icin kullanilir. K8s bu ve benzeri uygulamalar tarafindan kimligi dogrulanmis kullanicilarin k8s ile gorusmesina imkan verir. Fakat kimligin dogrulanmasi bir kullanicinin cluster da her seyi yapabilcegi anlamina gelmez. Burada yetkilendirme yani `autherization` kavrami devreye girer. Manuel bir cluster kurmuyorsak cloud servisleri tarafindan bu islemler bizim adimiza otomatik olarak yapilir.
 
 Minikube olusturulurken de certifika olusturulur ve kube config dosyasinin icine bu bilgiler girilir. Boylelikle her seferinde bu sertifikalarinizla api-server a istek gondermis olursunuz. Siz gidip bir obje yaratir gibi client sertifikasi yaratamazsiniz.
-Ornegin bir firmada developer olarak ise basladiniz ve k8s clusteriniza baglanmak istiyorsunuz. Admine gittim bu istegimi soyledim. O da bana x500 client certificate leri ile authenticate olacak sekilde calistigini soyledi. Eger ben bir private key ve certificate suging request dosyasi hazirlayip ona gonderirsem o k8s certificate authority sini kullanarak, bunun imzalayarak bana bir certicate yaratabilecegini soyledi. Develepor olarak bunlari olusturalim ilk olarak private key ve csr dosyalarini olusturacagim bir klasor yaratalim. Private key icin openssl uygulamasini kullanmam gerekiyor. Openssl uygulamasi ile bir tane private key olusturdum. 2. adim olarak bu anahtari kullanarak bir certificate signing request yani csr hazirlamam gerekiyor. Csr benim certifika saglayayiciya bak bu ozelliklerde bana digital certificate sagla dememize imkan saglayan dosyalardir. Bu dosyayi olusturacak ardindan bunu admine gonderecegiz. O da k8s in certificate authority si ile bunu onaylayip imzalayarak bizim certificate imizi olusturacak ve bize gonderecek biz de bununla k8s e ulasacagiz. `openssl req -new -key sezginerdem.key -out sezginerdem.csr -subj "/CN=sezgin@drsezginerdem.gmail=DevTeam"` kodu ile csr yaratiyorum. Bu kodda opensssl ile request yaratmak istedigim icin re opsiyonunu kullandim. -new ile yeni bir csr olmasini, -key ile bu klasorde olan anahtari gosteriyorum, -out ile sonucun yazilacagi sezginerdem.csr olmasini istiyorum, -subj ile certifika bilgilerini giriyorum CDN kullanici adi O ise bu kullanicilarin hangi gruplara uye olacagini belirleyecek. k8s kendi uzerinde bir kullanici objesi tutmaz. Sizin hangi kullanici oldugunuzu x500 certifikalarinizi bu alanlardan algilar. Bizler hangi kullanici adina sahip olmak istiyorsak ve bu kullaniciyi eklemek istedigimiz gruplar var ise bunlari csr olusturma asamasinda bu sekilde belirtiyoruz. Artik developer olarak benim isim bitti. Bu olusturdugum csr dosyasini k8s admina gonderecegim bundan sonraki islemleri o halledecek. Admin olarak ise yeni bir k8s objesi yaratacagim. Developer in bana vermis oldugu certificate signing request adindaki bu obje ile developerin bize verdigi cse i k8s e gonderecegim. O da bana certifica olusturak. README.md deki adimlari teker teker gerceklestiiryorum. csr objesini olusturdum. condition pending durumunda gorunuyor. Bunu onaylamam gerekiyor ki bu islem tamamlansin. `kubectl certificate approve sezginerdem` ile onayliyorum.bu serifikiyi yaml dosyasi ile cikariyorum. `kubectl get csr sezginerdem -o jsonpath='{.status.certificate}' | base64 -d >> sezginerdem.crt` komutu csr i goruntulemek istedigimi ve sonrasinda bunu jsonpath ile output olarak bunun icindeki status.certificate kismini al sonrasinda base64 il decode ediyorum; ve sezginerdem.crt ile kaydediyorum ve certificate olusturuldu. Bu certificayi developer a gonderdim. Developer bu certifikayi kubeconfig dosyasina ekler ve yeni bir contex yaratirsa cluster a bununla baglanabilir. `kubectl config set credentials sezgin@drsezginerdem.gmail --client-certificate=sezginerdem.crt --client-key=sezginerdem.key` ile kulanici set ediyorum. Bu kullanicinin minikube cluster ile iliskilendirilemsi gerekiyor. `kubectl config set-context sezginerdem-context --cluster=minikube --user=sezgin@drsezginerdem.gmail` ile iliskilendirme islemimi gerceklestiriyorum. `kubectl config use-context sezginerdem-context` komutu ile kullanici degisimi yaptim. bu asamaya kadar clustera baglanma yetkilendirmesi idi. Ancak listeleme dahil hicbir islem yapmaya bu kullanici yetkili degil. Authenticate oldu ancak authorizate yetkileri ise kisitli.
+Ornegin bir firmada developer olarak ise basladiniz ve k8s clusteriniza baglanmak istiyorsunuz. Admine gittim bu istegimi soyledim. O da bana x500 client certificate leri ile authenticate olacak sekilde calistigini soyledi. Eger ben bir private key ve certificate suging request dosyasi hazirlayip ona gonderirsem o k8s certificate authority sini kullanarak, bunun imzalayarak bana bir certicate yaratabilecegini soyledi. Develepor olarak bunlari olusturalim ilk olarak private key ve csr dosyalarini olusturacagim bir klasor yaratalim. Private key icin openssl uygulamasini kullanmam gerekiyor. Openssl uygulamasi ile bir tane private key olusturdum. `openssl genrsa -out sezginerdem.key 2048` 2. adim olarak bu anahtari kullanarak bir certificate signing request yani csr hazirlamam gerekiyor. Csr benim certifika saglayayiciya bak bu ozelliklerde bana digital certificate sagla dememize imkan saglayan dosyalardir. Bu dosyayi olusturacak ardindan bunu admine gonderecegiz. O da k8s in certificate authority si ile bunu onaylayip imzalayarak bizim certificate imizi olusturacak ve bize bir certificate gonderecek biz de bununla k8s e ulasacagiz. `openssl req -new -key sezginerdem.key -out sezginerdem.csr -subj "/CN=sezgin@drsezginerdem.gmail/O=DevTeam"` kodu ile csr yaratiyorum. Bu kodda openssl ile request yaratmak istedigim icin `req` opsiyonunu kullandim. `-new` ile yeni bir csr olmasini, `-key` ile bu klasorde olan anahtari gosteriyorum, `-out` ile sonucun yazilacagi sezginerdem.csr olmasini istiyorum, -subj ile certifika bilgilerini giriyorum CDN kullanici adi O ise bu kullanicilarin hangi gruplara uye olacagini belirleyecek. k8s kendi uzerinde bir kullanici objesi tutmaz. Sizin hangi kullanici oldugunuzu x500 certifikalarinizi bu alanlardan algilar. Bizler hangi kullanici adina sahip olmak istiyorsak ve bu kullaniciyi eklemek istedigimiz gruplar var ise bunlari `csr` olusturma asamasinda bu sekilde belirtiyoruz. Artik developer olarak benim isim bitti. Bu olusturdugum csr dosyasini k8s admina gonderecegim bundan sonraki islemleri o halledecek. Admin olarak ise yeni bir k8s objesi yaratacagim. Developer in bana vermis oldugu certificate signing request adindaki bu obje ile developerin bize verdigi cse i k8s e gonderecegim. O da bana certifica olusturak. README.md deki adimlari teker teker gerceklestiriyorum. csr objesini olusturdum. 
+
+//CertificateSigningRequest oluşturma
+`cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: ozgurozturk
+spec:
+  groups:
+  - system:authenticated
+  request: $(cat ozgurozturk.csr | base64 | tr -d "\n")
+  signerName: kubernetes.io/kube-apiserver-client
+  usages:
+  - client auth
+EOF`
+
+Condition pending durumunda gorunuyor. Bunu onaylamam gerekiyor ki bu islem tamamlansin. 
+`kubectl certificate approve sezginerdem` ile onayliyorum.bu serifikayi yaml dosyasi ile cikariyorum ve decode etmem gerekiyor. 
+`kubectl get csr sezginerdem -o jsonpath='{.status.certificate}' | base64 -d >> sezginerdem.crt` komutu csr i goruntulemek istedigimi ve sonrasinda bunu jsonpath ile output olarak bunun icindeki status.certificate kismini al sonrasinda base64 il decode ediyorum; ve sezginerdem.crt ile kaydediyorum ve certificate olusturuldu. 
+Bu certificayi developer a email ile gonderdim. Developer bu certifikayi kubeconfig dosyasina ekler ve yeni bir contex yaratirsa cluster a bununla baglanabilir. `kubectl config set-credentials sezgin@drsezginerdem.gmail --client-certificate=sezginerdem.crt --client-key=sezginerdem.key` ile kulanici set ediyorum. Bu kullanicinin minikube cluster ile iliskilendirilemsi gerekiyor. 
+`kubectl config set-context sezginerdem-context --cluster=minikube --user=sezgin@drsezginerdem.gmail` ile iliskilendirme islemimi gerceklestiriyorum. 
+`kubectl config use-context sezginerdem-context` komutu ile kullanici degisimi yaptim. Bu asamaya kadar clustera baglanma yetkilendirmesi idi. Ancak listeleme dahil hicbir islem yapmaya bu kullanici yetkili degil. Authenticate oldu ancak authorizate yetkileri ise kisitli.
+
+// Key ve CSR oluşturma
+`openssl genrsa -out ozgurozturk.key 2048` 
+`openssl req -new -key ozgurozturk.key -out ozgurozturk.csr -subj "/CN=ozgur@ozgurozturk.net/O=DevTeam"`
+
+//CertificateSigningRequest oluşturma
+`cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: ozgurozturk
+spec:
+  groups:
+  - system:authenticated
+  request: $(cat ozgurozturk.csr | base64 | tr -d "\n")
+  signerName: kubernetes.io/kube-apiserver-client
+  usages:
+  - client auth
+EOF`
+
+
+// CSR onaylama ve crt'yi alma
+`kubectl get csr`
+`kubectl certificate approve ozgurozturk`
+`kubectl get csr ozgurozturk -o jsonpath='{.status.certificate}' | base64 -d >> ozgurozturk.crt` 
+
+// kubectl config ayarları
+`kubectl config set-credentials ozgur@ozgurozturk.net --client-certificate=ozgurozturk.crt --client-key=ozgurozturk.key`
+`kubectl config set-context ozgurozturk-context --cluster=minikube --user=ozgur@ozgurozturk.net`
+`kubectl config use-context ozgurozturk-context`
 
 ## Role Based Acced Control "RBAC"
 AUTHENCICATION != Authorization
 
-Aurhentication=kimlik dogrulama soyledigi kisi mi != authorization=etki kontrolu eyleme yetkisi var mi
+`Aurhentication`=kimlik dogrulama --soyledigi kisi mi-- != `authorization`=yetki kontrolu --eyleme yetkisi var mi--
 
---RBAC objeleri:-- rol tabanli erisim denetimi (RBAC) kurulusunuzdaki bireysel kullanicilari rollerine dayali olarak bilgisayar veya ag kaynaklarina erisimi duzenleme yontemidir. RBAC yetkilendirmesi yetkilendirme kararlarini yonlendirmek icin rbac.authorization.k8s.io API grubunu kullanir ve Kubernetes API araciligiyla ilkeleri dinamik olarak yapilandirmaniza olanak tanir. 
+`RBAC objeleri:` rol tabanli erisim denetimi (RBAC) kurulusunuzdaki bireysel kullanicilari rollerine dayali olarak bilgisayar veya ag kaynaklarina erisimi duzenleme yontemidir. RBAC yetkilendirmesi yetkilendirme kararlarini yonlendirmek icin rbac.authorization.k8s.io API grubunu kullanir ve Kubernetes API araciligiyla ilkeleri dinamik olarak yapilandirmaniza olanak tanir. 
 
-Bu mekanizma role, role binding ve cluster, cluster role binding objeleri ile calisir. Yapilacabilecek islemleri yani yetkiler role veya cluster role objeleri olarak tanimlanir. Daha sonra role binding ve cluster role binding objeleri araciligiyla bu roller servis hesaplari, kullanicilar ya da gruplara bind edilir yani baglanir. Kullanicilar da bagli bulunduklari rollerde belirlenen yetkilere kavusurlar.
+Bu mekanizma role, role binding ve cluster, cluster role binding objeleri ile calisir. Yapilacabilecek islemleri yani yetkiler role veya cluster role binding objeleri olarak tanimlanir. Daha sonra role binding ve cluster role binding objeleri araciligiyla bu roller servis hesaplari, kullanicilar ya da gruplara bind edilir yani baglanir. Kullanicilar da bagli bulunduklari rollerde belirlenen yetkilere kavusurlar.
 
-Ornegin ben default namespace de pod objesi okuyup listeleyebilecek yetkiler belirledigim bir role yaratirim. Daha sonra bir role binding yaratarak kullaniciya bind ederim. Boylelikle bu kullanici default namespace altindaki podlari goruntuleyebilir. Eger bind ettigim role yalnizca bu ise kullanici sadece bu islemi yapabilir. Baska ns de podlari goruntuleyemez. Ya da servis objesi olusturamaz. Kullanicilar sadece bind edildikleri rollerde tanimlanan yetkilere sahip olur. Role, rolebinding, cluster, cluster binding birer k8s objesidir. Tum objelerde oldugu gibi apiversion, kind, metadata alanlari vardir ayrica rules kisminda ise bu rule atanan yetkiler belirlenir. Rule kisminda ilk once apiGroups kismi nda hangi api de kullanilacagini belirtiriz. Burasi bos olursa coreApi yani v1 api ile ilgili oldugunu, resource ise hangi objeler ile ilgili oldugu ve sub objeler ile ilgili oldugunu, verbs ise get, watch, list gibi hangi action lari yapilabilcegi konularina yetki verilir. 
+Ornegin ben default namespace de pod objesi okuyup listeleyebilecek yetkiler belirledigim bir role yaratirim. Daha sonra bir role binding yaratarak kullaniciya bind ederim. Boylelikle bu kullanici default namespace altindaki podlari goruntuleyebilir. Eger bind ettigim role yalnizca bu ise kullanici sadece bu islemi yapabilir. Baska ns de podlari goruntuleyemez. Ya da servis objesi olusturamaz. Kullanicilar sadece bind edildikleri rollerde tanimlanan yetkilere sahip olur. 
 
-Cluster-role ise role objesi ile nerede ise aynidir. Ilk fark obje tipi cluster role ikincisi ise namespace tanimi girilmemis. Role belirledigimiz namespace icin gecerli olan namespace icin yetki vermek icin kullanilir. Cluster role de belirlenen yetkiler ise tum cluster capinda gecerlidir. Yani ben birazdan bu rolu bir kullanicia baglarsam o kullaniciya bu rolde belirledigim haklar sadece default namespace icin gecerli olur. Fakat cluster-rolu baglarsam hangi ns de oldugu farketmeyecek. Burada tanimladigim yetkiler tum cluster capinda gecerli olacak. Bir diger fark ise su ana kadar gordugunuz her obje mutlaka ns altinda yaratilmali idi. Fakat k8s altinda namespace e bagli olmayan cluster seviyesinde objeler de var. Ornegin node lar da birer k8s objesi ve bunlar herhangi bir ns e bagli degil. Ya da customResourceDefinition lar da herhangi bir ns e bagli objeler degil. Bu tarz non ns objelerle ilgili yetkilendirme yaparken de cluster role kullaniyoruz. 
+Role, rolebinding, cluster, cluster binding birer k8s objesidir. Tum objelerde oldugu gibi apiversion, kind, metadata alanlari vardir ayrica rules kisminda ise bu rule atanan yetkiler belirlenir. `Rule` kisminda ilk once `apiGroups` kismi nda hangi api de kullanilacagini belirtiriz. Burasi bos olursa `coreApi` yani v1 api ile ilgili oldugunu, resource ise hangi objeler ile ilgili oldugu ve sub objeler ile ilgili oldugunu, `verbs` ise get, watch, list gibi hangi action lari yapilabilcegi konularina yetki verilir. 
 
-Bu tanimlanan yetkilerin kullanicilara baglanmasi gerekiyor bunu da role binding ile yapiyorouz. Cluster role binding ise cluster rolu baglamak icin kullanilan obje lerdir. Subject kisminda bu rolun kime bind edilecegini bildiriyoruz. Neyi baglamak istedigimizi roleRef altinda yaratiyoruz. Cluster role bindig de ise user yerine group atamasi yapiyoruz bu gruba dahi olan her kullanici bu yetkilere sahip olacak. 
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"] # "services", "endpoints", "pods", "pods/log" etc.
+  verbs: ["get", "watch", "list"] # "get", "list", "watch", "post", "put", "create", "update", "patch", "delete"
+```
+
+Cluster-role ise role objesi ile nerede ise aynidir. Ilk fark obje tipi cluster role ikincisi ise namespace tanimi girilmemis. Role belirledigimiz namespace icin gecerli olan namespace icin yetki vermek icin kullanilir. Cluster role de belirlenen yetkiler ise tum cluster capinda gecerlidir. Yani ben birazdan bu rolu bir kullaniciya baglarsam o kullaniciya bu rolde belirledigim haklar sadece default namespace icin gecerli olur. Fakat cluster-rolu baglarsam hangi ns de oldugu farketmeyecek. Burada tanimladigim yetkiler tum cluster capinda gecerli olacak. Bir diger fark ise su ana kadar gordugunuz her obje mutlaka ns altinda yaratilmali idi. Fakat k8s altinda namespace e bagli olmayan cluster seviyesinde objeler de var. Ornegin node lar da birer k8s objesi ve bunlar herhangi bir ns e bagli degil. Ya da `customResourceDefinition` lar da herhangi bir ns e bagli objeler degil. Bu tarz non ns objelerle ilgili yetkilendirme yaparken de cluster role kullaniyoruz. 
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+```
+
+Bu tanimlanan yetkilerin kullanicilara baglanmasi gerekiyor bunu da `role binding` ile yapiyorouz. `Cluster role binding` ise cluster rolu baglamak icin kullanilan obje lerdir. `Subject` kisminda bu rolun kime bind edilecegini bildiriyoruz. Neyi baglamak istedigimizi `roleRef` altinda yaratiyoruz. Cluster role bindig de ise user yerine group atamasi yapiyoruz bu gruba dahi olan her kullanici bu yetkilere sahip olacak. 
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: User
+  name: sezgin@drsezginerdem.gmail # "name" is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role #this must be Role or ClusterRole
+  name: pod-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+```
 
 ## service account
 Kullanici hesaplari insanlar icindir. Service accounts, podlarla calisan processler tarafindan kullanilmak uzere tasarlanmistir.
 
-k8s de deploy ettigimiz uygulamarin da kube-api ile gorusecek cluster uzerinde islem yapmasi gerekebilir. Ornegin k8s uzerinde uyguamalarinizi deploy edecek bir uygulama gelistirdiniz ve bunu bir pod olarak deploy ettiniz. Bun uygulamanin yeni uygulamalar deploy edebilmesi icin k8s api ile konusabilmesi ve deployment islemlerini gerceklestirmesi gerekiyor. Dolayisiyla bir pod uzerinde kosan bu uygulamanin oncelikle bir sekilde authentication adimini gecerek kimligini dogrulamasi ve sonrasinda bu islemleri yapabilmesi adina gerekli authorizationa yani yetkiye sahip olmasi gerekiyor. Bu ve benzer senaryolarda kullanilabilmesi adina service account adinda bir object tipi bulunmakta. Sertifika temelli authentication icin certificate islemleri gerekli uygulamalar icin ise service accountlar var. Yani aws de role atamak gibi. 
+k8s de deploy ettigimiz uygulamarin da kube-api ile gorusecek cluster uzerinde islem yapmasi gerekebilir. Ornegin k8s uzerinde uygulamalarinizi deploy edecek bir uygulama gelistirdiniz ve bunu bir pod olarak deploy ettiniz. Bun uygulamanin yeni uygulamalar deploy edebilmesi icin k8s api ile konusabilmesi ve deployment islemlerini gerceklestirmesi gerekiyor. Dolayisiyla bir pod uzerinde kosan bu uygulamanin oncelikle bir sekilde `authentication` adimini gecerek kimligini dogrulamasi ve sonrasinda bu islemleri yapabilmesi adina gerekli `authorizationa` yani yetkiye sahip olmasi gerekiyor. Bu ve benzer senaryolarda kullanilabilmesi adina `service account` adinda bir object tipi bulunmakta. Sertifika temelli authentication icin certificate islemleri gerekli uygulamalar icin ise service accountlar var. Yani AWS de role atamak gibi. 
 
-K8s de her namespace icin bir adet default service account olusturur. Her poda aksi belirtilmedigi surece bu service account baglanir. Default service account un hicbir yetkisi yoktur. Ama bizler istersek bunlara da role ya da cluster role bind ederek gerekli yetkiyi verebiliriz. 
+K8s de her namespace icin bir adet `default service account` olusturur. Her poda aksi belirtilmedigi surece bu service account baglanir. Default service account un hicbir yetkisi yoktur. Ama bizler istersek bunlara da role ya da cluster role bind ederek gerekli yetkiyi verebiliriz.
 
-Bir service account olusturdugumuz zaman bu service account icin bir secret olusturulur. Bu secret da 3 bilgi bulunur. Ilki service account un olusturuldugu namespace in adi. Ikinci bilgi ise bizlerin k8s api server ile iletisim kurarken https, tls baglantisi kurmamiz gerektiginden bu baglantinin hata vermemesi adina gerekli serfitika bilgisi. Son olarak da kimlik dogrulamasinda kullanabilecegim bir jwt yani jason web token bilgisi. Certificate tabanli authentication yapabildigimiz gibi http header bilgisine json web tokenlari birer token olarak gomerek de authentication olabiliriz. Her bir service account icin bu 3 bilginin oldugu bir secret yaratilir ve bu secret var/run/kubernetes.io/serviceaccount klasorune mount edilir. Boylece podun uzerindeki uygulamaya git buradaki dosyalardan bu degerleri oku ve kullan diyebiliriz.
+Bir service account olusturdugumuz zaman bu service account icin bir secret olusturulur. Bu secret da 3 bilgi bulunur. Ilki service account un olusturuldugu namespace in adi. Ikinci bilgi ise bizlerin k8s api server ile iletisim kurarken https, tls baglantisi kurmamiz gerektiginden bu baglantinin hata vermemesi adina gerekli serfitika bilgisi. Son olarak da kimlik dogrulamasinda kullanabilecegim bir jwt yani jason web token bilgisi. Certificate tabanli authentication yapabildigimiz gibi http header bilgisine json web tokenlari birer token olarak gomerek de authentication olabiliriz. Her bir service account icin bu 3 bilginin oldugu bir secret yaratilir ve bu secret `var/run/kubernetes.io/serviceaccount` klasorune mount edilir. Boylece podun uzerindeki uygulamaya git buradaki dosyalardan bu degerleri oku ve kullan diyebiliriz.
+
+Bu yaml dosyasnda bir service account olusturdum. Daha sonra bu service account u bind edecek bir rol binding olusturdum. Pod taniminda `serviceaccountname` ile hangi poda hangi servisin atanacagini belirtiyorum. Eger bu anahtarda herhangi bir sey belirtilmez ise `default service account` atanacaktir.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: testsa
+  namespace: default
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: podread
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: testsarolebinding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: testsa
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: podread
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testpod
+  namespace: default
+spec:
+  serviceAccountName: testsa
+  containers:
+  - name: testcontainer
+    image: ozgurozturknet/k8s:latest
+    ports:
+    - containerPort: 80
+```
 
 Her k8s kurulumunda cluster icinden k8s api server a erisilebilsin diye kubernetes isimli bir service yaratilir biz de cluster icindeki bi svc ye gidersek otomatik olarak kube api servere gitmis oluruz.
 
 ## Ingress
-***Ingress controller:*** L7 application load balancer kavraminin kubernetes spesifikasyonlarina gore calisan ve k8s'de deploy ederek kullanabildigimiz turudur. Nginx, HAproxy, Traefik en bilinen ingress controller uygulamalaridir. 
+`Ingress controller:` L7 application load balancer kavraminin kubernetes spesifikasyonlarina gore calisan ve k8s'de deploy ederek kullanabildigimiz turudur. Nginx, HAproxy, Traefik en bilinen ingress controller uygulamalaridir. 
 
-Ingress kurulumunu yaptiktan sonra eger cloud ortaminda calisiyorsak bu ingress controller dis dunyaya bir load balancer servisi ile expose oluyor ve public bir ip adresine sahip oluyoruz ve bu noktadan sonra artik dis dunyadan k8s e erisim sadece bu ip adresinden saglaniyor. Sonrasinda bu ingress controllerin configurasyonu yani hangi servise dis dunyadan hangi url e nasil ulasilacak kismi ni ingress objeleri dedigimiz objeler ile belirliyoruz.
+Ingress kurulumunu yaptiktan sonra eger cloud ortaminda calisiyorsak bu ingress controller dis dunyaya bir load balancer servisi ile expose oluyor ve public bir ip adresine sahip oluyoruz ve bu noktadan sonra artik dis dunyadan k8s e erisim sadece bu ip adresinden saglaniyor. Sonrasinda bu ingress controllerin configurasyonu yani hangi servise dis dunyadan hangi url e nasil ulasilacak kismi ni `ingress objeleri` dedigimiz objeler ile belirliyoruz.
 
---Ingress:-- Genellikle HTTP olmak uzere bir clusterdaki servislere harici erisimi yoneten bir API nesnesidir. Yuk dengeleme, SSL sonlandirmasi ve path-name tabanli yonlendirme ozelliklerini destekler. Ingress objeleri bizim ingress controller i k8s objeleri araciligiyla ayarlamamizi sagliyor. L7 application load balancerimiz olan ingress controller a baglanarak www.example.com a gelen uygulamalari a uygulamasina www.example.com/contact a gelen uygulamari b uygulamasina ve www.sezginerdem.com adresine gelen uygulamari ise c uygulamasina yonlendir diye o uygulamanin menulerinin ozelliklerini kullanarak ayar yapmak yerine tum bu istekleri ingress objesi seklinde olusturuyoruz. Deploy ettigimiz zaman ingress controllerlar bu objeyi okuyarak gerekli duzenlemeyi otomatik olarak yapiyor. Ingress controller bizlere L7 ALB lerin sundugu ssl termination, path base routing gibi bir cok ozelligi k8s objeleri olarak deploy edebilmemizi sagliyor.
+`Ingress:` Genellikle HTTP olmak uzere bir clusterdaki servislere harici erisimi yoneten bir API nesnesidir. Yuk dengeleme, SSL sonlandirmasi ve path-name tabanli yonlendirme ozelliklerini destekler. 
+Ingress objeleri bizim ingress controller i k8s objeleri araciligiyla ayarlamamizi sagliyor. L7 application load balancerimiz olan ingress controller a baglanarak www.example.com a gelen uygulamalari a uygulamasina www.example.com/contact a gelen uygulamari b uygulamasina ve www.sezginerdem.com adresine gelen uygulamari ise c uygulamasina yonlendir diye o uygulamanin menulerinin ozelliklerini kullanarak ayar yapmak yerine tum bu istekleri ingress objesi seklinde olusturuyoruz. Deploy ettigimiz zaman ingress controllerlar bu objeyi okuyarak gerekli duzenlemeyi otomatik olarak yapiyor. Ingress controller bizlere L7 ALB lerin sundugu ssl termination, path base routing gibi bir cok ozelligi k8s objeleri olarak deploy edebilmemizi sagliyor.
 
 Iki ingress controller one cikmis durumda nginx ve traefik. Her ingressin kurulumu farklidir. Hepsinin kendi dokumantasyonundan bakmak gerekiyor. Nginx ingress kuruldugu zaman nginx kendine bir ns yaratir ve objelerini burada yaratir. 
+Her ingress in kurulumu farkilidir. Hepsinin kurulumu kendi sayfalarindan nasil kurulacagini gorebilirsiniz. Nginx kurulduktan sonra kendisine bir ns yaratir ve daha sonra kurulacak uygulamalari bu ns uzerinde olusturur. 
 
-Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile expose ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uyguamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adrsine giderse b uygulamasi tarafindan sayfa gosteriyliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku dns de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gor url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer . Bunun yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var. 
+Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile expose ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uyguamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adrsine giderse b uygulamasi tarafindan sayfa gosteriliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku dns de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gor url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer  yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var. 
 Bu iki sorun da ingress controller ve ingress objeleri ile cozulmektedir. 
 
+Servisler nodeport tipinda olursa sadeec cluster icinden erisim sagalnir. Bu servislerin dis dunyadan erisim saglanmasi icin ingress controller yaratilmasi gerekmektedir. Ingress de ayni pod veya servis gibi bir k8s objesidir.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: appingress
+  annotations: # servisinizi http degil de https olarak olusturmak istoyorsak bunu anotationslarda belirmek gerekiyor bunu da dokumantasyondan bakabilirsiniz
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+    - host: k8sfundamentals.com # domainine ait bir servis yayinladigimi soyluyor
+      http:
+        paths:
+          - path: /blue # bu pathe bir istek gelirse
+            pathType: Prefix
+            backend:
+              service:
+                name: bluesvc # bu servisten cevap verilsin
+                port:
+                  number: 80
+          - path: /green # bu pathe bir istek gelirse
+            pathType: Prefix
+            backend:
+              service:
+                name: greensvc # buradan cevap verilsin
+                port:
+                  number: 80
+```
+
 ## ImagePullPolicy and Image Secret
+Guvenlik nedeni ile image larinizi private repolarda tutmaniz gerekmektedir. Bu repolardan image cekmek icin authenticate olmak gerekiyor. 
 Private registry lerde image lari tuttugunuz zaman bunlara authenticate olmak gerekir. Bu islemi yapmadan image cekilememektedir. 
 Bu authenticate icin oncelikle bir secret olusturacagim. Bu secret tipi "docker-registry" olacak.
 
+Private repodan cekilen bir image ile olusturulan pod. Bunu cekmek icin authonticate olmak gerekiyor.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imagesecrettest1
+  labels:
+    app: imagesecret
+spec:
+  containers:
+  - name: imagesecretcontainer
+    image: ozgurozturkregistry.azurecr.io/k8s:latest # bu bir private docker registry yani bu image i indirmek icin authenticate olmak gerekir
+    ports:
+    - containerPort: 80
+  ```
+
+Registrye authenticate olmak icin url, username ve password olmasi gerekiyor. Bunun icin bir secret olusturmamiz ve sonrasinda  bu secreti pod tanimina eklememiz gerekiyor.
+
+// Authetication gerektiren bir Docker registry'den image çekebilmek için oluşturulması gereken secret'in oluşturulması. `docker-registry` tipinde bir secret tipi olusturdum
+`kubectl create secret docker-registry "secret_ismi" --docker-server="registry_url" --docker-username="kullanıcı_adı" --docker-password="şifre"`
+Ör: `kubectl create secret docker-registry regscrt --docker-server=ozgurozturkregistry.azurecr.io --docker-username=ozgurozturkregistry --docker-password=wqRjEDdVhrM9Hj4D=gWwvV3YXyq9Y4ID`
+
+Daha sonra pod tanimimin icine `imagePullSecret` yazarak ve tanimladigim secret ismini alta yazarak authenticate islemini tamamliyorum. 
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imagesecrettest2
+  labels:
+    app: imagesecret
+spec:
+  containers:
+  - name: imagesecretcontainer
+    image: ozgurozturkregistry.azurecr.io/k8s:latest #private repository
+    imagePullPolicy: Always # IfNotPresent, Never
+    # If the tag is latest, k8s defaults imagePullPolicy to Always. Otherwise k8s defaults imagePullPolicy to IfNotPresent
+    ports:
+    - containerPort: 80
+  imagePullSecrets:
+  - name: regscrt # az once olusturdugum secret ismini buraya yaziyorum
 ```
-$ kubectl create secret docker-registry "secret_ismi" --docker-server="registry_url" --docker-username="kullanıcı_adı" --docker-password="şifre"
 
-Ör: kubectl create secret docker-registry regscrt --docker-server=ozgurozturkregistry.azurecr.io --docker-username=ozgurozturkregistry --docker-password=wqRjEDdVhrM9Hj4D=gWwvV3YXyq9Y4ID
-```
-
-Daha sonra pod tanimimin icine imagePullSecret yazarak ve tanimladigim secret ismini alta yazarak authenticate islemini tamamliyorum.
-
---2. Yol ise:-- Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari imagePullPolicy altinda tanimliyoruz. Eger bunun altinda always yazili ise her pod olusturulmaya calisildiginda her seferinde cekilecek makinede olup olmadigi onemli degil. Never secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. IfNotPresent da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. imagePullPolicy always olarak set ediliyor. Fakat latest disinda bir sey kullaniliyorsa imagePullPolicy set edilmedi ise IfNotPresent olarak set edilir. 
+*2. Yol ise:* Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari `imagePullPolicy` altinda tanimliyoruz. Eger bunun altinda `always` yazili ise her pod olusturulmaya calisildiginda her seferinde bu image cekilecek makinede olup olmadigi onemli degil. `never` secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. `IfNotPresent` da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. `imagePullPolicy` `always` olarak set ediliyor. Fakat `latest` disinda bir sey kullaniliyorsa `imagePullPolicy` set edilmedi ise `IfNotPresent` olarak set edilir. 
 
 ## Static Pod
-Kubelet in belirlediginiz bir dosyasina yaml dosyalarini koyarak kubeletin pod yaratma islemine static pod denir.
+Kubelet in belirlediginiz bir dosyasina yaml dosyalarini koyarak kubeletin pod yaratma islemine `static pod` denir.
 Boylelikle api serverla konusmadan yalnizca dosyalari klasore ekleyerek pod yaratma islemini gerceklestirmis oluruz.
-Neden static pod? Kubernetes kendi de podlarlardan olusmaktadir. Kubernetes kurulumunda ilk once kubelet kurulur bunu da kubeletin default manifest dosyalarinin bulundugu klasorden yapar. Bu dosyanin bulungu yere yaml dosyalarini koyarsak bu dosyalardan pod olusturulur. Daha sonra kubenetes api uzerinde de aynisini olusturur. Gercek hayatta cok isimize yaramiyor ancak bunu bilmek ve k8s in nasil ayaga kalktigini bilmek adina onemlidir.
+*Neden static pod?* Kubernetes kendi de podlarlardan olusmaktadir. Kubernetes kurulumunda ilk once kubelet kurulur bunu da kubeletin default manifest dosyalarinin bulundugu klasorden yapar. Bu dosyanin bulundugu yere yaml dosyalarini koyarsak bu dosyalardan pod olusturulur. Daha sonra kubenetes api uzerinde de aynisini olusturur. Gercek hayatta cok isimize yaramiyor ancak bunu bilmek ve k8s in nasil ayaga kalktigini bilmek adina onemlidir.
+
+etc/kubernetes/manifest dosyasi bu dosyanin default olarak bulundugu path. Ancak isterseniz degistirebilirsiniz.
 
 ## Helm
 Bir uygualamin kurulusunun paket hale getirilmesini saglayan bir arac. CNCF projesi. Kubernetes uzerinde paket yuklenmesini sagliyor. Choco, brew gibi bir paket yoneticisidir. 
 Kubernetesin resmi bir uygulamasi degil ancak nerede ise resmi uygulamasi haline gelmis durumda.
 Paket veya script olarak yuklenebilir. Helmi yuklerken 2 ve 3 versiyonunu yukleyebilirsiniz. Yeni basliyorsaniz helm 3 le devam edin.
---Chart:-- Kubernetese yuklediginiz uygulamanizin paketlenmis halidir. Paket hali chart.
---Release:-- Chartin kubernetese yuklenmis hali ise releasedir. 
---Repository:-- Helm chartlarin bir arada tutuldugu/bulundugu yerdir. 
+1. `Chart:` Kubernetese yuklediginiz uygulamanizin paketlenmis halidir. Paket hali chart.
+2. `Release:` Chartin kubernetese yuklenmis hali ise releasedir. 
+3. `Repository:` Helm chartlarin bir arada tutuldugu/bulundugu yerdir. 
 
-ArtifactHUB: Kubernetesdeki pluginler, helm chartlari hepsi ayri repositorylerde idi. ArtifactHUB butun bu repositorylerin aranabildigi bir platform. Diyelim ki wordpress adinda bir helm charti aramak istiyorum bunu buradan bularak k8s e nasil kuracagimi ogrenebilirim. 
+`ArtifactHUB:` Kubernetesdeki pluginler, helm chartlari hepsi ayri repositorylerde idi. ArtifactHUB butun bu repositorylerin aranabildigi bir platform. Diyelim ki wordpress adinda bir helm charti aramak istiyorum bunu buradan bularak k8s e nasil kuracagimi ogrenebilirim. 
 
-Helm uzerinden chartlari aramak istiyorsak 'heml search' ile arama yapabiliriz. Ya da belirli bri repository den de arama yapabilirsibniz. Helm charlari da yuklerken once reposunu ekliyorum ondan sonra install komutu ile yukluyorum. 
+Helm uzerinden chartlari aramak istiyorsak `helm search` ile arama yapabiliriz. Ya da belirli bir repository den de arama yapabilirsiniz. `helm search repo wordpress`derseniz localimdeki helm reposundan arama yapar. Helm chartlari da yuklerken once reposunu ekliyorum ondan sonra install komutu ile yukluyorum. 
 
 Chartin uzerinden bir release olusturmak istedigimizde default olarak kurar. Bazen degiskenleri kendimiz belirleyebiliz. Value lari kendim olsuturabilirim. 
 
 Helm ile upgrade ler ya da begenmezsek rollback ler yapabiliyorum. Bu helmin en guclu yonlerinden bir tanesi. 
-
