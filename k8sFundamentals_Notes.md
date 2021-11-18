@@ -838,17 +838,17 @@ Bu secretlar etcd de base64 olarak tutuluyor. Kendi yonettigimiz clusterlarda ma
 `kubectl get configmap`
 
 // ConfigMap objelerinin silinmesi
-$ kubectl delete configmap "configmap_ismi"
-Ör: kubectl delete configmap my-configmap
+kubectl delete configmap <configmap_ismi>
+`kubectl delete configmap my-configmap`
 
 ## configmap
 Gizli olmayan verileri anahtar/deger eslenikleri olarak depolamak icin kullanilan bir API nesnesidir. Podlar, ConfigMap'i environment variable, komut satiri argumanlari veya bir volume olarak baglanan yapilandirma dosyalari olarak kullanabilir.
 
-Secretlar ile ayni gorevi gorurler. Olusturulan configmap dosyalarindaki key value ler ile verileri tutup bunlari env var olarak ya da volme olarak podlara aktarabiliriz. Olusturma adimlari da nerede ise birebir aynidir. Sadece secret yazilan yerlere configmap yazilir. 
+Secretlar ile ayni gorevi gorurler. Olusturulan configmap dosyalarindaki key value ler ile verileri tutup bunlari env var olarak ya da volume olarak podlara aktarabiliriz. Olusturma adimlari da nerede ise birebir aynidir. Sadece `secret` yazilan yerlere `configmap` yazilir. 
 
-- Peki birebir ayni ise neden iki farkli obje tipi vardir? Secret hassas verileri saklamak icin kullanilan objelerdir. Olusturulan secretler base64 encode edilerek `etcd` de saklanir ve ayar yaparsak `etcd` uzerinde encryptsiz sekilde durabilir. `ConfigMap` de ise veriler base64 edilmez ve encrypt etmemize de gerek yoktur. Cunku bizler config map icerisinde gizli olmayan fakat yine de pod tanimimizdan ayirmamiz gereken configurasyon tarzi bilgileri tutariz yani uygulama disinda tutmaniz gereken veri sifre ssh anahtari gibi gizli bir veri ise secret degilse `configMap` uygun olacaktir. Bu ikisinin etcd de encoded olarak tutulmasi disinda birebir aynidir. Ilerde secretlarin guncellenmesinin otomatize edilmesi ya da ozel secret store larda ayri tutulmasi gibi ek ozellikler getirilebilir. Bu nedenle en bastan iki farkli obje tipi olusturmus k8s.
+- *Peki birebir ayni ise neden iki farkli obje tipi vardir?* Secret, hassas verileri saklamak icin kullanilan objelerdir. Olusturulan secretler base64 encode edilerek `etcd` de saklanir ve ayar yaparsak `etcd` uzerinde encryptsiz sekilde durabilir. `ConfigMap` de ise veriler base64 edilmez ve encrypt etmemize de gerek yoktur. Cunku bizler config map icerisinde gizli olmayan fakat yine de pod tanimimizdan ayirmamiz gereken configurasyon tarzi bilgileri tutariz yani uygulama disinda tutmaniz gereken veri, sifre, ssh anahtari gibi gizli bir veri secret degilse `configMap` uygun olacaktir. Bu ikisinin `etcd` de encoded olarak tutulmasi disinda birebir aynidir. Ilerde secretlarin guncellenmesinin otomatize edilmesi ya da ozel secret store larda ayri tutulmasi gibi ek ozellikler getirilebilir. Bu nedenle en bastan iki farkli obje tipi olusturmus k8s.
 
-Yaml dosyasi secret gibi tek farki data kismina girmek istedigim bilgileri key value seklinde girmek ya da settings altinda oldugu gibi birden fazla degeri alt alta girebiliyorum. Poda aktarma kismi secret ile ayni. Bir de secretsdaki gibi tip tanimi belirtmeye gerek yok.
+Yaml dosyasi secret gibi. tek farki data kismina girmek istedigim bilgileri key=value seklinde girmek ya da settings altinda oldugu gibi birden fazla degeri alt alta girebiliyorum. Poda aktarma kismi secret ile ayni. Bir de secretdaki gibi tip tanimi belirtmeye gerek yok.
 
 ```yaml
 apiVersion: v1
@@ -1551,6 +1551,12 @@ spec:
   usages:
   - client auth
 EOF`
+
+
+`lsm`
+
+
+
 
 Condition pending durumunda gorunuyor. Bunu onaylamam gerekiyor ki bu islem tamamlansin. 
 `kubectl certificate approve sezginerdem` ile onayliyorum.bu serifikayi yaml dosyasi ile cikariyorum ve decode etmem gerekiyor. 
