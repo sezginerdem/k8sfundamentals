@@ -868,6 +868,7 @@ Bu secretlar etcd de `base64` olarak tutuluyor. Kendi yonettigimiz clusterlarda 
 kubectl delete configmap <configmap_ismi>
 `kubectl delete configmap my-configmap`
 
+
 ## configmap
 Gizli olmayan verileri anahtar/deger eslenikleri olarak depolamak icin kullanilan bir API nesnesidir. Podlar, ConfigMap'i environment variable, komut satiri argumanlari veya bir volume olarak baglanan yapilandirma dosyalari olarak kullanabilir.
 
