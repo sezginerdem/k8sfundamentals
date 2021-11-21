@@ -854,6 +854,7 @@ Bu secretlar etcd de `base64` olarak tutuluyor. Kendi yonettigimiz clusterlarda 
 `kubectl delete secret "secret_ismi"`
 Ör: `kubectl delete secret my-secret`
 
+
 // Degerlerin dosyadan okunarak secret olusturulmasi
 `kubectl create secret generic mysecret --from-file=db_server=server.txt --from-file=db_username=username.txt --from-file=db_password=password.txt`
 
