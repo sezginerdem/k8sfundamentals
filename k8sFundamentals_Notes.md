@@ -387,20 +387,44 @@ Never ya da Onfailure olarak policy tanimlandi ve containerlardan biri hata veri
 Fakat restart policy always olarak set edildi ise pod hicbir zaman succeed ya da failed durumuna gecmez. Bunun yerine podun icerisindeki container yeniden baslatilir ve running state de devam eder. Fakat kubernetes bu yeniden baslatma islemini belirli bir siklikla yapiyorsa bazi seylerin ters gittigine kanaat getirir ve pod u `CrashLoopBackOff` adini verdigimiz bir state e sokar. Bunun anlami sen bir pod olusturdun ama bu pod un icerisindeki container ikide bir kapaniyor buna bir bak. Bu pod da sunlar olur: k8s container in icerisinde birseylerin ters gittigini anlar ve pod un statusunu `crashloopbackoff` a cevirir. Surekli restart etme yerine; restart eder 10 sn bekler eger 10 sn icinde yeniden cokerse 20 sn bekler yeniden cokerse 40 sn bekler sonra 80 sn bekler ve bu durum 5dk lik araliga cikana kadar boyle devam eder ve ondan sonra her 5dk da bir tekrar eder. Bu arada container cokmeyi birakir ve 10dk sure ile sorunsuz bir sekilde calismaya devam ederse. Kubelet container i crashloopbackoff dan cikarir ve running e dondurur. Eger bu olmaz ve siz mudahale etmezseniz bu durum sonsuza kadar boyle devam eder. Ozetle crashloopbackoff mudahaleyi gerektirir ve bakilmasi gerekmektedir. 
 
 ## Multicontainer pod (sidecar container)
-Bir frontend ve bir de backend den olusan two tier yani cift katmanli bir uygulama yazdik. Cok populer olan ornegin wordpress uygulamasi. WordPress uygulamasini deploy etmek istedigimizi varsayalim. Bildigimiz uzere wordpress php tabanli bir frontend ve bu uygulamanin verilerinin tutuldugu bir mysql veri tabanina sahip. Bu uygualamyi container haline getirmek istiyorum. Bu uygulamayi icinde mysql ve wordpress halinde calisan tek bir container haline getirebilir miyim? Teknik olarak evet. Fakat bunu yapmiyoruz. Her iki uygulama icin de ayri iki container kullaniyoruz. Bunun iki nedeni var 1) container in temel mantigi izolasyon bu iki uygulamayi da ayni container icine koymak bu izolasyondan mahrum olmak demek. 2) Iki uygulamayi scale etmek istemeniz durumunda yatay buyume yapamiyorsunuz. Bunu soyle dusunun ben 2 sunucudan olusan bir ortam kurdum. Hem wordpress hem de mysql uygulmasini ayni container icine kurdum ve tek bir uygulama olarak calistirmaya basladim. Sayfama yogun bir istek oldugunda wordpress in frontend katmani bu isteklere cevap verememeye basladi ben de yeniden bir container daha olusturarak load balancer arkasina almak ve kaynaklarimi cogaltmak istedim ki bu problemi cozebileyim. Ama bunu yaptigim zaman ortamda 2 frontend 2 tane de mysql veri tabani olacak. Ancak benim veri tabanimda veri sikintisi yoktu. Ikisi de ayni container da oldugu icin bunu coklamam gerektiginde ikisini birden cokladim. Hatta 2. containeri deploy ettikten sonra mysql baglanti ayarlarini degistirdim ve 1. container icindeki mysql e baglanmasi icin ayar yaptim cunku simdiye kadar olusturdugum her sey o veri tabaninda. Bunun 100 container a kadar scale edilen bir ortam oldugunu dusunun. Sirf 2 uygulamayi da ayni container icine gomdugum icin sikintilar yasadim. Bunun yerine bir mysql ve bir de wordpress olmak uzere 2 ayri image yaratsa idim bu sefer 1 tane mysql container yaratilirdi benim de istedigim kadar wordpress scale edebilme imkanim olusurdu. Bu nedenlerden dolayi en onemli best practice bir container icine 1 tane uygulama koymak. 
+Bir frontend ve bir de backend den olusan two tier yani cift katmanli bir uygulama yazdik. Cok populer olan ornegin wordpress uygulamasi. WordPress uygulamasini deploy etmek istedigimizi varsayalim. Bildigimiz uzere wordpress php tabanli bir frontend ve bu uygulamanin verilerinin tutuldugu bir mysql veri tabanina sahip. Bu uygualamyi container haline getirmek istiyorum. Bu uygulamayi icinde mysql ve wordpress halinde calisan tek bir container haline getirebilir miyim? Teknik olarak evet. Fakat bunu yapmiyoruz. Her iki uygulama icin de ayri iki container kullaniyoruz. Bunun iki nedeni var 
+  1. container in temel mantigi izolasyon bu iki uygulamayi da ayni container icine koymak bu izolasyondan mahrum olmak demek. 
+  2. Iki uygulamayi scale etmek istemeniz durumunda yatay buyume yapamiyorsunuz. 
+Bunu soyle dusunun ben 2 sunucudan olusan bir ortam kurdum. Hem wordpress hem de mysql uygulmasini ayni container icine kurdum ve tek bir uygulama olarak calistirmaya basladim. Sayfama yogun bir istek oldugunda wordpress in frontend katmani bu isteklere cevap verememeye basladi ben de yeniden bir container daha olusturarak load balancer arkasina almak ve kaynaklarimi cogaltmak istedim ki bu problemi cozebileyim. Ama bunu yaptigim zaman ortamda 2 frontend 2 tane de mysql veri tabani olacak. Ancak benim veri tabanimda veri sikintisi yoktu. Ikisi de ayni container da oldugu icin bunu coklamam gerektiginde ikisini birden cokladim. Hatta 2. containeri deploy ettikten sonra mysql baglanti ayarlarini degistirdim ve 1. container icindeki mysql e baglanmasi icin ayar yaptim cunku simdiye kadar olusturdugum her sey o veri tabaninda. Bunun 100 container a kadar scale edilen bir ortam oldugunu dusunun. Sirf 2 uygulamayi da ayni container icine gomdugum icin sikintilar yasadim. Bunun yerine bir mysql ve bir de wordpress olmak uzere 2 ayri image yaratsa idim bu sefer 1 tane mysql container yaratilirdi benim de istedigim kadar wordpress scale edebilme imkanim olusurdu. Bu nedenlerden dolayi en onemli best practice bir container icine 1 tane uygulama koymak. 
 Kubernetes icinde ise wordpress icin bir pod mysql icin bir pod olusturulmali. Fakat istersem bir pod icinde birden fazla container da koyabilirim ama bu da bir container icine iki uygulama koymak ile ayni sey cunku k8s de scale ettigimiz sey pod. Her container da tek bir uyguama her pod da bir container. 
-***Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?*** Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node 1 uzerinde yeterli kaynagim yok diye node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ana uygulamaya bagimli, onunla network seviyesinde izolasyon olmadan ve gerektigi durumda ayni izolasyon altyapisini kullanabilecek ayni pod icerisinde 2 container olarak calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide `sidecar` container denmektedir. 
+*Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?* 
+Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node 1 uzerinde yeterli kaynagim yok diye node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ana uygulamaya bagimli, onunla network seviyesinde izolasyon olmadan ve gerektigi durumda ayni izolasyon altyapisini kullanabilecek ayni pod icerisinde 2 container olarak calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide `sidecar` container denmektedir. 
 
 Bir pod icerisinde birden fazla container calistirdigimiz zaman:
 1. Ayni pod icerisinde tnaimlanmis tum containerlar ayni worker node uzerinde olsturuluyorlar.
 2. Containerlar ayri birer unitedir fakat pod un lifecycle i icinde yonetilir. Yani pod olusturulunca iki container birden olusturulur ve silirse de iki container birden silinir.
 3. Bu containerlar arasinda network izolasyonu bulunmaz yani ayni pod icerisinde bulunan a ve b containerlari birbirlerine localhost uzerinden ulasabilirler. Bunlar network bakimindan sanki ayni makinada calisan processlerdir.
-4. Tek bir volume yaratilatak her iki containera da mount edilebilir boylelikle ayni dosyalar uzerinde calisabilirsiniz.
+4. Tek bir volume yaratilarak her iki containera da mount edilebilir boylelikle ayni dosyalar uzerinde calisabilirsiniz.
 
-## init container
-Init container da bir pod icerisinde birde fazla pod yaratilmasina imkan verir. Fakat app containerlardan farkli olarak init containerlar pod un yasam dongusu boyunca calismaz. Siz bir pod tanimina init container tanimi koydugunuz zaman pod olusturuldugu zaman ilk olarak bu init container calistirilir. Init container calisir icindeki uygulama ne yapacaksa onu yapar ve ardindan kapanir bu init containerlar islerini tamamlayip kapanana kadar da app containerlar calismaya baslamaz. 
-***Peki neden boyle bir seye ihtiyac duyariz ve kullanim alani nedir?*** Init containerlar esas uygulamamiz calismadan once tamamlamamiz gereken seyler var ve bunlari tamamlamadan esas uygulamayi baslatmak mantikli degilse kullanmak gerekir. Mesela uygulamamizin bagimli oldugu baska bir uygulama ya da servis var. Eger bu ayakta ve hazir degilken uygulamayi baslatirsak uygulamada sikinti cikiyor. Bu durumda pod tanimina init container tanimi ekler ve bu init containerin bu servisi gozlemesi icin ayar yapariz. Init container icinde bir uygulama calistirilir ve bu servisten okey alana kadar calisacak okey aldiktan sonra da kapanacak sekilde ayar yapariz. Bu sayede pod olusturuldugu zaman ilk olarak init container calisir. Diger servisi beklemeye baslar. Diger servis hazir oldugu anda uygulama kapanir ve init container da kapatilir. Init container kapatildigi anda da esas uygulamamizin calistigi container ayaga kalkar ve boylece servisimiz hazir olana kadar uygulama beklemis olur. Soyle bir senaryo dusunun ana uygulamamizin ihtiyaci olan bazi config dosyalarinin guncel halinin ana uygulama baslamadan sisteme cekilmesi gerekiyor, Iste bu cekme islemini de init container ile halleder ve ana uygulama baslamadan bunlari sisteme indirebiliriz. 
-Multicontainerdan farkli olarak init containerlar yaml dosyalarinda tanimlanirken `initContainers` adi ile ayri bir alanda tanimlanir. Containerin isi bittikten sonra kapanir ve ardindan ana container calismaya baslar.
+## initContainers
+`initContainers` da bir pod icerisinde birde fazla pod yaratilmasina imkan verir. Fakat app containerlardan farkli olarak `initContainers`lar pod un yasam dongusu boyunca calismaz. Siz bir pod tanimina `initContainers` tanimi koydugunuz zaman pod olusturuldugu zaman ilk olarak bu `initContainers` calistirilir. `initContainers` calisir icindeki uygulama ne yapacaksa onu yapar ve ardindan kapanir bu `initContainers`lar islerini tamamlayip kapanana kadar da app containerlar calismaya baslamaz. 
+*Peki neden boyle bir seye ihtiyac duyariz ve kullanim alani nedir?* 
+`initContainers`lar esas uygulamamiz calismadan once tamamlamamiz gereken seyler var ve bunlari tamamlamadan esas uygulamayi baslatmak mantikli degilse kullanmak gerekir. Mesela uygulamamizin bagimli oldugu baska bir uygulama ya da servis var. Eger bu ayakta ve hazir degilken uygulamayi baslatirsak uygulamada sikinti cikiyor. Bu durumda pod tanimina `initContainers` tanimi ekler ve bu `initContainers`in bu servisi gozlemesi icin ayar yapariz. `initContainers` icinde bir uygulama calistirilir ve bu servisten okey alana kadar calisacak okey aldiktan sonra da kapanacak sekilde ayar yapariz. Bu sayede pod olusturuldugu zaman ilk olarak `initContainers` calisir. Diger servisi beklemeye baslar. Diger servis hazir oldugu anda uygulama kapanir ve `initContainers` da kapatilir. `initContainers` kapatildigi anda da esas uygulamamizin calistigi container ayaga kalkar ve boylece servisimiz hazir olana kadar uygulama beklemis olur. 
+Soyle bir senaryo dusunun ana uygulamamizin ihtiyaci olan bazi config dosyalarinin guncel halinin ana uygulama baslamadan sisteme cekilmesi gerekiyor, iste bu cekme islemini de `initContainers` ile halleder ve ana uygulama baslamadan bunlari sisteme indirebiliriz. 
+Multicontainerdan farkli olarak `initContainers`lar yaml dosyalarinda tanimlanirken `initContainers` adi ile ayri bir alanda tanimlanir. Containerin isi bittikten sonra kapanir ve ardindan ana container calismaya baslar.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+  initContainers:
+  - name: init-myservice
+    image: busybox
+    command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ; done;']
+```
 
 ## label and selector
 Label yani tagler k8s de her turlu objeye atayabildiginiz anahtar deger eslenikleridir. Etiketler sayesinde olusturdugumuz objelere bizlerin anlayacagi ve gruplara yaparken kullanabilecegimiz bilgiler eklemis oluruz. Bu sayede k8s tarafindan bizlere core ozellik olarak sunulmayan objelere belirli bir aidiyet atanmasi islemini gerceklestirebiliriz. 
@@ -742,7 +766,7 @@ Secretlar, parolalar, OAuth token ve ssh anahtarlari gibi hassas bilgileri depol
   2. Verilerin degismesi sifrenin guncellenmesi gerektigi zaman yaml dosyasi icerisinde degisikliklere gitmem gerekiyor. Bu hassas bilgileri bu tanimlamalardan ayirmak gerekiyor bunu da secretlar ile saglayabiliyoruz.
 Verileri secret icerisinde saklar sonrasinda pod a ekleriz. Secretlar da diger objeler gibi yaratabiliriz.
 Secret ile pod ayni namespace icinde olmali.
-8 degisik tipte secret yaratabiliriz. Opaque bunlardan varsayilan olan turdur. Ama nerdeyse hicbir zaman `Opaque` disinda bir secret tipini kullanmayiz. 
+8 degisik tipte secret yaratabiliriz. `Opaque` bunlardan varsayilan olan turdur. Ama nerdeyse hicbir zaman `Opaque` disinda bir secret tipini kullanmayiz. 
 
 Basit bir secret.yaml dosyasi
 ```yaml
@@ -757,8 +781,11 @@ stringData: #stringdata olarak yazarsaniz bu bilgileri ekranda oldugu gibi yazar
   db_password: P@ssw0rd!
 ```
 
-Bu secretlari pod a nasil ekleriz? 2 senecek var ya bunlari 1. volume araciligiyla ya da 2. env variable araciligiyla ekleriz.
+Bu secretlari pod a nasil ekleriz? 2 senecek var: 
+  1. volume araciligiyla 
+  2. env variable araciligiyla ekleriz.
 
+1. Yontem in yaml hali ornek olarak
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -770,7 +797,7 @@ spec:
     image: ozgurozturknet/k8s:blue
     volumeMounts:
     - name: secret-vol
-      mountPath: /secret # colume u maount ettim boylelikle k8s secret icerisindeki tum anahttarlari birer dosya olarak bu path e koyacak. Bu dosya icerisinde de anahtarla atadigim degerler olacak dolayisiyla ben artik sunu dileybilecegim kullanici adina mi almak istiyorsun /secret altinda db_user_name dosyasina bakarak ogrenebilirsin.
+      mountPath: /secret # volume u mount ettim boylelikle k8s secret icerisindeki tum anahttarlari birer dosya olarak bu path e koyacak. Bu dosya icerisinde de anahtarla atadigim degerler olacak dolayisiyla ben artik sunu dileybilecegim kullanici adina mi almak istiyorsun /secret altinda db_user_name dosyasina bakarak ogrenebilirsin.
   volumes:
   - name: secret-vol
     secret: # volume u secrettan olusturdum
@@ -784,7 +811,7 @@ spec:
   containers:
   - name: secretcontainer
     image: ozgurozturknet/k8s:blue
-    env: # env anahtari ile environment variable tanimladim fakat degerleri yaml dosyasian yazmak yerine secrettan okutuyorum.
+    env: # env anahtari ile environment variable tanimladim fakat degerleri yaml dosyasina yazmak yerine secrettan okutuyorum.
       - name: username
         valueFrom:
           secretKeyRef:
@@ -814,7 +841,7 @@ spec:
         name: mysecret3
 ```
 
-Bu secretlar etcd de base64 olarak tutuluyor. Kendi yonettigimiz clusterlarda manuel olarak bu secretlari encrypt etmemiz gerekiyor. Cloud saglayicilar bunu bizim yerimize otomatik olarak yapiyor. Kendi yonettigimiz clusterlarda bunu manuel olarak devreye almamiz gerekiyor. Siz bir secret olusturdugunuzda diger objelerde oldugu gibi diger kullanicilar da bu secretlara varsayilan olarak erisim hakkina sahip bunu engellemek icin de `rbac` kullaniyoruz.
+Bu secretlar etcd de `base64` olarak tutuluyor. Kendi yonettigimiz clusterlarda manuel olarak bu secretlari encrypt etmemiz gerekiyor. Cloud saglayicilar bunu bizim yerimize otomatik olarak yapiyor. Kendi yonettigimiz clusterlarda bunu manuel olarak devreye almamiz gerekiyor. Siz bir secret olusturdugunuzda diger objelerde oldugu gibi diger kullanicilar da bu secretlara varsayilan olarak erisim hakkina sahip bunu engellemek icin de `rbac` kullaniyoruz.
 
 // Imperative olarak Secret objelerinin oluşturulması (Opaque de olsa imperative yazarken generic olarak yazmak gerekiyor)
 `kubectl create secret generic "secret_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
@@ -1527,7 +1554,7 @@ spec:
 
 ## Authorization and authentication
 K8s kimlik dogrulama eklentileri araciligiyla API isteklerinin kimligini dogrulamak icin istemci sertifikalari tasiyici belirtecleri bir kimlik dogrulama proxy'si veya HTTP temel kimlik dogrulamasi kullanir.
-Api'de bir kullanici objesi bulunmamasina ragmen, cluster'in certificate authoruty'si tarafindan imzalanmis gecerli bir sertifika sunan herhangi bir kullanici (CA) kimligi dogrulanmis olarak kabul edilir. Bu yapilandirmada k8s sertifikanin 'konu' kismindaki ortak ad alanindan kullanici adini belirler (or. "/CN=bob")
+Api'de bir kullanici objesi bulunmamasina ragmen, cluster'in certificate authority'si tarafindan imzalanmis gecerli bir sertifika sunan herhangi bir kullanici (CA) kimligi dogrulanmis olarak kabul edilir. Bu yapilandirmada k8s sertifikanin 'konu' kismindaki ortak ad alanindan kullanici adini belirler (or. "/CN=bob")
 Oradan, rol tabanli erisim denetimi (RBAC) alt sistemi, kullanicinin bir kaynak uzerinde belirli bir islemi gerceklestirme yetkkisina sahip olup olmadigini belirler.
 
 Her platformun kullanici yaratma ve yonetme servisleri bulunur (IAM). Ancak K8s boyle bir hizmet sunmaz. Kullanici yaratamazsaniz. User objesi bulunmaz. Kimlik olusturma ve dogrulama isi cluster disinda yapilacak sekilde tasarlanmistir. 
@@ -1551,12 +1578,6 @@ spec:
   usages:
   - client auth
 EOF`
-
-
-`lsm`
-
-
-
 
 Condition pending durumunda gorunuyor. Bunu onaylamam gerekiyor ki bu islem tamamlansin. 
 `kubectl certificate approve sezginerdem` ile onayliyorum.bu serifikayi yaml dosyasi ile cikariyorum ve decode etmem gerekiyor. 
@@ -1594,6 +1615,16 @@ EOF`
 `kubectl config set-credentials ozgur@ozgurozturk.net --client-certificate=ozgurozturk.crt --client-key=ozgurozturk.key`
 `kubectl config set-context ozgurozturk-context --cluster=minikube --user=ozgur@ozgurozturk.net`
 `kubectl config use-context ozgurozturk-context`
+
+### Authentication
+All user managed by kube-apiserver, kube-apiserver oncelikle kullaniciyi authencicate eder sonrasinda process requeste bakar. Nasil authenticate eder
+  1. Static password file (this is not recommend)
+  2. Static token file (this is not recommend)
+  3. certificates
+  4. identity services (third party applications like elda, kerberotos etc)
+
+1. Static password file and 2. Static token file: You can use a .csv file for authentication. 
+file has a three coloumns password, username and user ID. And you can use a forth column for group. This file is the same as for static token file. you can write token instead of password. 
 
 ## Role Based Acced Control "RBAC"
 AUTHENCICATION != Authorization
@@ -1825,3 +1856,50 @@ Helm uzerinden chartlari aramak istiyorsak `helm search` ile arama yapabiliriz. 
 Chartin uzerinden bir release olusturmak istedigimizde default olarak kurar. Bazen degiskenleri kendimiz belirleyebiliz. Value lari kendim olsuturabilirim. 
 
 Helm ile upgrade ler ya da begenmezsek rollback ler yapabiliyorum. Bu helmin en guclu yonlerinden bir tanesi. 
+
+# OS Upgrade
+// pod olmadiginda yeniden baslatmak eger deployment varsa options kullanmali
+`kubectl drain <node-name> --ignore-daemonsets`
+
+// node-02 unschedule et ancak icindeki uygulamalara zarar verme
+`kubectl cordon <node-name>`
+
+// node-01 i schedulable hale getirmek
+`kubectl uncordon <node-name>`
+
+## Etcd Backup - Resource Configs
+// tum resourcelari yaml dosyasina kaydet
+`kubectl get all --all-namespaces -o yaml > all-deploy-services.yaml`
+
+Velero=Kubernetes backup tool
+
+// take a snopshot etcd
+`ETCDTL_API=3 etcdctl snapshot save <snaphot.db>`
+
+// snaphotlarin statusunu goruntuleme
+`ETCDTL_API=3 etcdctl snapshot status <snaphot.db>`
+
+// etcd snaphotlarini restore etmek
+`service kube-apiserver stop`
+`ETCDCTL_API=3 etcdctl snapshot restore <snapshot name> --data-dir </var/lib/etcd-from-backup(snaphot path)>`
+//configure etcd.service file to use the new etcd file dir
+`--data-dir=/var/lib/etcd-from-backup`
+`systemctl daemon-reload`
+`service etcd restart`
+`service kube-apiserver start`
+
+- etcd commands
+  To see all the options for a specific sub-command, make use of the -h or --help flag.
+  For example, if you want to take a snapshot of etcd, use:
+
+  etcdctl snapshot save -h and keep a note of the mandatory global options.
+
+  Since our ETCD database is TLS-Enabled, the following options are mandatory:
+
+  --cacert   verify certificates of TLS-enabled secure servers using this CA bundle
+
+  --cert     identify secure client using this TLS certificate file
+
+  --endpoints=[127.0.0.1:2379]    This is the default as ETCD is running on master node and exposed on localhost 2379.
+
+  --key                           identify secure client using this TLS key file
