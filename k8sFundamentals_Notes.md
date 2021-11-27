@@ -932,7 +932,7 @@ spec:
 
 ## Node affinity(yakinlik benzesme)
 `Node affinity` kavramsal olarak nodeSelector'a benzer ve nodelara atanan etiketlere gore podunuzun hangi node ustunde schedule edilmeye uygun oldugunu kisitlamaniza olanak tanir.
-Podlarimizin uygun worker nodelarda olusturulmasini saglayan k8s ozelligidir. Node selectora cok benzer. Bizler pod umuzu ekler ve podumuzun schedule edilecegi node uzerinde ekledigimiz label in olmasini bekleriz. Bunun yaninda bunun olmasini sart kosar ya da tercih ettigimizi belirtiriz.
+Podlarimizin uygun worker nodelarda olusturulmasini saglayan k8s ozelligidir. Node selectora cok benzer. Bizler pod umuzu ekler ve podumuzun s\chedule edilecegi node uzerinde ekledigimiz label in olmasini bekleriz. Bunun yaninda bunun olmasini sart kosar ya da tercih ettigimizi belirtiriz.
 
 ```yaml
 apiVersion: v1
