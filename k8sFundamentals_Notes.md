@@ -608,6 +608,36 @@ Diyelim ki elimde 4 tane sunucum var ve bunlardan kubernetes cluster olusturmak 
 - 3. Bu senaryoda pod-a baska bir worker node da deploy edilmis bir pod ile iletisim kurmak istiyor. Ornegin worker2 node uzerindeki pod-c ile. Kurallarda ne demistik podlar birbirleriyle nat (network adress translation) a ihtiyac duymadan birbirleriyle haberlesebilmeli. Peki kural buysa pod-a pod-c ile nat olmadan nasil haberlesecek? Pod-a pod-c ye ulasmak istiyor paketi bridge e teslim etti ancak bridge de pod-c nin ip adresi tanimli degil. Mecburen trafigi ethernet sifir a gonderecek. Ethernet sifir bakacak destination 10.10.20.2 bilmedigi bir adres. Kendi ip adresi blogu disinda, routing tanimli degil. napacak mecburen natlayip router a teslim edecek. Orada da paket kaybi olacak. Cunku router da paketi nereye gonderecegi ile ilgili bir bilgi yok. Bu senaryoda ayri worker nodelarda kosan podlar birbirleriyle haberlesemiyorlar. Bunu cozecek birkac teknoloji var. Mesele vxlan teknolojisini kullanarak 10.10.0.0/16 network unu node larin bagli oldugu 192.168.1.0 network u uzerinde kosacak bir overlay network u olarak tanimlayarak nat a ihtiyac duymadan trafik akisi saglayabiliriz. Ya da podlara 198.162.1.0 networkundan ip verecek sekilde tanim yapip worker node un ethernet sifirlarina bu ip adreslerini de tanimlayip trafigi nat siz route edebiliriz. Bu ve benzeri bizim network altyapimiza uygun olacak bir cozum bulabiliriz. Ancak tum bu cozumleri k8s altinda saglamak neredeyse imkansiz. Bu nedenle k8s kendi icinde bir network cozumu ile gelmez bunun yerine container run timelar veya kubernetes gibi orchestratorlar ortaya ciktiklarinda hepsi bu ve benzeri network sorunlarini adreslemek icin cesitli yontemler denediler ve uyguladilar fakat bir sure sonra bu ayri ayri yontemler belirli bir sure sonra karmasa yaratti. Bu karmasayi cozmek adina Cloud Native Computing Foundation (CNCF) tarafindan tum bu linux container alt yapisinda ip dagitimi bridge tanimlari vxlan tanimlari ve diger ayarlarin standartlarini belirleyebilecek container Container Netork Interface (CNI) denilen bir proje baslatildi. CNI bu container network altyapisinin nasil olmasi gerektigi ile ilgili standartlar yayinladi ve developerlarin bu standarda uygun networking cozumleri olusturabilmesine imkan sagladi. Bu sayede bu standartlara uygun bir sekilde network plugin leri yazilma imkani dogdu. K8s de bu projenin bir tarafi olarak sunu dedi bakin ben k8s de bu pod networkunu kendim cozmeyecegim CNI standardini benimsedim. Siz kubernetes clusterinizda network islerinizi bu standarda uygun olarak yazilmis ve sizin network cozumunuze uygun olacak bir plugin secin. Yani k8s  bu isleri kendi uzerinden atti ve sizin k8s i deploy ettiginiz ortama uygun CNI network plugini secerek tum bu altyapiyi bunun tanimlamasina izin verdi.
 K8s kurulumunda ortamimiza uygun bir CNI plugin i secmemiz sarttir. Kullanabilecegimiz pek cok open source plugin vardir ve hepsinin degisik ozellikleri vardir. Mesela Azure uzerinden yonetilen Aks kullansa idik Azure kendi yazdigi aks plugin ini kullanarak her pod un vnetten direk bir ip adresi almasini saglar ve bu iletisimi bu sekilde cozer. Ya da cisco router lardan olusan bir network altyapisi kullaniyor olsa idik cisco nun aci plugin ini kullanip bunun bu isi halletmesini saglayabilirdik. Tum bu cni plugin dunyasi ortama uygun olarak secilmelidir. Bunlarin 2 tanesi on plana cikti. Manuel kurulan k8s clusterlarda genelde bu iki plugn kuruluyor. Birincisi flaner ve network policy gibi destek sunmasi ile de one cikan calico dur. k8s kurulumunu tamamladiktan sonra cni plugin ini de yukleyerek k8s in network yonetimini bu plug ine devretmesini saglayabiliyoruz. Ornegin biz bu ortamda calico cni plugin yuklersek podlarin ip adresinin atanmasi, ip table kurallarinin duzenlenmesi ve node lar arasinda bu cidr blogunun nasil calismasi icin overlay tanimlarinin yapilarak vxlan interfacelarinin olusturulmasi dahil tum gorevler calico tarafindan hallediliyor. k8s de bir pod olusturdugunuz zaman scheduler bunun calisacagi node u secer ve kubelet burada devreye girerek podu olusturur. Pod icin atanacak ip adresinin belirlenmesi, bunun poda atanmasi ve altyapida ayarlanmasi gereken tum islemlerin halledilmesi ise calico tarafindan saglanir. Boylece pod lar farkli node larda olsalar bile birbirleriyle nat olmadan haberlesebilirler. k8s de podlarin birbirleri ile ve dis dunyay ile haberlesmeleri yani ingress trafigi bu sekilde gerceklesiyor.
 
+
+// ip link eth0 in mac adresini goster
+ip link show <eth0>
+
+// ip adresinden node cni yi tespit et
+ip a | grep -i <10.59.250.12>
+
+// ip range show
+ip addr show <weave>
+
+// node mac adres
+arp <node01>
+
+// ping google from the master node
+ip route show default
+
+// network plugin path
+/opt/cni/bin
+
+// network ip range
+apt update
+apt install ipcalc
+ip a | grep eth0
+
+// ip range for pod
+kubectl logs <weave-pod-name> weave -n kube-system
+
+// IP Range configured for the services within the cluster
+cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep cluster-ip-range
+
 ## service
 Bir dizi pod uzerinde calisan bir uygulamayi ag hizmeti olarak gostermenin soyut bir yolu.
 Bir web sitesi olusturacagimizi hayal edelim. Insanlar bu web sitesine baglanacak ve resim yukleyecek. Yukledikleri resimlere bir filtre ekleyecegiz ve geri dondurecegiz. Biz bu uygulamayi 2 ayri servis olarak tasarladik. Birinci servis frontend adinda olacak ve kullanicilar buraya baglanacak. Bu kismi javascript ile yazdik. 2. kisim ise bu frontend in baglanarak resimleri gonderdigi ve bu resimlere filtre ekleyen yazilim olacak. Bunu da .net de yazdik. Her iki kismi da container image lari haline getirdik, artik k8s uzerinde bunu deploy edebiliriz. 2 tane deployment yaml dosyasi olusturduk ve bu frontend ve backend katmanlarini 3'er pod olacak seklinde k8s uzerinde deploy ettik, senaryomuz bu. Simdi bu senaryonun erisim kismini inceleyelim. Ilk olarak bu 3 frontend poduna benim bir sekilde dis dunyadan baglanilmasini saglamam gerekiyor. Cozmemiz gereken ilk sorun bu. Benim bu podlara dis dunyadan bir sekilde erisim saglamam lazim. Bu sorunu  bir sekilde cozduk diyelim. Kullanicilar bu podlardan birine baglandi ve resmi yukledi. Benim bu forntend uygulamamin resmi islemesi icin backend podlardan birisi ile iletisim kurmasi ve resmi ona gondermesi gerekiyor. Bu kisim sanki daha kolay gibi. Sonucta k8s uzerinden her podun essiz bir ip adresi var ve her pod birbiri ile sikintisiz haberlesebiliyor. Fakat simdi soyle bir sikinti var. 3 frontend pod u deploy edecek sekilde bir deployment objesi olusturdum ve o da 3 pod olusturdu. Ayni sekilde 3 backend podu olusturacak deployment objesi de olusturdum. Benim frontend podlarim backend podlarim ile network uzerinden iletisim kurmalari gerekiyor. Frontend e bir resim yuklendigi zaman bu frontend pod herhangi bir backend pod ile iletisim kurarak ona resmi yollayacak o da isleyip geri yollayacak. Bunun olmasi icin frontend lerin backend podlara nasil ulasabilecegini bilmeleri gerekir. Kisacasi onlarin ip adreslerini bilmeleri lazim. Ben bu sorunu cozmek adina oncelikle tum backend pod larinin ip adreslerini listeledim sonra frontend podlarima tek tek baglandim ve iletisim kumalari gereken ip adreslerini yazilima ekledim ve bu sayade frontendler backendlere erisebildi sorunu simdilik cozdum. Ama simdi soyle bir sikinti var. Bildiginiz gibi k8s cesitli durumlarda bu podlari bu sistemlerden kaldirip yeniden olusturabilir. Ornegin node lardan biri bir sikinti cikardi ve node devre disi kaldi. Backend deployment objesi bu durumu tespit etti ve devre disi kalan node lar uzerinde kalan podlari saglikli node lar uzerinde yeniden olusturdu. Yeniden olusan podlar da yeni ip adresleri aldi. Simdi benim tekrardan frontend lere baglanarak yazilim icerisinde bu ip adreslerini guncellemem gerekecek ve isin kotu tarafi su ki bu durum k8s uzerinde surekli olabilir. Surekli pod silinerek yeniden yaratilabilir. Ya da diyelim ben bu backend deploymenti scale ettim. Artik 4 pod calisiyor bunu da eklemem gerekebilir. Goruldugu gibi benim bu senaryoda cok islem yapmam gerekiyor. Neyse ki bu mekanizmayi cozebilecek bir mekanizma k8s de mevcut.
@@ -638,6 +668,13 @@ spec:
 ```
 
 Deployment olustururken bu obje bir replicaset olusturuyordu ve bu replicasetler podlari olusturuyordu. Burada da servis objesi olusturulurken servis objesi endpoint adinda bir obje olusturur ve bu endpoint objesi bizim belirledigimiz selector tarafindan secilen podlarin IP adreslerini uzerinde barindirir ve servis trafigini nereye yonlendirecegini bu listeye gore duzenler. Podlar silinip yeniden baslatildiginda bu liste otomatik olarak guncelleniyor.
+
+## Network Policies
+Herhangir network policy yaratmadi iseniz
+1. Her pod diger her pod ile konusabilir
+2. Her pod diger dis dunya ile konusabilir.
+3. Herkes disardan ingress ile ya da loadbalancer ile bu podlara erisebilir.
+Bu davranisi kisitlamak icin network policy lere ihtiyac duyariz
 
 ## livenessprobe
 Kubelet, bir containerin ne zaman yeniden baslatilacagi bilmek icin liveness probe kullanir. Ornegin, liveless probe, bir uygulamanin calistigi ancak ilerleme saglayamadigi bir kilitlenmeyi yakalayabilir. Boyle bir durumda bir container'i yeniden baslatmak, hatalara ragmen uygulamayi daha kullanilabilir hale getirmeye yardimci olabilir.
@@ -1859,10 +1896,10 @@ Chartin uzerinden bir release olusturmak istedigimizde default olarak kurar. Baz
 Helm ile upgrade ler ya da begenmezsek rollback ler yapabiliyorum. Bu helmin en guclu yonlerinden bir tanesi. 
 
 # OS Upgrade
-// pod olmadiginda yeniden baslatmak eger deployment varsa options kullanmali
+// pod olmadiginda yeniden baslatmak eger deployment varsa options kullanmali-uunschedule eder ve tum podlari siler
 `kubectl drain <node-name> --ignore-daemonsets`
 
-// node-02 unschedule et ancak icindeki uygulamalara zarar verme
+// node-02 unschedule et ancak icindeki uygulamalara zarar verme - unschedule eder ama podlari silmez
 `kubectl cordon <node-name>`
 
 // node-01 i schedulable hale getirmek
