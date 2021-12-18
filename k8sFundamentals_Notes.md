@@ -1,53 +1,53 @@
 # KUBERNETES
 
-- Konteyner orkestreysin aracidir.
+- Konteyner orchestrate aracidir.
 
 - Modullerden olusuyor
 - Declerative metod kullaniyor
 - Automation (Current state i surekli gozluyor ve current state i desired state de tutmaya calisiyor)
 
-# KUBERNETES YONETIM KOMPONENTLERI
-***
+# Kubernete Yonetim Components
 
 ## Control Plane-Master Node
 
-Control-plane yani yonetim kismi master node uzerinde calisir. Bu componentlerin hepsi tek bir linux isletim sistemine kurulabilecegi gibi highly availibility icin birden fazla sisteme de kurulabilir. Etcd tamamen bu yapidan ayri bir sekilde konuslandirilarak daha yuksek bir erisim saglanabilir iken ama genellikle etcd de api-server in kostugu yerde durur. Ornegin 3 sunucu uzerinde 3 api-server kurulup diger componentler bu sistemlere dagitilabilir. Bu uzerinde control-plane componentlerinin kostugu sistemlere cluster altinda master node deriz. Master nodelar sadece bu sistemleri barindirmak icin bulunur ve production ortaminda herhangi bir is yukumuzu bu sistemler uzerinde calistirmayiz. Bunlarda sadece cluster in yonetim altyapisini kostururuz. Is yuklerimiz ise worker nodelar uzerinde calistirilir. Bunlar uzerinde bir container run time barindiran ve clustera dahil edilmis sistemlerdir. 
+`Controlplane` yani yonetim kismi master node uzerinde calisir. Bu componentlerin hepsi tek bir linux isletim sistemine kurulabilecegi gibi highly availibility icin birden fazla sisteme de kurulabilir. `Etcd` tamamen bu yapidan ayri bir sekilde konuslandirilarak daha yuksek bir erisim saglanabilir iken ama genellikle `etcd` de api-server in kostugu yerde durur. Ornegin 3 sunucu uzerinde 3 `api-server` kurulup diger componentler bu sistemlere dagitilabilir. Bu uzerinde control-plane componentlerinin kostugu sistemlere cluster altinda master node deriz. Master nodelar sadece bu sistemleri barindirmak icin bulunur ve production ortaminda herhangi bir is yukumuzu bu sistemler uzerinde calistirmayiz. Bunlarda sadece cluster in yonetim altyapisini kostururuz. Is yuklerimiz ise worker nodelar uzerinde calistirilir. Bunlar uzerinde bir container run time barindiran ve clustera dahil edilmis sistemlerdir. 
 
 ###  1. Kube-apiserver: Resepsiyon ornegi
-Kube-apiserver, Kubernetes API'ini ortaya cikaran Kubernetes control plane'in en oneli bileseni ve giris noktasidir. Tum diger komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Kubernetes ile alaki tum komponentlerin ve dis dunyadan kubernetes platformu ile iletisim kuran tum servislerin ortak giris noktasidir. API server tum komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Tum iletisim api server uzerinden gerceklestirilir. Kube-apiserver k8s de kaynak olusturma islemlerinde API dogrulamasindan sorumludur. Kullanicilar kubectl komut satiri istemcisi veya rest-api cagrilari araciligiyla api-server ile iletisim kurabilirler. Kisacasi disaridan istek gerceklestirmek icin api-server a ulasir authantication ve authorization islemlerini gercektlestirir ve kubernetese ulasirsiniz. Diger tum komponenetler de isteklerini api server uzerinden gerceklestirir.
+Kube-apiserver, Kubernetes API'ini ortaya cikaran Kubernetes `control plane`in en oneli bileseni ve giris noktasidir. Tum diger komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Kubernetes ile alaki tum komponentlerin ve dis dunyadan kubernetes platformu ile iletisim kuran tum servislerin ortak giris noktasidir. API server tum komponent ve node bilesenlerinin direk iletisim kurabildigi tek komponenttir. Tum iletisim api server uzerinden gerceklestirilir. Kube-apiserver k8s de kaynak olusturma islemlerinde API dogrulamasindan sorumludur. Kullanicilar kubectl komut satiri istemcisi veya rest-api cagrilari araciligiyla api-server ile iletisim kurabilirler. Kisacasi disaridan istek gerceklestirmek icin api-server a ulasir `authantication` ve `authorization` islemlerini gercektlestirir ve kubernetese ulasirsiniz. Diger tum komponenetler de isteklerini api server uzerinden gerceklestirir.
 
 ### 2. Etcd: Pano
-Tum cluster verisi metadata bilgileri ve k8s de olusturulan tum objelerin bilgilerinin tutuldugu anahtar-deger “key-value” veri deposudur. Clusterin mevcut durumu ile ilgili bilgiyi uzerinde barindirir. Kisacasi k8s in calismasi icin ihtiyac duyulan tum bilgiler etcd uzerinde tutulur. Api-server haric baska hicbir komponent etcd ile dogrudan haberlesemezler. Etcd ile iletisim kurmak istediklerinde bunu api-vserver uzerinden gerceklestirirler. 
+Tum cluster verisi metadata bilgileri ve k8s de olusturulan tum objelerin bilgilerinin tutuldugu anahtar-deger `key-value` veri deposudur. Clusterin mevcut durumu ile ilgili bilgiyi uzerinde barindirir. Kisacasi k8s in calismasi icin ihtiyac duyulan tum bilgiler etcd uzerinde tutulur. Api-server haric baska hicbir komponent etcd ile dogrudan haberlesemezler. Etcd ile iletisim kurmak istediklerinde bunu api-vserver uzerinden gerceklestirirler. 
 
-### 3. Kube-scheduler: uretim planlama
-Yaratilmak istenen podlarin gereksinimlerini kontrol ederek o podun en uygun calisacagi worker node un hangisi oldugunu tespit eder ve o podun burada olusturulmasini saglar. Podun ozel gereksinimlerini isteklerini, cpu gibi cesitli parametreleri elinde bulundurarak degerlendirir ve pod icin en uygun node un hangisi olduguna karar verir. 
+### 3. Kube-scheduler: Uretim planlama
+Yaratilmak istenen podlarin gereksinimlerini kontrol ederek o podun en uygun calisacagi worker node un hangisi oldugunu tespit eder ve o podun burada olusturulmasini saglar. Podun ozel gereksinimlerini isteklerini, `cpu` gibi cesitli parametreleri elinde bulundurarak degerlendirir ve pod icin en uygun node un hangisi olduguna karar verir. 
 
-### 4. Kube-controller-manager: vardiya amiri
-Tek bir binary olarak bulunsa da icinden birden fazla kontroller bulundurur. K8s mevcut durumu istenilen durumla mevcut durum arasindaki karsilastirmada uygulama yonetimi saglar. Kube-controller altindaki controller managerlar k8s den istenilen durumla mevcut durum arasinda fark olup olmadigi gozlerler. Kube-api araciligiyla etcd de saklanan cluster durumunu inceler ve eger mevcut durum ile istenilen durum arasinda fark varsa iste bu farki olusturan kaynaklari gerektigi gibi olustururak, guncelleyerek veya silerek bu durumu esitler. Ornegin siz k8s e uygulamanizin 3 pod olarak calismanizi bildirdiniz. K8s de bunu gerceklestirdi ve uygulamanizin kostugu 3 pod calismaya basladi ama sonra bir tanesi silindi iste controller-manager bu podun yeniden olusturulmasini saglar. 
+### 4. Kube-controller-manager: Vardiya amiri
+Tek bir binary olarak bulunsa da icinden birden fazla controler bulundurur. K8s mevcut durumu istenilen durumla mevcut durum arasindaki karsilastirmada uygulama yonetimi saglar. Kube-controller altindaki controller managerlar k8s den istenilen durumla mevcut durum arasinda fark olup olmadigi gozlerler. Kube-api araciligiyla etcd de saklanan cluster durumunu inceler ve eger mevcut durum ile istenilen durum arasinda fark varsa iste bu farki olusturan kaynaklari gerektigi gibi olusturarak, guncelleyerek veya silerek bu durumu esitler. Ornegin siz k8s e uygulamanizin 3 pod olarak calismanizi bildirdiniz. K8s de bunu gerceklestirdi ve uygulamanizin kostugu 3 pod calismaya basladi ama sonra bir tanesi silindi iste controller-manager bu podun yeniden olusturulmasini saglar. 
 
-## WORKER NODE
+## Worker Node
 ***
-Her worker node da 3 temel component bulunur. Ilk ve en onemli component containerlarin calismasini saglayacak bir container run time dir. Default olarak bu docker dir ancak k8s docker container run time destegini birakarak bazen containerd ye gecmistir.
+Her worker node da 3 temel component bulunur. Ilk ve en onemli component containerlarin calismasini saglayacak bir `container run time` dir. Default olarak bu docker dir ancak k8s docker container run time destegini birakarak artik `containerd` ye gecmistir.
 
-### 1. Kubelet: ustabasi
-Her worker node'da bulunur. Kubelet api-server araciligiyla etcd yi kontrol eder. Scheduler tarafindan bulundugu node uzerinde calismasi gereken bir pod belirtildi ise kubelet bu podu o sistemde yaratir. Conatinerd ye haber gonderir ve belirlenen ozelliklerde bir container in o sistemde calismasini saglar.
+### 1. Kubelet: Ustabasi
+Her worker node'da bulunur. `Kubelet` api-server araciligiyla etcd yi kontrol eder. Scheduler tarafindan bulundugu node uzerinde calismasi gereken bir pod belirtildi ise kubelet bu podu o sistemde yaratir. Conatinerd ye haber gonderir ve belirlenen ozelliklerde bir container in o sistemde calismasini saglar.
 
-### 2. Kube-proxy: lojistik elemani
-Her worker node da calisir. Olusturulan podlarin tcp, udp ve etcdp trafik akislarini yonetir, ag kurallarini yonetir. Kisaca network proxy gorevi gorur.
+### 2. Kube-proxy: Lojistik elemani
+Her worker node da calisir. Olusturulan podlarin tcp, udp ve etcdp trafik akislarini yonetir, ag kurallarini yonetir. Kisaca `network proxy` gorevi gorur.
 Bunlarin disinda DNS ya da gui hizmeti saglayan cesitli servisler entegre edilebilen servislerdir fakat bunlar core componentler olarak adlandirilmaz.
 
-# Kubectl Kurulumu
-***
-Kubernetes e komut vermek icin bunu API-server uzerinden yapiyoruz. 
-Bunun 3 yontemi var. 
+# Kubectl Installiation
 
-- ### **Rest cagrilari:**
+Kubernetes e komut vermek icin bunu API-server uzerinden yapiyoruz. 
+
+Bunun 3 yontemi var. 
+1. Rest cagrilari:
 Uygulamalarin ya da scriptlerin icinde kullanilir.
-- ### **Gui istemcileri:**
+2. Gui istemcileri:
 Grafiksel arayuz ile iletisim kurmak. Resmi gui araci dashboard, oktant, land en bilinen araclardir. Gui istemciler en temel araclar degildir. 
-- ### **Kubectl:**
+3. Kubectl:
 Shell uzerinden apiserver a komutlar gonderdigimiz k8s in resmi cli aracidir. k8s cluster olusturulmadan once ilk olarak kubectl yuklenmesi gerekir.
-- #### Kubectl kurulum
+
+## Kubectl kurulum
 Linux icin oncelikle ```brew``` kurulumu
 Sonrasinda ```brew install kubectl`` ile kubectl kurulumu tamamlaniyor
 
@@ -55,91 +55,55 @@ Sonrasinda ```brew install kubectl`` ile kubectl kurulumu tamamlaniyor
 - kubectl araci baglanacagi kubernetes cluster bilgilerine config dosyalari araciligiyla erisir.
 - config dosyasinin icerisinde kubernetes cluster baglanti bilgilerini ve oraya baglanirken kullanmak istedigimiz kullanicilari belirtiriz.
 - Daha sonra bu baglanti bilgileri ve kullanicilari ve ek olarak namespace bilgilerini de olusturarak contextler yaratiriz.
-- kubectl varsayilan olarak $HOME/.kube/ altindaki config isimli dosyaya bakar.
-- kubectl varsayilan olarak $HOME/.kube/ altindaki config dosyasina bakar ama bunu KUBECONFIG environment variable degerini degistirerek guncelleyerebilirsiniz.
+- kubectl varsayilan olarak `$HOME/.kube/` altindaki config isimli dosyaya bakar ama bunu `KUBECONFIG` environment variable degerini degistirerek guncelleyerebilirsiniz.
 -  Context kismi kubeconfig dosyasindaki baglanmask istedigimiz cluster a hangi user ile baglanacagimizi ve hangi namespace e erisecegimizi contextler yaratarak belirleriz. Kullanici ile serverlarin birlestirildigi bir kisimdir context.
 
-### kubectl komutlari
-kubectl config dosyası ```$HOME/.kube/``` konumunda bulunan ```config``` isimli dosyadır.
+## Kubectl komutlari
+kubectl config dosyası `$HOME/.kube/` konumunda bulunan `config` isimli dosyadır.
 
-Ör: Linux ve Mac ```/home/ozgurozturknet/.kube/config``` | Windows ```C:\Users\ozgur\.kube\config```
-***
+Linux ve Mac `/home/serdem/.kube/config` | Windows `C:\Users\serdem\.kube\config`
 
 Mevcut kubectl client ve Kubernetes cluster versiyonlarını görmek için:
-```
-$ kubectl version
-```
-***
+`kubectl version`
+
 Config dosyasında tanımlı context'leri listeleme:
-```
-kubectl config get-contexts
-```
-***
+`kubectl config get-contexts`
+
 Seçili durumdaki context'i gösterme.
-```
-$ kubectl config current-context
-```
-***
+`kubectl config current-context`
+
 config dosyasında tanımlı contextlerden bir tanesini geçerli context olarak atama. 
-```
-$ kubectl config use-context "context_ismi"
-```
-***
+`kubectl config use-context "context_ismi"`
+
 Geçerli context'de tanımlı Kubernetes cluster hakkında bilgi edinme.
-```
-$ kubectl cluster-info
-```
-***
+`kubectl cluster-info`
+
 Varsayılan namespace'de bulunan objeleri listeleme
-```
-$ kubectl get "obje_tipi"
+`kubectl get "obje_tipi"` | `kubectl get pods`
 
-Ör: kubectl get pods
-```
-***
 Varsayılan namespace'de bulunan tek bir objenin özelliklerini listeleme
-```
-$ kubectl get "obje_tipi" "obje_ismi"
-
-Ör: kubectl get pods testpod
-```
-***
+`kubectl get "obje_tipi" "obje_ismi"` | `kubectl get pods testpod`
 
 Varsayılan dışında başka bir namespace'de bulunan objeleri listeleme (_-n "namespace_adi" ekiyle komutların belirtilen namespace üstünde çalıştırılması sağlanmaktadır_)
-```
-$ kubectl get "obje_tipi" -n "namespace_adi"
+`kubectl get "obje_tipi" -n "namespace_adi"` | `kubectl get pods -n kube-system`
 
-Ör: kubectl get pods -n kube-system
-```
-***
 Tüm namespace'lerde bulunan objeleri listeleme (_--all-namespaces ya da kısaca -A eki komutun tüm namespace'leri kapsamasını sağlar_)
-```
-$ kubectl get "obje_ismi" --all-namespaces
+`kubectl get "obje_ismi" --all-namespaces` | `kubectl get pods --all-namespaces`
 
-Ör: kubectl get pods --all-namespaces
-```
-***
 kubectl komutlarının geri döndürdüğü çıktı kısıtlı bilgiler içerir ve plain-text olarak döner. **-o** opsiyonuyla bu çıktı belirtilen başka bir formatta döndürülebilir. Örneğin **-o yaml** opsiyonu çıktının yaml formatında döndürülmesini sağlar. Kullanılabilecek opsiyonlar:
-- ```-o yaml``` Yaml formatında çıktı döndürür.
-- ```-o json``` Json formatinda çıktı döndürür.
-- ```-o wide``` Plain-text fakat daha çok bilgi içerir.
-- ```-o jsonpath=<template>``` Jsonpath ifadesinde tanımlanan alanları döndürür.
-- ```-o name``` Sadece isimleri döndürür. 
-- ```-o custom-columns=<spec>``` Comma-seperated olarak belirtilen kolonlardan bir table döndürür. 
-```
-$ kubectl get "obje_tipi" "obje_ismi" -o "opsiyon_ismi"
+- `-o yaml` Yaml formatında çıktı döndürür.
+- `-o json` Json formatinda çıktı döndürür.
+- `-o wide` Plain-text fakat daha çok bilgi içerir.
+- `-o jsonpath=<template>` Jsonpath ifadesinde tanımlanan alanları döndürür.
+- `-o name` Sadece isimleri döndürür. 
+- `-o custom-columns=<spec>` Comma-seperated olarak belirtilen kolonlardan bir table döndürür. 
+  
+`kubectl get "obje_tipi" "obje_ismi" -o "opsiyon_ismi"` | `kubectl get pods -o wide`
 
-Ör: kubectl get pods -o wide
-```
-***
 Kubernetes obje tipleriyle ilgili detaylı bilgi edinmek..
-```
-$ kubectl explain "obje_tipi"
+`kubectl explain "obje_tipi"` | `kubectl explain pods`
 
-Ör: kubectl explain pods
-```
-
-# Kubeadm ile Cluster Kurulumu
+# Kubeadm ile Kubernetes Cluster Kurulumu
 
 ## kubeadm kurulum
 
@@ -240,106 +204,53 @@ $ kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.ya
 ```
 
 # Pod
-***
+
 - Kubernetes icinde yaratilan en temel objedir.
-- Kubernetesde olusturabileceginiz en kucuk birimlerdir.
-- Podlar bir yada daha fazla container barindirabilirler ancak cogu durumda pod tek bir container barindirir.
-- Her bir pod un essiz bir id si "uid" bulunur
+- Kubernetesde olusturabileceginiz en kucuk birimdir.
+- Podlar bir yada daha fazla container barindirabilir ancak cogu durumda pod tek bir container barindirir.
+- Her bir pod un essiz bir id si `uid` bulunur
 - Her pod essiz bir ip adresine sahiptir.
-- Ayni pod icersindeki containerlar ayni node ustunde calistirilir ve bu containerlar birbirleriyle localhost ustunden haberlesebilirler.
-- Kubectl ile kube-api ile haberleserek k8s uzerinde pod yaratma islemi gerceklestirilir. Api-server bu poda bizim tanimladigimiz bilgileri atar ve bir pod yaratir ve etcd veri tabanina kaydedilir. Kube-scheduler componenti surekli burayi gozler ve herhangi bir worker node uzerinde atamasi yapilmamis pod tanimi yapilmamissa o podun calismasi icin uygun bir worker node secer ve bu bilgiyi pod tanimina ekler. Sonrasinda worker node uzerinde calisan kubelet servisi de bu etcd yi surekli gozledigi icin bu pod tanimini gorur ve bu tanimda belirtilen container o worker node uzerinde olusturulur ve boylece pod olusturulma asamalari tamamlanir.
+- Ayni pod icersindeki containerlar ayni node ustunde calistirilir ve bu containerlar birbirleriyle `localhost` ustunden haberlesebilirler.
+- Kubectl ile kube-api ile haberleserek k8s uzerinde pod yaratma islemi gerceklestirilir. Api-server bu poda bizim tanimladigimiz bilgileri atar ve bir pod yaratir ve etcd veri tabanina kaydedilir. `Kube-scheduler` componenti surekli burayi gozler ve herhangi bir worker node uzerinde atamasi yapilmamis pod tanimi yapilmamissa o podun calismasi icin uygun bir worker node secer ve bu bilgiyi pod tanimina ekler. Sonrasinda worker node uzerinde calisan `kubelet` servisi de bu etcd yi surekli gozledigi icin bu pod tanimini gorur ve bu tanimda belirtilen container o worker node uzerinde olusturulur ve boylece pod olusturulma asamalari tamamlanir.
 
 // Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run)
-
-`kubectl run nginx --image=nginx --dry-run=client -o yaml`
+| `kubectl run nginx --image=nginx --dry-run=client -o yaml`
 
 Imperative yöntemle pod oluşturma.
+`kubectl run "pod_ismi" --image="image_ismi" --restart=Never` | `kubectl run firstpod --image=nginx --restart=Never`
 
-```
-$ kubectl run "pod_ismi" --image="image_ismi" --restart=Never
-
-Ör: kubectl run firstpod --image=nginx --restart=Never
-```
-***
 Bir objenin ayrıntılı özelliklerini görmek. 
-```
-$ kubectl describe "obje_tipi" "obje_ismi"
+`kubectl describe "obje_tipi" "obje_ismi"` | `kubectl describe pods firstpod`
 
-Ör: kubectl describe pods firstpod
-```
-***
 Bir pod objesinin loglarını görüntüleme. _(-f opsiyonu çıktıya yapışmanızı ve anlık olarak üretilen logları görmenizi sağlar)_
-```
-$ kubectl logs "pod_ismi"
+`kubectl logs "pod_ismi"` | `kubectl logs firstpod` | `kubectl logs -f firstpod`
 
-Ör: kubectl logs firstpod
-Ör: kubectl logs -f firstpod
-```
-***
 Pod'da komut çalıştırma. _(Eğer pod içerisinde birden fazla container varsa **-c "container_ismi"** opsiyonu ile komutun çalıştırılması istenilen container belirtilebilir)_
-```
-$ kubectl exec "pod_ismi" -- "komut"
+`kubectl exec "pod_ismi" -- "komut"` | `kubectl exec firstpod -- printenv` | `kubectl exec firstpod -c container1 --printenv` 
 
-Ör: kubectl exec firstpod -- printenv
-Ör: kubectl exec firstpod -c container1 --printenv
-```
-***
 Pod'a shell bağlantısı oluşturma. _(Eğer pod içerisinde birden fazla container varsa **-c "container_ismi"** opsiyonu ile komutun çalıştırılması istenilen container belirtilebilir)_
-```
-$ kubectl exec -it "pod_ismi" -- "shell_konumu-yada-komutu"
+`kubectl exec -it "pod_ismi" -- "shell_konumu-yada-komutu"` | `kubectl exec -it firstpod -- /bin/sh` | `kubectl exec -it firstpod -c container1 -- /bin/sh` 
 
-Ör: kubectl exec -it firstpod -- /bin/sh
-Ör: kubectl exec -it firstpod -c container1 -- /bin/sh
-```
-***
 Bir Kubernetes objesini silme. 
-```
-$ kubectl delete "obje_tipi" "obje_ismi"
+`kubectl delete "obje_tipi" "obje_ismi"` | `kubectl delete pods firstpod`
 
-Ör: kubectl delete pods firstpod
-```
-***
 Json ya da Yaml formatında hazırlanmış bir konfigurasyon dosyası aracılığıyla yeni obje oluşturma. 
-```
-$ kubectl apply -f "dosya_yolu/dosya_ismi"
+`kubectl apply -f "dosya_yolu/dosya_ismi"` | `kubectl apply -f ./pod1.yaml`
 
-Ör: kubectl apply -f ./pod1.yaml
-```
-***
 Oluşturulan objeyi dosya kullanarak silme
-```
-$ kubectl delete -f "dosya_yolu/dosya_ismi"
+`kubectl delete -f "dosya_yolu/dosya_ismi"` | `kubectl delete -f ./pod1.yaml`
 
-Ör: kubectl delete -f ./pod1.yaml
-```
-***
 Label ve port konfigurasyonlarını da ekleyerek bir pod oluşturma. 
-```
-$ kubectl run "pod_ismi" --image="image_ismi" --port="port_numarası" --labels"anahtar:değer_eşlenikleri" --restart=Never
+`kubectl run "pod_ismi" --image="image_ismi" --port="port_numarası" --labels"anahtar:değer_eşlenikleri" --restart=Never` | `kubectl run secondpod --image=nginx --port=80 --labels="app=front-end,team=developer" --restart=Never`
 
-Ör: kubectl run secondpod --image=nginx --port=80 --labels="app=front-end,team=developer" --restart=Never
-```
-***
 Cluster'da bulunan bir Kubernetes objesini varsayılan text editörü ile açarak özelliklerini güncelleme. 
-```
-$ kubectl edit "obje_tipi" "obje_ismi"
+`kubectl edit "obje_tipi" "obje_ismi"` | `kubectl edit pods firstpod`
 
-Ör: kubectl edit pods firstpod
-```
-***
 kubectl komutları sonucu oluşan çıktıyı tek seferlik görmek yerine değişiklikleri izleyebilme imkanına **-w** opsiyonu ile kavuşuruz _(linux dünyasındaki **watch** komutunun yaptığı işin bir benzerini **-w** opsiyonu sağlar)_
-```
-$ kubectl "komut" -w
+`kubectl "komut" -w` | `kubectl get pods -w`
 
-Ör: kubectl get pods -w
-```
-***
 kubectl'in çalıştırıldığı bilgisayar üzerinden cluster'da bulunan bir objeye tünel açılarak bağlantı kontrolü yapılması "detaylarına network konusunda geleceğiz"
-```
-$ kubectl port-forward "obje_tipi"/"obje_ismi" "local_port":"hedef_port"
-
-Ör: kubectl port-forward pod/multicontainer 8080:80
-```
+`kubectl port-forward "obje_tipi"/"obje_ismi" "local_port":"hedef_port"` | `kubectl port-forward pod/multicontainer 8080:80`
 
 ```yaml
 apiVersion: v1 # obje tipinin hangi API de tanimlandigi (her objenin belli bir API i var ve bunu bilerek buraya yazmak gerekiyor) Nasil bilebiliriz? dokumantasyondan veya explain ile
@@ -356,42 +267,49 @@ spec: # objenin ozellikleri (her objeye gore farklilasir)
     - containerPort: 80
 ```
 
-
 ## Pod Yasam Dongusu
-### pending
+1. Pending:
 Pod yaratmak icin gonderilen yaml dosyasi kube-api tarafindan alinir ve varsayilan ayarlari da ekleyerek poda bir unique id atar ve tum bunlari etcd ye kaydeder. Bu asamadan sonra pod olusturulmustur ve bu asamadan sonra pending asamasina gecer. 
 Eger bir podun statusu pending durumunda ise bunun anlami sudur: birisi bir pod olusturdu podla ilgili tanimlar yapildi ve veri tabanina kaydedildi ama pod herhangi bir node uzerinde olusturulmadi. 
 
-### creating
-Kube-scheduler api-server araciligiyla surekli etcd yi gozler. Eger burada yeni yaratilmis ve herhangi bir node atamasi yapilmamis bir pod gorurse calismaya baslar. Algoritmasi ve secme kriterlerine gore podun calismasinin en uygun olacagi node u secer ve veri tabanindaki pod objesine node bilgisini ekler. Bu noktadan itibaren pod yasam dongusunde creating asamasina gecer. Eger bir pod creating asamasina gecemiyorsa bu kube-scheduler in uygun bir node bulamadigi anlamina gelir. Bunun pek cok nedeni olabilir: cluster da bu podun gereksinimlerini karsilayabilecek uygun bir node bulunmuyor olabilir veya nodelar uzerinde cpu ve memory gibi kaynaklar tukenmis olabilir. 
+2. Creating:
+Kube-scheduler api-server araciligiyla surekli etcd yi gozler. Eger burada yeni yaratilmis ve herhangi bir node atamasi yapilmamis bir pod gorurse calismaya baslar. Algoritmasi ve secme kriterlerine gore podun calismasinin en uygun olacagi node u secer ve veri tabanindaki pod objesine node bilgisini ekler. Bu noktadan itibaren pod yasam dongusunde creating asamasina gecer. _Eger bir pod creating asamasina gecemiyorsa bu kube-scheduler in uygun bir node bulamadigi_ anlamina gelir. Bunun pek cok nedeni olabilir: cluster da bu podun gereksinimlerini karsilayabilecek uygun bir node bulunmuyor olabilir veya nodelar uzerinde `cpu` ve `memory` gibi kaynaklar tukenmis olabilir. 
 
-### ImagePullBackOff
+3. ImagePullBackOff:
 Clusterdaki tum nodelar uzerinde kubelet adli bir servis calisir. Bu servis ayni kube-scheduler gibi surekli etcd veri tabanini gozler ve bulundugu node a atanmis podlari tespit eder ve hemen islemlere baslar. Ilk olarak pod taniminda olusturulacak containerlara bakar ve bu containerlarda olusturulacak image lari sisteme indirmeye baslar. Eger bir sekilde image indirilemezse oncelikle pod erimagepull ve ardindan da imagepullbackoff asamasina gecer. Eger podun statusunda `imagepullbackoff` gorurseniz bu node un image i repository den cekemedigi ve bunu tekrar tekrar denemeye devam ettigi anlamina gelir. Bunun birkac nedeni olabilir: en sik karsilasilan neden pod tanimlanmasinda image isminin yanlis yazilmasidir. Image ismi yanlis yazildigi icin image cekilemeyecektir ya da image i cekmek icin sisteme kaydolmak gerektigi ve bu authentication islemlerinde hata yapilmasidir. Bu nedenle image cekilemeyecektir. Bu gibi bir hata olmamasi durumda ise diger asamaya gecer.
 
-### Runnig
+4. Runnig:
 Islemlerin sorunsuz bir sekilde ilerlemesi halinde kubelet node da bulunan container engine ile haberlesir ve ilgili containerlarin olusturulmasini saglar ve containerler running durumuna gecer. Bu noktadan itibaren artik pod olusturulmus olur.
 
-**- Containerlarla ilgili temel kural:** Container icindeki uygulama calistigi surece container calisir. Uygulama calismayi birakirsa container durdurulur. Uygulamanin da durdurulmasi 3 sekilde olur: 1) isi bittigi icin hata vermeden otomatik olarak kapanir. 2) Kullanicinin istegi uzerine komut gonderilir ve hata vermeden kapanir. 3) hata verir, sikinti cikar, hata kodu olusturarak kapanir. Ornegin nginx image uzerinden bir container yarattigimizi dusunelim. Bu uygulama bir deamon bir servis yani siz onu durdurana ya da hata cikip cokene kadar calismaya devam eder. O calistigi surece de container calismaya devam eder. Fakat diyelim ki siz bir image yarattiniz ve bu image in varsayiln uygulamasi da bir script ya da basit bir komut. Container baslayinca bu script calisiyor isini yapiyor ve isi bitince kapaniyor yani container da kapaniyor yani kapanmasi icin illa ki hata vermeden kapanmasina gerek yok.
-Bu gibi sorunlar nedeni ile containerlar icin restart policy tanimi yapilir. Restart policy 3 adet deger alabilir:
-- **Always:** Default degerdir. Pod un icerindeki container her durumda durdurulursa durdurulsun her sartta yeniden baslat anlamina gelir. 
-- **On-failure:** Sadece hata alip kapanirsa yeniden baslatilir.
-- **Never:** Pod hicbir zaman yeniden baslatilmaz.
+**- Containerlarla ilgili temel kural:** Container icindeki uygulama calistigi surece container calisir. Uygulama calismayi birakirsa container durdurulur. Uygulamanin da durdurulmasi 3 sekilde olur: 
+   1. isi bittigi icin hata vermeden otomatik olarak kapanir. 
+   2. Kullanicinin istegi uzerine komut gonderilir ve hata vermeden kapanir. 
+   3. Hata verir, sikinti cikar, hata kodu olusturarak kapanir. Ornegin nginx image uzerinden bir container yarattigimizi dusunelim. Bu uygulama bir deamon bir servis yani siz onu durdurana ya da hata cikip cokene kadar calismaya devam eder. O calistigi surece de container calismaya devam eder. Fakat diyelim ki siz bir image yarattiniz ve bu image in varsayilan uygulamasi da bir script ya da basit bir komut. Container baslayinca bu script calisiyor isini yapiyor ve isi bitince kapaniyor yani container da kapaniyor yani kapanmasi icin illa ki hata vermeden kapanmasina gerek yok.
+Bu gibi sorunlar nedeni ile containerlar icin restart policy tanimi yapilir. 
 
-### Succeed
+Restart policy 3 adet deger alabilir:
+   1. **Always:** Default degerdir. Pod un icerindeki container her durumda durdurulursa durdurulsun her sartta yeniden baslat anlamina gelir. 
+   2. **On-failure:** Sadece hata alip kapanirsa yeniden baslatilir.
+   3. **Never:** Pod hicbir zaman yeniden baslatilmaz.
+
+
+5. Succeed:
 Podun altindaki containerlar calismaya devam ettikce status running olarak devam eder. Eger containerlarin hepsi hata vermeden dogal olarak kapanirsa ve restart policy never veya onfailure olarak set edildi ise podun statusu succeed statusune gecer ve pod yasam dongusunu tamamlar. Yani bir diger degisle completed, basarili olarak pod un yasam dongusu tamamlanir. 
 
-### Failed
-Never ya da Onfailure olarak policy tanimlandi ve containerlardan biri hata verip kapandi ise bu sefer pod un statusu failed olarak isaretlenir ve yasam dongusunu boyle tamamlar. 
+6. Failed
+`Never` ya da `Onfailure` olarak policy tanimlandi ve containerlardan biri hata verip kapandi ise bu sefer pod un statusu failed olarak isaretlenir ve yasam dongusunu boyle tamamlar. 
 
-- ### CrashLoopBackOff
-Fakat restart policy always olarak set edildi ise pod hicbir zaman succeed ya da failed durumuna gecmez. Bunun yerine podun icerisindeki container yeniden baslatilir ve running state de devam eder. Fakat kubernetes bu yeniden baslatma islemini belirli bir siklikla yapiyorsa bazi seylerin ters gittigine kanaat getirir ve pod u `CrashLoopBackOff` adini verdigimiz bir state e sokar. Bunun anlami sen bir pod olusturdun ama bu pod un icerisindeki container ikide bir kapaniyor buna bir bak. Bu pod da sunlar olur: k8s container in icerisinde birseylerin ters gittigini anlar ve pod un statusunu `crashloopbackoff` a cevirir. Surekli restart etme yerine; restart eder 10 sn bekler eger 10 sn icinde yeniden cokerse 20 sn bekler yeniden cokerse 40 sn bekler sonra 80 sn bekler ve bu durum 5dk lik araliga cikana kadar boyle devam eder ve ondan sonra her 5dk da bir tekrar eder. Bu arada container cokmeyi birakir ve 10dk sure ile sorunsuz bir sekilde calismaya devam ederse. Kubelet container i crashloopbackoff dan cikarir ve running e dondurur. Eger bu olmaz ve siz mudahale etmezseniz bu durum sonsuza kadar boyle devam eder. Ozetle crashloopbackoff mudahaleyi gerektirir ve bakilmasi gerekmektedir. 
+7. CrashLoopBackOff
+Fakat restart policy `always` olarak set edildi ise pod hicbir zaman succeed ya da failed durumuna gecmez. Bunun yerine podun icerisindeki container yeniden baslatilir ve running state de devam eder. Fakat kubernetes bu yeniden baslatma islemini belirli bir siklikla yapiyorsa bazi seylerin ters gittigine kanaat getirir ve pod u `CrashLoopBackOff` adini verdigimiz bir state e sokar. Bunun anlami sen bir pod olusturdun ama bu pod un icerisindeki container ikide bir kapaniyor buna bir bak. Bu pod da sunlar olur: k8s container in icerisinde birseylerin ters gittigini anlar ve pod un statusunu `crashloopbackoff` a cevirir. Surekli restart etme yerine; restart eder 10 sn bekler eger 10 sn icinde yeniden cokerse 20 sn bekler yeniden cokerse 40 sn bekler sonra 80 sn bekler ve bu durum 5dk lik araliga cikana kadar boyle devam eder ve ondan sonra her 5dk da bir tekrar eder. Bu arada container cokmeyi birakir ve 10dk sure ile sorunsuz bir sekilde calismaya devam ederse. Kubelet container i crashloopbackoff dan cikarir ve running e dondurur. Eger bu olmaz ve siz mudahale etmezseniz bu durum sonsuza kadar boyle devam eder. _Ozetle crashloopbackoff mudahaleyi gerektirir ve bakilmasi gerekmektedir._
 
 ## Multicontainer pod (sidecar container)
 Bir frontend ve bir de backend den olusan two tier yani cift katmanli bir uygulama yazdik. Cok populer olan ornegin wordpress uygulamasi. WordPress uygulamasini deploy etmek istedigimizi varsayalim. Bildigimiz uzere wordpress php tabanli bir frontend ve bu uygulamanin verilerinin tutuldugu bir mysql veri tabanina sahip. Bu uygualamyi container haline getirmek istiyorum. Bu uygulamayi icinde mysql ve wordpress halinde calisan tek bir container haline getirebilir miyim? Teknik olarak evet. Fakat bunu yapmiyoruz. Her iki uygulama icin de ayri iki container kullaniyoruz. Bunun iki nedeni var 
   1. container in temel mantigi izolasyon bu iki uygulamayi da ayni container icine koymak bu izolasyondan mahrum olmak demek. 
   2. Iki uygulamayi scale etmek istemeniz durumunda yatay buyume yapamiyorsunuz. 
+
 Bunu soyle dusunun ben 2 sunucudan olusan bir ortam kurdum. Hem wordpress hem de mysql uygulmasini ayni container icine kurdum ve tek bir uygulama olarak calistirmaya basladim. Sayfama yogun bir istek oldugunda wordpress in frontend katmani bu isteklere cevap verememeye basladi ben de yeniden bir container daha olusturarak load balancer arkasina almak ve kaynaklarimi cogaltmak istedim ki bu problemi cozebileyim. Ama bunu yaptigim zaman ortamda 2 frontend 2 tane de mysql veri tabani olacak. Ancak benim veri tabanimda veri sikintisi yoktu. Ikisi de ayni container da oldugu icin bunu coklamam gerektiginde ikisini birden cokladim. Hatta 2. containeri deploy ettikten sonra mysql baglanti ayarlarini degistirdim ve 1. container icindeki mysql e baglanmasi icin ayar yaptim cunku simdiye kadar olusturdugum her sey o veri tabaninda. Bunun 100 container a kadar scale edilen bir ortam oldugunu dusunun. Sirf 2 uygulamayi da ayni container icine gomdugum icin sikintilar yasadim. Bunun yerine bir mysql ve bir de wordpress olmak uzere 2 ayri image yaratsa idim bu sefer 1 tane mysql container yaratilirdi benim de istedigim kadar wordpress scale edebilme imkanim olusurdu. Bu nedenlerden dolayi en onemli best practice bir container icine 1 tane uygulama koymak. 
 Kubernetes icinde ise wordpress icin bir pod mysql icin bir pod olusturulmali. Fakat istersem bir pod icinde birden fazla container da koyabilirim ama bu da bir container icine iki uygulama koymak ile ayni sey cunku k8s de scale ettigimiz sey pod. Her container da tek bir uyguama her pod da bir container. 
+
 *Peki neden kubernetes ayni pod icinde birden fazla container calismasina izin veriyor?* 
 Diyelim ki ben wordpress php uygulamasinin uygulama ici performans degerlerinin merkezi bir yerde toplayarak analiz etmek istiyorum. Bunu yapabilecek bir uygulamayi deploy etmek istiyoruz. Bunu k8s de nasil yapabiliriz? Oncelikle mysql podumuzu ayaga kaldirdik sonrasinda wordpress uygulamamiz agaya kalkti son olarak da yeni uygulamanin ayaga kalkacagi podu yarattim. Son uygulamanin tek bir amaci var wordpress e baglanacak ve uygulamayi analiz edecek veriyi toplayacak yani bu son uygulamam wordpress e bagimli. Bu uygulama wordpress hangi worker node da olusturuluyorsa orda olustrulmali. Wordpress calismaya basladigi zaman calismali kapandigi zaman kapanmali yani tamamen ona bagimli. Yani ben 2. bir wordpres uygulamayi yaratirken 2. bir uygulama daha deploy etmem gerekecek. 3. bir wordpress uygulamasi icin 3. log kodunu olusturuacgim. Wordpress i silerken bu uygulamadan bilgi toplatan podu da silmem gerekecek. Bu cok zaman alan bir islem surekli iki is yapmam gerekiyor. Diger bir sikinti ise diyelim ki benim metric toplayan uygulamam word press uygulamasi ile storage seviyesinde haberlesmesi ortak dosyalari yazmasi gerekiyor ancak 2 podun ayni local volume e baglanabilmesi icin 2 pod un ayni worker node uzerinde calismasi gerekiyor. Diyelim ki ben wordpress podunun olusturdugumda kube-scheduler bunu o an en uygun olan olan node1 da olusturdu. Sonrasinda analiz verisi toplayan uygulama olusturmak istedim ve kube-scheduler bunu node 1 uzerinde yeterli kaynagim yok diye node2 uzerinde olusturdu. Bu uygulamalar stroge seviyesinde birbirlerine ulasamayacaklar. Bu da ayri bir sorun. K8s bu sorunlari ortadan kaldirmak icin ana uygulamaya bagimli, onunla network seviyesinde izolasyon olmadan ve gerektigi durumda ayni izolasyon altyapisini kullanabilecek ayni pod icerisinde 2 container olarak calistirma imkani sagliyor. Birlikte scale edilmesi gereken, birbirleriyle network ve storage sebiyesinde haberlesmesi gereken uygulamalari ayni pod icerisinde ayri ayri containerlar olarak calistirabiliyoruz. Buna terminolojide `sidecar` container denmektedir. 
 
@@ -401,10 +319,12 @@ Bir pod icerisinde birden fazla container calistirdigimiz zaman:
 3. Bu containerlar arasinda network izolasyonu bulunmaz yani ayni pod icerisinde bulunan a ve b containerlari birbirlerine localhost uzerinden ulasabilirler. Bunlar network bakimindan sanki ayni makinada calisan processlerdir.
 4. Tek bir volume yaratilarak her iki containera da mount edilebilir boylelikle ayni dosyalar uzerinde calisabilirsiniz.
 
-## initContainers
+# InitContainers
 `initContainers` da bir pod icerisinde birde fazla pod yaratilmasina imkan verir. Fakat app containerlardan farkli olarak `initContainers`lar pod un yasam dongusu boyunca calismaz. Siz bir pod tanimina `initContainers` tanimi koydugunuz zaman pod olusturuldugu zaman ilk olarak bu `initContainers` calistirilir. `initContainers` calisir icindeki uygulama ne yapacaksa onu yapar ve ardindan kapanir bu `initContainers`lar islerini tamamlayip kapanana kadar da app containerlar calismaya baslamaz. 
+
 *Peki neden boyle bir seye ihtiyac duyariz ve kullanim alani nedir?* 
 `initContainers`lar esas uygulamamiz calismadan once tamamlamamiz gereken seyler var ve bunlari tamamlamadan esas uygulamayi baslatmak mantikli degilse kullanmak gerekir. Mesela uygulamamizin bagimli oldugu baska bir uygulama ya da servis var. Eger bu ayakta ve hazir degilken uygulamayi baslatirsak uygulamada sikinti cikiyor. Bu durumda pod tanimina `initContainers` tanimi ekler ve bu `initContainers`in bu servisi gozlemesi icin ayar yapariz. `initContainers` icinde bir uygulama calistirilir ve bu servisten okey alana kadar calisacak okey aldiktan sonra da kapanacak sekilde ayar yapariz. Bu sayede pod olusturuldugu zaman ilk olarak `initContainers` calisir. Diger servisi beklemeye baslar. Diger servis hazir oldugu anda uygulama kapanir ve `initContainers` da kapatilir. `initContainers` kapatildigi anda da esas uygulamamizin calistigi container ayaga kalkar ve boylece servisimiz hazir olana kadar uygulama beklemis olur. 
+
 Soyle bir senaryo dusunun ana uygulamamizin ihtiyaci olan bazi config dosyalarinin guncel halinin ana uygulama baslamadan sisteme cekilmesi gerekiyor, iste bu cekme islemini de `initContainers` ile halleder ve ana uygulama baslamadan bunlari sisteme indirebiliriz. 
 Multicontainerdan farkli olarak `initContainers`lar yaml dosyalarinda tanimlanirken `initContainers` adi ile ayri bir alanda tanimlanir. Containerin isi bittikten sonra kapanir ve ardindan ana container calismaya baslar.
 
@@ -426,63 +346,64 @@ spec:
     command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ; done;']
 ```
 
-## label and selector
+# Label and selector
 Label yani tagler k8s de her turlu objeye atayabildiginiz anahtar deger eslenikleridir. Etiketler sayesinde olusturdugumuz objelere bizlerin anlayacagi ve gruplara yaparken kullanabilecegimiz bilgiler eklemis oluruz. Bu sayede k8s tarafindan bizlere core ozellik olarak sunulmayan objelere belirli bir aidiyet atanmasi islemini gerceklestirebiliriz. 
 Ornegin k8s de 5 ekip tarafindan olusturulan 100 den fazla pod calistiriyoruz. Hangi pod un hangi ekibe ait oldugunuz belirtgmek istersek k8s in bize sunmus oldugu bir hiyerarsi mekanizmasi yok ama labels sayesinda bunu saglayabiliyoruz. Ornegin her ekip kendi olusturdugu objeye team:teamname seklinde etiket atarsa bizler bu etiketler sayesinde hangi ekibin hangi objelere sahip oldugunu listeleme imkanina kavusuruz. Ya da uygulamamizin frontend katmanini olusturan objelere tier:front-end backend katmanini olusturan objelere ise tier:backend etiketini atayarak frontend ve backend katmanlarini ayri ayri listeleme imkanina kavusuruz. 
 Etiketler obje olusturulurken atanacagi gibi objeler olustuktan sonra da atanip silinebilir. Etiketler anahtar veri degerleri seklinde olusturulur. Etiketler bir DNS subdomanin seklinde atanan opsiyonel bir on ek kismi bulundurabilir example.com/tier:frontened gibi. Bu kisim zorunlu degildir. Bu kisimdan sonra bir slash etklenir ve ana kisim yazilir bu ana kisim anahtar veri kismidir ve bu iki deger arasinda iki nokta ust uste bulunur. Bu anahtar ve deger kismi en fazla 63 karekter olabilir. Alfanumerik bir karakterle baslamali ve bitmelidir. Tire alt cizgi noktalar ve arasinda numerik degerler icerebilir ancak bunlarla baslayamazlar.
 Etiketlerin bir onemli gorevi de k8s de objeler arasindaki baglanti da labels lar araciligiyla kurulur. Servisler ve deployment objeleri hangi podlar ile iliski kuracagini label lar sayesinde belirlerler. Ornegin bir servis yaratir ve ona git tier:frontend label li podu bul ve servisi bu poda yonlendir.
 Yaml dosyalarinda selector araciligiyla deploymenta senin yonetecegin podlar app:frontend label ina sahip olacaklar. Bunu gorursen anla ki bu podlar senin podlarin. yaml dosyasi icindeki template alindaki labels kismina da bu app:frontend i ekliyorum ki deployment hangi pod u sececegini anlayabilsin. 
+
 Labels ve selector kismi 3 acidan onemli
 - Ilk olarak bu bir zorunlu alan. Yani deployment da en az bir selector tanimi olmali ve ayni label lar template kisminda da bulunmali.
 - Egerki birden fazla deployment objesi olusturacaksaniz ki production ortaminda bu olacak, siz her deployment objesinde farkli label ve selector kullanilmalisiniz. Ayni labellar kullanilmasi sikinti cikarir.
 - Ayni label lari kullandiginiz baska objeleri yaratirsaniz misal singleton bir pod yaratirsaniz bu da sikinti cikarir. 
 
 // belirli bir labeldaki podlari goster
-kubectl get pods -l "<label ismi>"
+`kubectl get pods -l "<label ismi>"` | 
 
 // podlarin labelslarini goster
-kubectl get pods -l --show-labels
+`kubectl get pods -l --show-labels`
 
 // equality based kullanim
-kubectl get pods -l "app=firstpod" --show-labels
+`kubectl get pods -l "app=firstpod" --show-labels`
 
 // set based kullanimi (bu kullanimin equality den farki )
-kubectl get pods -l 'app in (firstapp)' --show-labels
+`kubectl get pods -l 'app in (firstapp)' --show-labels`
 
 //notin esit degildir anlamina gelir
 //app anahtari degeri firstapp olmayan tum podlari getir
-kubectl get pod -l 'app notin (firstapp)' --show-labels
+`kubectl get pod -l 'app notin (firstapp)' --show-labels`
 
 //app anahtarini sorgula ve bunlarin icerisinden degeri firstapp olmayanlari getir
-kubectl get pod -l 'app,app notin (firstapp)' --show-labels
+`kubectl get pod -l 'app,app notin (firstapp)' --show-labels`
 
 // anahtarina sahip olmayanlari listele
-kubectl get pods -l '!app'
+`kubectl get pods -l '!app'`
 
 // label ekle
-kubectl label pods pod9 app=thirdapp
+`kubectl label pods pod9 app=thirdapp`
 
 // label sil
-kubectl label pods pod9 app-
+`kubectl label pods pod9 app-`
 
 //label guncelle
-kubectl label --overwrite pods pod9 team=team3
+`kubectl label --overwrite pods pod9 team=team3`
 
 //Tum podlara (namespacedeki) label ekle
-kubectl label pods --all foo=bar
+`kubectl label pods --all foo=bar`
 
-**nodeSelector** ile podun calismasini istedigimiz node u belirleyebiliyoruz. Bunu da labellar araciligiyla yapiyoruz.Bu saayde pod ile node u eslestirebiliyoruz. Mesela bazi worker nodelarda ssd var iken bazilarinda ise yavas bir disk var. Bazi uygulamalarimin hizli ssd de calismasini istiyor isem node lara bunu belirten labellar atarim ve podlarda da nodeselector ile bunu belirtir isem bu amacima ulasabilirim.
+**nodeSelector** ile podun calismasini istedigimiz node u belirleyebiliyoruz. Bunu da labellar araciligiyla yapiyoruz.Bu sayede pod ile node u eslestirebiliyoruz. Mesela bazi worker nodelarda ssd var iken bazilarinda ise yavas bir disk var. Bazi uygulamalarimin hizli ssd de calismasini istiyor isem node lara bunu belirten labellar atarim ve podlarda da nodeselector ile bunu belirtir isem bu amacima ulasabilirim.
 
-## Annotation
+# Annotation
 Aynen labellar gibi anahtar veri opsiyonu ekleyebilecegimiz 2. secenek ise annotations. Labellar k8s icin cok onemli oldugu icin label eklemek veya cikarmak clusterda birseyleri tetikleyebilir. Dolayisiyla her bilgiyi label olarak metadataya ekleyemeyebiliriz. Ancak bu bilgiler gerekli olabilir. Mesela podun ne zaman ve kim tarafindan olusturuldugu bilgisini eklemek istiyorum. Bu bilginin label olarak eklenmesi dogru degil, yani bu bilgiyi label olarak secme istegim yok veya bu bilgiyi herhangi bir secme istegi olarak kullanmak da istemiyorum. Dolayisiyla bunu annotationa eklemek daha dogru olacaktir. Ayrica annotation k8s in ana componenti olmayan fakat k8s ile baglantisi olan yazilimlar tarafindan ihtiyac duyulan bilgilerin de yazildigi yerdir. Ornegin firmamizin destek ekipleri tarafindan kullanilan bir cagri kabul uygulamasi var. Bu yazilimi k8s den bilgi cekebilecek hale getirdik ve soyle bir sistem kurmak istiyoruz: Herhangi bir k8s objesinde bir sikinti ciktigi zaman bu cagri yazilimi bunu tespit etsin ve o objenin destek sorumlusu olarak belirlenen insana mail gondersin. Bu durumda o mail adresi bilgisini objenin metadatasina annotation olarak ekleyebiliriz ve destek yazilimi bu bilgiyi cekebilir. Bu sayede de bu insana mail gonderebilir. Annotation bu ve benzeri durumlar icin kullanilir. Olusturulma kurallari label larla hemen hemen aynidir. DNS subdomain olarak eklenebilecek ve zorunlu olmayan bir prefix ile baslayabilen, sonrasinda da label lar gibi 63 karakteri gecmeyecek; nokta tire ve alt tire icerebilen ama bunlarla baslayamayan alfanumerik degerler icerebilir. Value kisminda ise bu kurallar gecerli degildir. Alfanumerik olmayan karakterler de alabilir. 
 
 // annotation ekle
-kubectl annotate pods <pod adi> <foo=bar>
+`kubectl annotate pods <pod adi> <foo=bar>`
 
 // annotation sil
-kubectl annotate pods <pod adi> <foo>-
+`kubectl annotate pods <pod adi> <foo>-`
 
-## Namespace
+# Namespace
 Soyle bir senaryo kurun bi firmada calisiyoruz ve tum calisanlarin ortak calistiklari dosyalari barindirabilecekleri bir yapi tasarliyoruz. 10 ayri ekibimiz var ve bu 10 ayi ekibin de erisip dosya barindirabilecegi bir altyapi kurmak istiyoruz. Bu sistemi nasil kurariz: bir file server yaratirim ve bunun altinda tum ekibin erisebilecegi bir paylasim alani yaratirim. Sonra gider tek tek tum kullanicilarin bilgisayarlarinin buraya erismesini saglayabilirim. Baslangicta sorunsuz olabilir ancak birden fazla ekibin olmasi durumunda soru olabilir. Bu dosya altinda 100lerce dosyanin olmasi durumunda bu belli bir zaman sonra yonetilemez hal alabilir. Bir diger sikinti da su olabilir diyelim ki ben a.txt adinda bir dosya olusturdum. Baska bir arkadasim da a.txt adinda bir dosya olusturup ayni yere atamaz. Bir baska sikinti da su olabilir. Diyelim ki sadece HR calisanlarinin gormesi gereken dosyalari da burada tutuyorum. Bu dosyalarin sadece HT tarafindan gorulmesini saglamak icin dosya bazinda ayarlamalar yapmam gerekir. Her dosya upload edildigide de bu islemleri tekrarlamam gerekir. Son olarak da su sikintiyi yasariz. Herkes tek bir alana dosya kaydettigi icin ekip bazli kota ayarlamasi yapmam zor olur. Yani hr kismina 20gb alan ayirayim IT kismina 100gb alan ayirayim gibi ayarlamalar yapamam. Cozum belirli bir zaman sonra yeterli olmamaya basladi.
 Her ekip icin klasor altinda ayri bir alan yaratirsak tum bu problemleri ortadan kaldiririz. Her ekibe ozel bir klasor olusturulur. Her ekip kendi dosyalarini kendi klasorlerinde tutabilirler. Ayrica it ekibi gibi ekiplere ozel proje bazli klasorler de yaratiriz. Ornegin yeni bir urun gelistirmesi yaratiyoruz ve bu urune ait gelistirme dosyalarini bu klasorde tutariz bu sayede tum guvenlik ayarlarini klasor bazda halledebiliriz. HR klasorune sadece hr calisanlari erissin it kalsorune sadece it calisanlari erissin, proje klasorunde proje yoneticisinin yazma izni olsun ama stajyer sadece dosyalari okuyabilsin diyebiliriz. Boylece guvenlik ve gruplama ile pek cok sorunun ustesinden geldik. Isimin cakismasini engelledik. Tek tek dosya bazinda kim erisebilir ayari yapmaya gerek kalmadi bunu klasor bazinda yaptik. Son olarak da klasor bazinda kota ayarlamasi yaparak kaynak kisitlamasi saglabiliyoruz. Namespace tam anlami ile bu ise yarar. 
 Kubernetes cluster i bu ornekteki fileserver olarak dusunursek namespace ler de burada yarattigimiz klasorlerdir. K8s de objeleri sanal klasorler altinda olusturabilir ve bu sanal klasorler altinda olusturabilir ve sonrasinda bu sanal klasor bazinda erisim izni ve kota ayarlamasi yapabiliriz.
@@ -494,29 +415,30 @@ Her k8s kurulumunda varsayilan olarak 4 namespace olusturulur.
 Bizler herhangi bir namespace tanimi yapmadan baslar ve objelerimizi bir tek namespace altinda toplamayiz. Tek bir ekip tarafindan yonetilen kucuk bir kubernetes clusterimiz var ise boyle de devam ederiz. Fakat ne zaman buyur ve birden fazla ekip tarafindan yonetilen ve birden fazla ekip tarafindan deploy edildigi bir k8s cluster a evrilirsek iste o zaman namespaceler bize kota ayarlamasi ve namespace bazinda kullanici erisimi verebilme gibi ozellikleri sayesinde yardimci olacaktir. 
 
 // belirli bir namespacedeki podlari goster
-kubectl get pods --namespace <namespace ismi>
+`kubectl get pods --namespace <namespace ismi>`
 
 // tum namespacelerdeki podlari goster
-kubectl get pods --all-namespaces
+`kubectl get pods --all-namespaces`
 
 // namespace yarat
-kubectl create namespace <namespace ismi>
+`kubectl create namespace <namespace ismi>`
 
 // namespace leri goster
-kubectl get namespaces
+`kubectl get namespaces`
 
 // belirli bir namespacedeki podlari goster
-kubectl get pods -n <namespace ismi>
+`kubectl get pods -n <namespace ismi>`
 
 // varsayilan namespace i degistir
-kubectl config set-context --current --namespace=development
+`kubectl config set-context --current --namespace=development`
 
 // Bir pod baska bir namespacedeki pod a baglanmasi icin
-mysql.connect("<service name>.<namespace>.<service>.<domain>")
-mysql.connect("db-service.dev.svc.cluster.local")
+`mysql.connect("<service name>.<namespace>.<service>.<domain>")`
+`mysql.connect("db-service.dev.svc.cluster.local")`
 
-## deployment
+# Deployment
 En temel obje pod dur ama biz genelde tekil yonetilmeyen podlar yaratmayiz. podlari yoneten ust seviye objeler yaratiriz ve podlar bu objeler tarafindan yaratilir ve yonetilir. 
+
 ***Neden tekil podlar yaratmiyoruz?***
 Deployment buna nasil cozum bulur?
 Bir uygulamamizi production ortaminda deploy ettigimizi varsayalim. Uygulamamizi container image i haline getirdik ve bunu kubernetes de deploy etmek icin bir pod tanimi yarattik kubectl apply ile bunu api sever a gonderdik. 3 worker node lu bir yapimiz var ve kube-scheduler uygun bir worker node secerek podu o node uzerinde olusturdu. Fakat bir sure sonra bu podun olusturuldugu worker node bozuldu ve erisilemiyor. Dolayisiyla pod a da erisemiyoruz. Bu durumda pod terminating durumuna gecer ve oylece kalir ve tabii ki de pod calismadigi icin uygulamamiz da calismamaya baslar. Siz bir pod yarattiginiz zaman kube-scheduler bu poda uygun bir node bulur ve onun uzerinde bu pod u calistirir. Eger container seviyesinde bir sikinti cikarsa ve restart policy onfailure ya da always olarak secildi ise container restart edilir ve sorun cozulur. Ama pod un schedule edildigi node da bir sikinti cikar ya da kaynak sikintisi nedeni ile o pod durdurulursa kube-scheduler devreye girip aaa su pod calismiyormus deyip baska bir node uzerinde onu schedule edeyim demez. Bu nedenle worker node umuz gittigi icin de pod umuz terminate state e duser ve oylece kalir. Buna cozum olarak da 3 ayri podun 3 ayri node uzerinde calismasini node selector tanimlari ile sagladik. Kisacasi her bir worker node da bir tane olmak uzere 3 tane pod yarattik, onlerine de bir load balancer koyduk. Boylece bir tanesine bir sey olursa diger 2 tanesine erisilebilmesini sagladik. Ancak diyelim ki ben bu uygulamayi gelistirmeye devam ettim, yeni bir versiyon cikardim, yeniden bir container image i yarattim. Simdi bu 3 podu bu yeni image la yeniden olusturmak istiyorum. Bunu nasil yapmam gerekir tek tek butun yaml dosyalarindaki image kismini degistirmem gerekiyor. Tekrar kubectl apply yaptim ve 3 podu tekrar olusturum isler boyle zahmetli oluyor. Eskisine donmek istedigimde veya label olusturmak istedigimde isler kontrolden cikiyor.
@@ -528,24 +450,25 @@ Best practice olarak yek bir pod bile yaratacak olsaniz deployment ile yaratmak 
 
 // Generate Deployment YAML file (-o yaml). Don't create it(--dry-run) with 4 Replicas (--replicas=4)
 `kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml`
+
 Save it to a file, make necessary changes to the file (for example, adding more replicas) and then create the deployment.
 
 // In k8s version 1.19+, we can specify the --replicas option to create a deployment with 4 replicas.
 `kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml`
 
 // deployment yarat
-kubectl create deployment firstdeployment --image=nginx:latest --replicas=2
+`kubectl create deployment firstdeployment --image=nginx:latest --replicas=2`
 
 // deployment guncelle
-kubectl set image deployment/firstdeployment nginx=httpd
+`kubectl set image deployment/firstdeployment nginx=httpd`
 
 // deployment delete
-kubectl delete deployment firstdeployment
+`kubectl delete deployment firstdeployment`
 
 Deployment yaml dosyalarinda template kisimlari deployment in ozelliklerinin yazildigi alan. Bu kisim olusturulmasi istenen pod un metedata kismi ile ayni o kisimdan yalnizca name kismini cikarip yapistiriyoruz. 
 Selector kismi ise deployment objesininn yakalayacagi (sahip oldugu) podlarin labellerini deployment a bildirmek icin kullanilir. Template kisminda labels in altinda bunu tanimliyorum ki secme isi tamamlansin. 
 
-## replicaset
+# Replicaset
 Replication Controller replicaset in eski bir teknolojisi ve artik kulanilmiyor.
 Bir replicasetin amaci herhangi bir zamanda calisan kararli bir replica pod setini surdurmektir. Bu nedenle, genellikle belirli sayida ozdes pod un kullanilabilirligini garanti etmek icin kullanilir. Deployment bizim istedigimiz ozelliklerde podu kendi olusturmaz. Replicaset bizim istedigimiz ozelliklerde replicaset objesi olusturur ve podlar bu replicaset objesi tarafindan olsturulur. 
 K8s ilk ciktiginda replication-controller adinda bir objesi vardi halen var ancak kullanilmiyor. Replication controller birden fazla ayni tipte pod olusturmak icin kullaniliyordu fakat deploy ettigi podlarla ilgili degisiklik yapmak istedigimiz zaman bazi sikintilar cikariyorudu. Bu sikintilari cozmek icin de soyle bir yola gidildi. Bu replication controller in sagladigi ozellikler deployment ve replicaset adinda 2 objeye bolundu. Replicaset objesinin temel gorevi su oldu: belirledigimiz ozelliklere gore belirledigimiz sayida pod olusturmak ve bunun desired state de kalmasini saglamak. Deployment ise bunun bir ust seviye objesi olarak dizayn edildi ve pod taniminda bir guncelleme yaparsak bu guncellemenin belirledigimiz kurallara ve sirayla uygulanmasini saglamak oldu. Ozetle biz bir deployment objesi olusturdugumuz zaman bu kendi yonettigi bir replicaset objesi olusturur ve bu replicaset objesi de podlari yaratir ve yonetir. Bir deployment taniminda bir degisiklik yaparsak ornegin kullanilan image i guncellersek deployment bu yeni tanimla yeni bir replicaset objesi daha yaratir. Ilk yaratilan replicaset objesi yavas yavas kendi olusturdugu podlari silmeye baslar ve yeni replicaset de yeni podlari yaratir. Burada silme ve yaratma isleminin neye gore olacagini bizler belirleyebiliriz. Bu bize herhangi bir kesinti olmadan uygulama guncelleme ve yeni versiyon gecisi yapma imkani saglar.
@@ -558,26 +481,26 @@ Replicaset ile deployment yaml dosyalari arasinda bir fark yok sadece isim kismi
 `kubectl replace -f replicaset-definition.yaml`
 `kubectl scale -replicas=6 -f replicaset-definition.yaml` 
 
-## Rollout and Rollback
+# Rollout and Rollback
 Deployment yaml dosyalarinda spec altinda strategy anahtari ile bizler bu deploymenti guncelledigimiz zaman rollout islemlerinin nasil yapilacagini belirleriz. 
 Kullanabilecegimiz 2 tip rollout stratejisi mevcuttur. 
-- *Recreate:* Bu deploymentta bir degisiklik yaparsam oncelikle bu deploymet daki tum podlari sil ve bu islem tamamlandiktan sonra yeni podlari olustur. Bu stratejiyi genelde hardcore migration yaptimizda kullaniriz. Ornegin uygulamamizin yeni versiyonu ile eski versiyonunun kisa bir sure icin bile olsa bir arada calismasi sakincali olacaksa, major degisikliklerde `recreate` stratejisi secilerek oncelikle tum eski verisyonlarin sistemden kaldirilmasi ve sonrasinda yeni podlarin yaratilmasi istenebilir. *Her zaman kullanilan bir secenek degildir.*
-- *Rollingupdate:* Default stratejidir. Herhangi strateji belirtmez iseniz bu strateji uygulanir. Recreate in tam tersidir. Degisikligi asamali olarak yapar. Bu islemin de 2 farkli opsiyonu vardir. Bunlar `maxUnavailable` ve `maxSurge` dir. 
+1. *Recreate:* Bu deploymentta bir degisiklik yaparsam oncelikle bu deploymet daki tum podlari sil ve bu islem tamamlandiktan sonra yeni podlari olustur. Bu stratejiyi genelde hardcore migration yaptimizda kullaniriz. Ornegin uygulamamizin yeni versiyonu ile eski versiyonunun kisa bir sure icin bile olsa bir arada calismasi sakincali olacaksa, major degisikliklerde `recreate` stratejisi secilerek oncelikle tum eski verisyonlarin sistemden kaldirilmasi ve sonrasinda yeni podlarin yaratilmasi istenebilir. *Her zaman kullanilan bir secenek degildir.*
+2. *Rollingupdate:* Default stratejidir. Herhangi strateji belirtmez iseniz bu strateji uygulanir. Recreate in tam tersidir. Degisikligi asamali olarak yapar. Bu islemin de 2 farkli opsiyonu vardir. Bunlar `maxUnavailable` ve `maxSurge` dir. 
   1. `maxUnavailable`: Ben deploymentda bir degisiklik yaptigim zaman en fazla burada belirledigim sayidaki kadar podu sil. `maxUnavailable: 2` su demek: Yani ornegin 10 tane pod dan olusturulan bir deployment da bir guncelleme yapar isem bu guncellemeye baslandigi anda en fazla 2 tanesini siliyor. Sonra yeni podlari olusturuyor onlar olusturulduktan sonra devam ediyor yani bir nevi gecis sirasinda en fazla kac pod un silinebilecegi bilgisini giriyorum. Burada sayi yerine yuzde de girilebilir. 
   2. `maxSurge` Gecis sirasinda toplam pod sayisinin en fazla kac pod olabilecegini belirler. Soyle bir sey dusunun 10 podlu bir deployment i guncelledigim zaman ne olacak kubernetes sirayla 10 tane eski podu silecek ve 10 tane de yeni pod ayaga kaldiracak ve bunu asama asama yapacak yani ayni anda sistemde hem yeni hem de eski podlar olacak. Iste bu durumda toplamda sistemde en fazla kac pod olabilir sayisini `maxSurge` ile belirliyoruz. Bu ornekte 2 secilmis bu su demek oluyor bizim desired state imiz 10 pod ama gecis sirasinda 12 poda kadar calisabilir. Yani olacak olan su ben bu deployment i olusturdum, sonra update ettim, k8s oncelikle yeni bir `replicaset` olusturacak ve yeni tanimda 2 pod ayaga kalkacak. Dolayisiyla eski 10 pod + 2 yeni pod toplam 12 pod ayakta olacak. Sonrasinda eski replicaset 2 tane podu silecek. Toplam pod sayisi tekrar 10 a dusecek. Yeni replicaset yeni 2 pod olusturacak toplam sayi 12 ye cikacak sonra eski replicaseti tekrar silecek sonra yeni replicaset tekrar olusturacak tek tek toplam sayi 12 yi gecmeden ve 8 in altina da dusmeden islemler devam edecek ve sonunda eski replicaset 0 a yeni replicaset de 10 a cikacak bu sayede sistemde hicbir kesinti yapmadan gecis yapmis olacagiz.
 `maxUnavailable` ve `maxSurge` un default degeri yuzde 25 dir.
 
 // record komutu ile deploymentdaki yapilan islemleri daha sonra rollout yapabilmek icin kaydediyor
-kubectl set image deployment <deployment ismi> <yapilacak degisiklik> --record=true
+`kubectl set image deployment <deployment ismi> <yapilacak degisiklik> --record=true`
 
 // rollout ile Deployment yapılan değişikliklerin listelenmesi.
-kubectl rollout history deployment <deployment ismi>
+`kubectl rollout history deployment <deployment ismi>`
 
 // belirli bir degiskligin detayli listelenmesi
-kubectl rollout history deployment <deployment ismi> --revision=<sayi>
+`kubectl rollout history deployment <deployment ismi> --revision=<sayi>`
 
 // istenilen bir revizyona rollout yapmak
-kubetcl rollout undo deployment <deployment ismi> --to-revision=<historydeki revizyon sayisi>
+`kubetcl rollout undo deployment <deployment ismi> --to-revision=<historydeki revizyon sayisi>`
 
 *`Rollback`* ise deployment da yapilan degisiklerin geri alinmasidir.
 Rollout komutunda 3 opsiyon mevcuttur:
@@ -586,59 +509,61 @@ Rollout komutunda 3 opsiyon mevcuttur:
   3. *Rollout resume:* Durdurmus oldugum deployment i yeniden devam ettirmek istersem resume komutu ile devam ettiriyorum. 
 
 //Deployment yapılan değişikliklerin izlenmesi.
-kubectl rollout status deployment <deployment_ismi>
-Ör: `kubectl rollout status deployment rolldeployment` 
+`kubectl rollout status deployment <deployment_ismi>` | `kubectl rollout status deployment rolldeployment` 
 
 // Deployment üstünde yapılan değişikliklerin durdurulması.
-kubectl rollout pause deployment <deployment_ismi>
-Ör: `kubectl rollout pause deployment rolldeployment`
+`kubectl rollout pause deployment <deployment_ismi>`
+| `kubectl rollout pause deployment rolldeployment`
 
 // Durdurulan rollout'un devam ettirilmesi. 
-kubectl rollout resume deployment <deployment_ismi>
-Ör: `kubectl rollout resume deployment rolldeployment`
+`kubectl rollout resume deployment <deployment_ismi>` | `kubectl rollout resume deployment rolldeployment`
 
-## Network
+# Network
 Network temel kurallari
-- Kubernetes kurulumunda podlara ip dagitilmasi icin bir ip adres araligi ya da kubernetes terminolojisinda bilinen adiyla --pod-network-cidr belirlenir.
+- Kubernetes kurulumunda podlara ip dagitilmasi icin bir ip adres araligi ya da kubernetes terminolojisinda bilinen adiyla `--pod-network-cidr` belirlenir.
 - Kubernetes'de her pod bu cidr blogundan atanacak bir unique ip adresine sahip olur.
-- Ayni cluster icerisindeki tum podlar varsayilan olarak birbirleriyle herhangi bir kisitlama olmadan ve NAT yani network address translation olmadan haberlesebilirler.
-Diyelim ki elimde 4 tane sunucum var ve bunlardan kubernetes cluster olusturmak istiyorum. Evdeki internet baglantimi saglayan bir routerim var ve bu routerin da ic networku 192.168.1.0/24 networku. Router in ic bacagi da 192.168.1.1 ip adresine sahip. Buraya bir switch bagladim ve router ve makinalari da bu switch e bagladim. Makinalara 192.168.1 networkundan ip adresi atadim ve hepsinin default gateway leri router i goruyor. Bu makinalar hepsi ayni network uzerinde ve dolayisiyla birbirleriyle sikintisiz bir sekilde haberlesebiliyorlar. Default gateway olarak da router olarak ayarli oldugu icin de dis dunyaya gidecek tum trafigi bu router a yonlendiriyorlar ve onun ustunden gitmek istedikleri yere gidebiliyorlar. Bu makinalarin hepsine linux isletim sistemlerini de yukledim. Simdi sirada k8s kurulumu var. Tum makinalarda k8s kurulumu icin gerekli on hazirliklari yaptim ve master node a gecerek k8s kurulumunu baslatacagim. Oncelikle podlar icin bir ip adres araligi belirlemem gerekiyor yani --pod-network-cidr. Ben de bu network disindan bir ip adres araligi belirledim gerekli ve 10.10.0.0/16 networkunu sectim. k8s kurulumuna --pod-network-cidr=10.10.0.0/16 opsiyonunu girerek basladim, master node ayaga kalkti. Sonra gittim tek tek worker node lari da cluster a dahil ettim ve k8s kurulumum tamamlandi. Bu kurulumu tamamladigimizda worker node larda su islemler olur: ilk olarak her bir worker node uzerinde bir adet virtual bridge yaratilir. Bu virtual bridge bize baslangicta belirledigimiz pod-cidr araliginda iletisim kuracak seklinde ayarlanir. Sonrasinda yeni bir pod yarattigimiz zaman o pod icin linux kernelinda ayri bir network namespace olusturulur ve bu pod un sanal ethernet sifir interface ini bu pod cidr adres blogundan bir ip adresi atanarak bulundugu host ustundeki bridge e balganir. 6 adet pod yarattim ve bu podlarin hepsi cidr blogundan ip adresi almis durumda. Bu asamada network trafiginin nasil isledigini dusunelim bununla ilgili 3 ayri senorya yapilacak:
-- 1. senaryoda podlar dis dunyadaki bir adrese gitmek istediginde network akisi nasil oluyor bunu pod a uzerinden inceleyecegiz. Diyelim ki bu senaryodaki pod-a dis yunyadaki 1.1.1.1 ip adresli bir sunucu  ile iletisim kurmak istedi. Bu durumda pod-a iletisim paketlerini bridge e teslim edecek paket burdan worker node un ethernet sifir internet face ine ulasacak peket burada nat lanacak sonrasinda paket worker node un default gateway i olan rooter a gidecek. Rooter da yeniden nat lacak oradan da 1.1.1.1 ip adresli sunucuya ulasacak. Bu sunucudan gelecek paket de yeniden natlacak ve pod-a ya ulasacak. Dolayisiyla pod-a uzerinde calistigi worker node un ulasabildigi her destination a ulasabilecek. 
-- 2. senaryoda yine pod-a yi ele alalim ve bu sefer pod-a nin ayni worker node da bulunan pod-b ile iletisim kurmak istedigini varsayalim. Gordugunuz gibi her iki pod da ayni worker node uzerinde bulunan ayni bridge e bagli ve ayni ip adres blogundan adrese sahipler. Dolayisiyla pod-a paketi bridge e teslim edecek bridge den de pod-b ye gidecek. pod-b nin cevabi da bu yolun aynisi olacak. Ayni network deki 2 makina gibi sorunsuz ve natsiz birbirleriyle haberlesebilecekler. 
-- 3. Bu senaryoda pod-a baska bir worker node da deploy edilmis bir pod ile iletisim kurmak istiyor. Ornegin worker2 node uzerindeki pod-c ile. Kurallarda ne demistik podlar birbirleriyle nat (network adress translation) a ihtiyac duymadan birbirleriyle haberlesebilmeli. Peki kural buysa pod-a pod-c ile nat olmadan nasil haberlesecek? Pod-a pod-c ye ulasmak istiyor paketi bridge e teslim etti ancak bridge de pod-c nin ip adresi tanimli degil. Mecburen trafigi ethernet sifir a gonderecek. Ethernet sifir bakacak destination 10.10.20.2 bilmedigi bir adres. Kendi ip adresi blogu disinda, routing tanimli degil. napacak mecburen natlayip router a teslim edecek. Orada da paket kaybi olacak. Cunku router da paketi nereye gonderecegi ile ilgili bir bilgi yok. Bu senaryoda ayri worker nodelarda kosan podlar birbirleriyle haberlesemiyorlar. Bunu cozecek birkac teknoloji var. Mesele vxlan teknolojisini kullanarak 10.10.0.0/16 network unu node larin bagli oldugu 192.168.1.0 network u uzerinde kosacak bir overlay network u olarak tanimlayarak nat a ihtiyac duymadan trafik akisi saglayabiliriz. Ya da podlara 198.162.1.0 networkundan ip verecek sekilde tanim yapip worker node un ethernet sifirlarina bu ip adreslerini de tanimlayip trafigi nat siz route edebiliriz. Bu ve benzeri bizim network altyapimiza uygun olacak bir cozum bulabiliriz. Ancak tum bu cozumleri k8s altinda saglamak neredeyse imkansiz. Bu nedenle k8s kendi icinde bir network cozumu ile gelmez bunun yerine container run timelar veya kubernetes gibi orchestratorlar ortaya ciktiklarinda hepsi bu ve benzeri network sorunlarini adreslemek icin cesitli yontemler denediler ve uyguladilar fakat bir sure sonra bu ayri ayri yontemler belirli bir sure sonra karmasa yaratti. Bu karmasayi cozmek adina Cloud Native Computing Foundation (CNCF) tarafindan tum bu linux container alt yapisinda ip dagitimi bridge tanimlari vxlan tanimlari ve diger ayarlarin standartlarini belirleyebilecek container Container Netork Interface (CNI) denilen bir proje baslatildi. CNI bu container network altyapisinin nasil olmasi gerektigi ile ilgili standartlar yayinladi ve developerlarin bu standarda uygun networking cozumleri olusturabilmesine imkan sagladi. Bu sayede bu standartlara uygun bir sekilde network plugin leri yazilma imkani dogdu. K8s de bu projenin bir tarafi olarak sunu dedi bakin ben k8s de bu pod networkunu kendim cozmeyecegim CNI standardini benimsedim. Siz kubernetes clusterinizda network islerinizi bu standarda uygun olarak yazilmis ve sizin network cozumunuze uygun olacak bir plugin secin. Yani k8s  bu isleri kendi uzerinden atti ve sizin k8s i deploy ettiginiz ortama uygun CNI network plugini secerek tum bu altyapiyi bunun tanimlamasina izin verdi.
-K8s kurulumunda ortamimiza uygun bir CNI plugin i secmemiz sarttir. Kullanabilecegimiz pek cok open source plugin vardir ve hepsinin degisik ozellikleri vardir. Mesela Azure uzerinden yonetilen Aks kullansa idik Azure kendi yazdigi aks plugin ini kullanarak her pod un vnetten direk bir ip adresi almasini saglar ve bu iletisimi bu sekilde cozer. Ya da cisco router lardan olusan bir network altyapisi kullaniyor olsa idik cisco nun aci plugin ini kullanip bunun bu isi halletmesini saglayabilirdik. Tum bu cni plugin dunyasi ortama uygun olarak secilmelidir. Bunlarin 2 tanesi on plana cikti. Manuel kurulan k8s clusterlarda genelde bu iki plugn kuruluyor. Birincisi flaner ve network policy gibi destek sunmasi ile de one cikan calico dur. k8s kurulumunu tamamladiktan sonra cni plugin ini de yukleyerek k8s in network yonetimini bu plug ine devretmesini saglayabiliyoruz. Ornegin biz bu ortamda calico cni plugin yuklersek podlarin ip adresinin atanmasi, ip table kurallarinin duzenlenmesi ve node lar arasinda bu cidr blogunun nasil calismasi icin overlay tanimlarinin yapilarak vxlan interfacelarinin olusturulmasi dahil tum gorevler calico tarafindan hallediliyor. k8s de bir pod olusturdugunuz zaman scheduler bunun calisacagi node u secer ve kubelet burada devreye girerek podu olusturur. Pod icin atanacak ip adresinin belirlenmesi, bunun poda atanmasi ve altyapida ayarlanmasi gereken tum islemlerin halledilmesi ise calico tarafindan saglanir. Boylece pod lar farkli node larda olsalar bile birbirleriyle nat olmadan haberlesebilirler. k8s de podlarin birbirleri ile ve dis dunyay ile haberlesmeleri yani ingress trafigi bu sekilde gerceklesiyor.
+- Ayni cluster icerisindeki tum podlar varsayilan olarak birbirleriyle herhangi bir kisitlama olmadan ve `NAT` yani network address translation olmadan haberlesebilirler.
+
+Diyelim ki elimde 4 tane sunucum var ve bunlardan kubernetes cluster olusturmak istiyorum. Evdeki internet baglantimi saglayan bir routerim var ve bu routerin da ic networku 192.168.1.0/24 networku. Router in ic bacagi da 192.168.1.1 ip adresine sahip. Buraya bir switch bagladim ve router ve makinalari da bu switch e bagladim. Makinalara 192.168.1 networkundan ip adresi atadim ve hepsinin default gateway leri router i goruyor. Bu makinalar hepsi ayni network uzerinde ve dolayisiyla birbirleriyle sikintisiz bir sekilde haberlesebiliyorlar. Default gateway olarak da router olarak ayarli oldugu icin de dis dunyaya gidecek tum trafigi bu router a yonlendiriyorlar ve onun ustunden gitmek istedikleri yere gidebiliyorlar. Bu makinalarin hepsine linux isletim sistemlerini de yukledim. Simdi sirada k8s kurulumu var. Tum makinalarda k8s kurulumu icin gerekli on hazirliklari yaptim ve master node a gecerek k8s kurulumunu baslatacagim. Oncelikle podlar icin bir ip adres araligi belirlemem gerekiyor yani --pod-network-cidr. Ben de bu network disindan bir ip adres araligi belirledim gerekli ve 10.10.0.0/16 networkunu sectim. k8s kurulumuna --pod-network-cidr=10.10.0.0/16 opsiyonunu girerek basladim, master node ayaga kalkti. Sonra gittim tek tek worker node lari da cluster a dahil ettim ve k8s kurulumum tamamlandi. Bu kurulumu tamamladigimizda worker node larda su islemler olur: ilk olarak her bir worker node uzerinde bir adet virtual bridge yaratilir. Bu virtual bridge bize baslangicta belirledigimiz pod-cidr araliginda iletisim kuracak seklinde ayarlanir. Sonrasinda yeni bir pod yarattigimiz zaman o pod icin linux kernelinda ayri bir network namespace olusturulur ve bu pod un sanal ethernet sifir interface ini bu pod cidr adres blogundan bir ip adresi atanarak bulundugu host ustundeki bridge e balganir. 6 adet pod yarattim ve bu podlarin hepsi cidr blogundan ip adresi almis durumda. 
+
+Bu asamada network trafiginin nasil isledigini dusunelim bununla ilgili 3 ayri senorya yapilacak:
+1. Senaryoda podlar dis dunyadaki bir adrese gitmek istediginde network akisi nasil oluyor bunu pod a uzerinden inceleyecegiz. Diyelim ki bu senaryodaki pod-a dis yunyadaki 1.1.1.1 ip adresli bir sunucu  ile iletisim kurmak istedi. Bu durumda pod-a iletisim paketlerini bridge e teslim edecek paket burdan worker node un ethernet sifir internet face ine ulasacak paket burada nat lanacak sonrasinda paket worker node un default gateway i olan rooter a gidecek. Rooter da yeniden nat lacak oradan da 1.1.1.1 ip adresli sunucuya ulasacak. Bu sunucudan gelecek paket de yeniden natlacak ve pod-a ya ulasacak. Dolayisiyla pod-a uzerinde calistigi worker node un ulasabildigi her destination a ulasabilecek. 
+2. Senaryoda yine pod-a yi ele alalim ve bu sefer pod-a nin ayni worker node da bulunan pod-b ile iletisim kurmak istedigini varsayalim. Gordugunuz gibi her iki pod da ayni worker node uzerinde bulunan ayni bridge e bagli ve ayni ip adres blogundan adrese sahipler. Dolayisiyla pod-a paketi bridge e teslim edecek bridge den de pod-b ye gidecek. pod-b nin cevabi da bu yolun aynisi olacak. Ayni network deki 2 makina gibi sorunsuz ve natsiz birbirleriyle haberlesebilecekler. 
+3. Bu senaryoda pod-a baska bir worker node da deploy edilmis bir pod ile iletisim kurmak istiyor. Ornegin worker2 node uzerindeki pod-c ile. Kurallarda ne demistik podlar birbirleriyle nat (network adress translation) a ihtiyac duymadan birbirleriyle haberlesebilmeli. Peki kural buysa pod-a pod-c ile nat olmadan nasil haberlesecek? Pod-a pod-c ye ulasmak istiyor paketi bridge e teslim etti ancak bridge de pod-c nin ip adresi tanimli degil. Mecburen trafigi ethernet sifir a gonderecek. Ethernet sifir bakacak destination 10.10.20.2 bilmedigi bir adres. Kendi ip adresi blogu disinda, routing tanimli degil. Napacak mecburen natlayip router a teslim edecek. Orada da paket kaybi olacak. Cunku router da paketi nereye gonderecegi ile ilgili bir bilgi yok. Bu senaryoda ayri worker nodelarda kosan podlar birbirleriyle haberlesemiyorlar. Bunu cozecek birkac teknoloji var. Mesele vxlan teknolojisini kullanarak 10.10.0.0/16 network unu node larin bagli oldugu 192.168.1.0 network u uzerinde kosacak bir overlay network u olarak tanimlayarak nat a ihtiyac duymadan trafik akisi saglayabiliriz. Ya da podlara 198.162.1.0 networkundan ip verecek sekilde tanim yapip worker node un ethernet sifirlarina bu ip adreslerini de tanimlayip trafigi nat siz route edebiliriz. Bu ve benzeri bizim network altyapimiza uygun olacak bir cozum bulabiliriz. Ancak tum bu cozumleri k8s altinda saglamak neredeyse imkansiz. Bu nedenle k8s kendi icinde bir network cozumu ile gelmez bunun yerine container run timelar veya kubernetes gibi orchestratorlar ortaya ciktiklarinda hepsi bu ve benzeri network sorunlarini adreslemek icin cesitli yontemler denediler ve uyguladilar fakat bir sure sonra bu ayri ayri yontemler belirli bir sure sonra karmasa yaratti. Bu karmasayi cozmek adina Cloud Native Computing Foundation (CNCF) tarafindan tum bu linux container alt yapisinda ip dagitimi bridge tanimlari vxlan tanimlari ve diger ayarlarin standartlarini belirleyebilecek container Container Netork Interface (CNI) denilen bir proje baslatildi. CNI bu container network altyapisinin nasil olmasi gerektigi ile ilgili standartlar yayinladi ve developerlarin bu standarda uygun networking cozumleri olusturabilmesine imkan sagladi. Bu sayede bu standartlara uygun bir sekilde network plugin leri yazilma imkani dogdu. K8s de bu projenin bir tarafi olarak sunu dedi bakin ben k8s de bu pod networkunu kendim cozmeyecegim CNI standardini benimsedim. Siz kubernetes clusterinizda network islerinizi bu standarda uygun olarak yazilmis ve sizin network cozumunuze uygun olacak bir plugin secin. Yani k8s  bu isleri kendi uzerinden atti ve sizin k8s i deploy ettiginiz ortama uygun CNI network plugini secerek tum bu altyapiyi bunun tanimlamasina izin verdi.
+  
+K8s kurulumunda ortamimiza uygun bir CNI plugin i secmemiz sarttir. Kullanabilecegimiz pek cok open source plugin vardir ve hepsinin degisik ozellikleri vardir. Mesela Azure uzerinden yonetilen Aks kullansa idik Azure kendi yazdigi aks plugin ini kullanarak her pod un vnetten direk bir ip adresi almasini saglar ve bu iletisimi bu sekilde cozer. Ya da cisco router lardan olusan bir network altyapisi kullaniyor olsa idik cisco nun aci plugin ini kullanip bunun bu isi halletmesini saglayabilirdik. Tum bu cni plugin dunyasi ortama uygun olarak secilmelidir. Bunlarin 2 tanesi on plana cikti. Manuel kurulan k8s clusterlarda genelde bu iki plugin kuruluyor. Birincisi `flaner` ve network policy gibi destek sunmasi ile de one cikan `calico` dur. k8s kurulumunu tamamladiktan sonra cni plugin ini de yukleyerek k8s in network yonetimini bu plug ine devretmesini saglayabiliyoruz. Ornegin biz bu ortamda `calico` cni plugin yuklersek podlarin ip adresinin atanmasi, ip table kurallarinin duzenlenmesi ve node lar arasinda bu cidr blogunun nasil calismasi icin overlay tanimlarinin yapilarak vxlan interfacelarinin olusturulmasi dahil tum gorevler calico tarafindan hallediliyor. k8s de bir pod olusturdugunuz zaman scheduler bunun calisacagi node u secer ve kubelet burada devreye girerek podu olusturur. Pod icin atanacak ip adresinin belirlenmesi, bunun poda atanmasi ve altyapida ayarlanmasi gereken tum islemlerin halledilmesi ise calico tarafindan saglanir. Boylece pod lar farkli node larda olsalar bile birbirleriyle nat olmadan haberlesebilirler. k8s de podlarin birbirleri ile ve dis dunya ile haberlesmeleri yani ingress trafigi bu sekilde gerceklesiyor.
 
 
 // ip link eth0 in mac adresini goster
-ip link show <eth0>
+`ip link show <eth0>`
 
 // ip adresinden node cni yi tespit et
-ip a | grep -i <10.59.250.12>
+`ip a | grep -i <10.59.250.12>`
 
 // ip range show
-ip addr show <weave>
+`ip addr show <weave>`
 
 // node mac adres
-arp <node01>
+`arp <node01>`
 
 // ping google from the master node
-ip route show default
+`ip route show default`
 
 // network plugin path
-/opt/cni/bin
+`/opt/cni/bin`
 
 // network ip range
-apt update
-apt install ipcalc
-ip a | grep eth0
+`apt update`
+`apt install ipcalc`
+`ip a | grep eth0`
 
 // ip range for pod
-kubectl logs <weave-pod-name> weave -n kube-system
+`kubectl logs <weave-pod-name> weave -n kube-system`
 
 // IP Range configured for the services within the cluster
-cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep cluster-ip-range
+`cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep cluster-ip-range`
 
-## service
+# Service
 Bir dizi pod uzerinde calisan bir uygulamayi ag hizmeti olarak gostermenin soyut bir yolu.
 Bir web sitesi olusturacagimizi hayal edelim. Insanlar bu web sitesine baglanacak ve resim yukleyecek. Yukledikleri resimlere bir filtre ekleyecegiz ve geri dondurecegiz. Biz bu uygulamayi 2 ayri servis olarak tasarladik. Birinci servis frontend adinda olacak ve kullanicilar buraya baglanacak. Bu kismi javascript ile yazdik. 2. kisim ise bu frontend in baglanarak resimleri gonderdigi ve bu resimlere filtre ekleyen yazilim olacak. Bunu da .net de yazdik. Her iki kismi da container image lari haline getirdik, artik k8s uzerinde bunu deploy edebiliriz. 2 tane deployment yaml dosyasi olusturduk ve bu frontend ve backend katmanlarini 3'er pod olacak seklinde k8s uzerinde deploy ettik, senaryomuz bu. Simdi bu senaryonun erisim kismini inceleyelim. Ilk olarak bu 3 frontend poduna benim bir sekilde dis dunyadan baglanilmasini saglamam gerekiyor. Cozmemiz gereken ilk sorun bu. Benim bu podlara dis dunyadan bir sekilde erisim saglamam lazim. Bu sorunu  bir sekilde cozduk diyelim. Kullanicilar bu podlardan birine baglandi ve resmi yukledi. Benim bu forntend uygulamamin resmi islemesi icin backend podlardan birisi ile iletisim kurmasi ve resmi ona gondermesi gerekiyor. Bu kisim sanki daha kolay gibi. Sonucta k8s uzerinden her podun essiz bir ip adresi var ve her pod birbiri ile sikintisiz haberlesebiliyor. Fakat simdi soyle bir sikinti var. 3 frontend pod u deploy edecek sekilde bir deployment objesi olusturdum ve o da 3 pod olusturdu. Ayni sekilde 3 backend podu olusturacak deployment objesi de olusturdum. Benim frontend podlarim backend podlarim ile network uzerinden iletisim kurmalari gerekiyor. Frontend e bir resim yuklendigi zaman bu frontend pod herhangi bir backend pod ile iletisim kurarak ona resmi yollayacak o da isleyip geri yollayacak. Bunun olmasi icin frontend lerin backend podlara nasil ulasabilecegini bilmeleri gerekir. Kisacasi onlarin ip adreslerini bilmeleri lazim. Ben bu sorunu cozmek adina oncelikle tum backend pod larinin ip adreslerini listeledim sonra frontend podlarima tek tek baglandim ve iletisim kumalari gereken ip adreslerini yazilima ekledim ve bu sayade frontendler backendlere erisebildi sorunu simdilik cozdum. Ama simdi soyle bir sikinti var. Bildiginiz gibi k8s cesitli durumlarda bu podlari bu sistemlerden kaldirip yeniden olusturabilir. Ornegin node lardan biri bir sikinti cikardi ve node devre disi kaldi. Backend deployment objesi bu durumu tespit etti ve devre disi kalan node lar uzerinde kalan podlari saglikli node lar uzerinde yeniden olusturdu. Yeniden olusan podlar da yeni ip adresleri aldi. Simdi benim tekrardan frontend lere baglanarak yazilim icerisinde bu ip adreslerini guncellemem gerekecek ve isin kotu tarafi su ki bu durum k8s uzerinde surekli olabilir. Surekli pod silinerek yeniden yaratilabilir. Ya da diyelim ben bu backend deploymenti scale ettim. Artik 4 pod calisiyor bunu da eklemem gerekebilir. Goruldugu gibi benim bu senaryoda cok islem yapmam gerekiyor. Neyse ki bu mekanizmayi cozebilecek bir mekanizma k8s de mevcut.
 K8s servisler bu ve benzeri sikintilari ortadan kaldirmaya yarayan objelerdir. 4 tip servis objesi yaratabiliriz. 
@@ -669,14 +594,18 @@ spec:
 
 Deployment olustururken bu obje bir replicaset olusturuyordu ve bu replicasetler podlari olusturuyordu. Burada da servis objesi olusturulurken servis objesi endpoint adinda bir obje olusturur ve bu endpoint objesi bizim belirledigimiz selector tarafindan secilen podlarin IP adreslerini uzerinde barindirir ve servis trafigini nereye yonlendirecegini bu listeye gore duzenler. Podlar silinip yeniden baslatildiginda bu liste otomatik olarak guncelleniyor.
 
-## Network Policies
+# Network Policies
 Herhangir network policy yaratmadi iseniz
 1. Her pod diger her pod ile konusabilir
 2. Her pod diger dis dunya ile konusabilir.
 3. Herkes disardan ingress ile ya da loadbalancer ile bu podlara erisebilir.
 Bu davranisi kisitlamak icin network policy lere ihtiyac duyariz
+Biz bir network policy yaratiriz ve daha sonra bu network policy nin hangi podlar uzerinde etkili olacagini pod selector ile seceriz. Yani ilk once tanimlamamiz gereken `podSelector` tanimidir.
+`policyTypes` da tipini belirliyoruz. `Ingress` iceriye dogur demek yani selector ile secilen podlara gelebn trafikle ilgili ayaralar. `Egress` ise secilen podlardan dis dunyayay giden trafigin ayarlarini gosterir. `from` nerenin ingresinden yapailacak olan islemleri gosterir. `ipBlock` hangi ip bloklarindan trafige izin verilmesi gerektigini belirten alana verilen ad. Yani secilen podlara belirlenen ip adresi uzerinden gelecek isteklere `ports` da belirtilen port uzerinden izin ver. `expect` ise haric tutulan io blogunu belirtmek icin kullanilir. `namaspaceSelector` bu secilen podlara bu namespacedeki labeslerini belirttigim tum podlar asagidaki port numarasindan erisebilsin. `podselector` ile dirak pod secerek o podlara network policy eklenebilir. 
+`egress` de ise dis dunyaya erirsim izinleri tanimlaniyor.
+Ayni poda ferkli network policyler atanabilir. Bu durumda kural su: bu policylerdeki kurallarin birlesimi seklinde assgin edilir.
 
-## livenessprobe
+# Livenessprobe
 Kubelet, bir containerin ne zaman yeniden baslatilacagi bilmek icin liveness probe kullanir. Ornegin, liveless probe, bir uygulamanin calistigi ancak ilerleme saglayamadigi bir kilitlenmeyi yakalayabilir. Boyle bir durumda bir container'i yeniden baslatmak, hatalara ragmen uygulamayi daha kullanilabilir hale getirmeye yardimci olabilir.
 Livenessprobe ile container icinde bir komut calistirarak ya da bir http endpoint e request gondererek ya da bir porta tcp connection acarak uygulamamizin dogru calisip calismadigini kontrol etmeye calisiyoruz. Bu sorgulamanin sonucunda bekledigimiz sonucu alirsak container in saglikli oldgunu eger bekledigimiz sonucu alamazsak container da sikinti oldugunu tespit edebiliyoruz. 
 Bazi durumlarda pod icinde uygulama calisiyor olarak gorunse de islevini yerine getirmiyor olabilir. Ornegin bir web sayfasi yayinlayan bir podumuz var. Httpd temelli bir container calisiyor. Bu baslayinca container icindeki httpd deamon ayaga kalkiyor ve bizim web sitemizi sunmaya basliyor. Fakat bir zaman sonra bu servis takilmaya basliyor. Bir hatadan dolayi sayfalari sunmaya devam edemiyor. Ama httpd uygulamasi yani service ayakta service cokmedi ya da kapanmadi ama esas yapmasi gerekn is olan web sitesini yayinlamak, sunma isini yapamiyor. Bu durumda ortamda soyle bir sorun olusuyor. Eger uygulama calismiyor olsa ya da uygulama kapansa kubelet bunu tespit ederek containeri yeniden olusturarak sorunu cozuyor. Fakat uygulama ayakta olmasina ragmen yapmasi gereken isi yapmiyorsa kubelet bunu tespit edemiyor dolayisiyla container i yeniden baslatarak sorunu cozme mekanizmasi calismiyor. Bunun cozumu ise liveness probes dur. 
@@ -703,7 +632,7 @@ containers:
       periodSeconds: 3
 ```
 
-## Readiness
+# Readiness
 Kubelet, bir containerin ne zaman trafigi kabul etmeye hazir oldugunu bilmek icin readiness probelari kullanir. Bir pod tum containerlar hazir oldugunda hazir kabul edilir. Readiness probe sayesinde bir pod hazir olana kadar service arkasina eklenmez.
 3 frontend podumu olusturacak bir deploymentimiz bunlari da dis dunyadan erisilmesini saglayacak load balancer tip bir service imiz oldugunu varsayalim. Bunlari yaml dosyalari araciligiyla olusturduk. Bu deploymet da bir guncelleme yapmak istersek diyelim ki web sitemizin yeni bir image ini olusturduk ve deploymentimizi guncelledik ve rolling update stratejisi secildigi icin de podlar birer birer devreden cikartilip yeni podlar devreye alindi. Ben bu deployment da yeni bir image atadigim zaman k8s hemen bu guncel image ile yeni bir pod olusturacak ve bunu load balancer servisine dahil edecek yani olusturup baslatildigi anda dis dunyaya bunun uzerine trafik akmaya baslayacak. Ya bu benim uygulamam ilk baslatildiginda bir yerlere baglanip bazi dosyalar cekiyor ve sonra web sitesini servis etmeye basliyor ise ya da baska bir nedenden dolayi container baslatilir baslatilmaz bu servis hizmet veremiyorsa arada belirli bir sure gecip bazi islemler yapmasi gerekiyorsa eger durum buysa ben bu podu olusturdugum anda bu podlar load balancer servisinden trafik almaya basladigi icin sikinti olacak. Yani bu pod ayakta, icindeki uygulama calisiyor. Ama daha henuz web sitemi sunmaya hazir degil. Dolayisiyla bu pod henuz load balancer servisine eklenmek icin hazir degil. Peki ben bunun load balancer hizmetinden trafik almaya hazir oldugunu nasil anlayacagim? Readiness ile.
 Readiness probe lar aynen liveness probe lar gibi olusturulur. `http`, `exec` ya da `tcpsocket` olarak kurgulanabilir. Siz bir readiness check tanimlarsiniz eger bu readiness check olumlu sonuc donuyorsa pod servise eklenir ve trafik alir. Eger bu readiness check fail ederse de bu pod servisten cikarilir.
@@ -1781,7 +1710,7 @@ Her k8s kurulumunda cluster icinden k8s api server a erisilebilsin diye kubernet
 ## Ingress
 `Ingress controller:` L7 application load balancer kavraminin kubernetes spesifikasyonlarina gore calisan ve k8s'de deploy ederek kullanabildigimiz turudur. Nginx, HAproxy, Traefik en bilinen ingress controller uygulamalaridir. 
 
-Ingress kurulumunu yaptiktan sonra eger cloud ortaminda calisiyorsak bu ingress controller dis dunyaya bir load balancer servisi ile expose oluyor ve public bir ip adresine sahip oluyoruz ve bu noktadan sonra artik dis dunyadan k8s e erisim sadece bu ip adresinden saglaniyor. Sonrasinda bu ingress controllerin configurasyonu yani hangi servise dis dunyadan hangi url e nasil ulasilacak kismi ni `ingress objeleri` dedigimiz objeler ile belirliyoruz.
+Ingress kurulumunu yaptiktan sonra eger cloud ortaminda calisiyorsak bu ingress controller dis dunyaya bir load balancer servisi ile expose oluyor ve public bir ip adresine sahip oluyoruz ve bu noktadan sonra artik dis dunyadan k8s e erisim sadece bu ip adresinden saglaniyor. Sonrasinda bu ingress controllerin configurasyonu yani hangi servise dis dunyadan hangi url e nasil ulasilacak kismini `ingress objeleri` dedigimiz objeler ile belirliyoruz.
 
 `Ingress:` Genellikle HTTP olmak uzere bir clusterdaki servislere harici erisimi yoneten bir API nesnesidir. Yuk dengeleme, SSL sonlandirmasi ve path-name tabanli yonlendirme ozelliklerini destekler. 
 Ingress objeleri bizim ingress controller i k8s objeleri araciligiyla ayarlamamizi sagliyor. L7 application load balancerimiz olan ingress controller a baglanarak www.example.com a gelen uygulamalari a uygulamasina www.example.com/contact a gelen uygulamari b uygulamasina ve www.sezginerdem.com adresine gelen uygulamari ise c uygulamasina yonlendir diye o uygulamanin menulerinin ozelliklerini kullanarak ayar yapmak yerine tum bu istekleri ingress objesi seklinde olusturuyoruz. Deploy ettigimiz zaman ingress controllerlar bu objeyi okuyarak gerekli duzenlemeyi otomatik olarak yapiyor. Ingress controller bizlere L7 ALB lerin sundugu ssl termination, path base routing gibi bir cok ozelligi k8s objeleri olarak deploy edebilmemizi sagliyor.
@@ -1789,10 +1718,10 @@ Ingress objeleri bizim ingress controller i k8s objeleri araciligiyla ayarlamami
 Iki ingress controller one cikmis durumda nginx ve traefik. Her ingressin kurulumu farklidir. Hepsinin kendi dokumantasyonundan bakmak gerekiyor. Nginx ingress kuruldugu zaman nginx kendine bir ns yaratir ve objelerini burada yaratir. 
 Her ingress in kurulumu farkilidir. Hepsinin kurulumu kendi sayfalarindan nasil kurulacagini gorebilirsiniz. Nginx kurulduktan sonra kendisine bir ns yaratir ve daha sonra kurulacak uygulamalari bu ns uzerinde olusturur. 
 
-Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile expose ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uyguamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adrsine giderse b uygulamasi tarafindan sayfa gosteriliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku dns de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gor url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer  yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var. 
+Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile expose ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uygulamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adresine giderse b uygulamasi tarafindan sayfa gosteriliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku DNS de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gore url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer  yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var. 
 Bu iki sorun da ingress controller ve ingress objeleri ile cozulmektedir. 
 
-Servisler nodeport tipinda olursa sadeec cluster icinden erisim sagalnir. Bu servislerin dis dunyadan erisim saglanmasi icin ingress controller yaratilmasi gerekmektedir. Ingress de ayni pod veya servis gibi bir k8s objesidir.
+Servisler nodeport tipinde olursa sadece cluster icinden erisim saglanir. Bu servislerin dis dunyadan erisim saglanmasi icin ingress controller yaratilmasi gerekmektedir. Ingress de ayni pod veya servis gibi bir k8s objesidir.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1827,7 +1756,7 @@ Guvenlik nedeni ile image larinizi private repolarda tutmaniz gerekmektedir. Bu 
 Private registry lerde image lari tuttugunuz zaman bunlara authenticate olmak gerekir. Bu islemi yapmadan image cekilememektedir. 
 Bu authenticate icin oncelikle bir secret olusturacagim. Bu secret tipi "docker-registry" olacak.
 
-Private repodan cekilen bir image ile olusturulan pod. Bunu cekmek icin authonticate olmak gerekiyor.
+Private repodan cekilen bir image ile minikube olusturulan pod. Bunu cekmek icin authonticate olmak gerekiyor.
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1941,3 +1870,68 @@ Velero=Kubernetes backup tool
   --endpoints=[127.0.0.1:2379]    This is the default as ETCD is running on master node and exposed on localhost 2379.
 
   --key                           identify secure client using this TLS key file
+
+
+## Monitoring - Prometheus Stack
+Kubernetes de 4 farkli yerde monitoring yapilmasi gerekmektedir:
+1. Cluster in durumu. Hangi objeler var neler deploy edilmis
+2. Objelerin bu durumu nedir. Deployment yarattik ama tum replicalar calsiiyor mu, podlar ne kadar cpu tuketiyor
+3. Nodelari izlememiz gerekiyor. Worker nodelarin cpu, io kullanimi.
+4. UYgulamalarin mevcut durumu. Uygulamalarin loglarini takip etmek gerekir.
+
+Eger monitoringle ozellikle bir toolunuz yoksa. `k get pods` la kisa bir bilgi alabilirsiniz. Veya `describe` ile ayrintili bilgi alabilirim.
+Metriclerin izlenmesini prometheus sayesinde yapabilrim. Sucunularimizdan gerekli end pointleri bildirerek metricleri toplama islemini prometheus yapar. Bunun bir ati ozelligi bir agent kurmaya ihtiyac duymamasi. Dagitik mimarilerde onemli bir ozellik. Kubernetes in nerdeyse standart monitoring araci haline geldi. 
+
+### Prometheusun kubernetese kurulumu
+Oncelikle `kube metrics` adli bir arac kurmaniz gerekiyor. Bu kube api ile konusarak objelerimizin durumunu metriclerini alarak bunlari kube api araciligiyla cekiyor ve prometheus un okuyabilcegi bir hale getiriyor. Datayi donusturuyor. Bunun yaninda nodeun cpu, memory gibi metcirleri linux makinasindan cekmek istiyorsak bu sefer nodelarin uzerine node exporteri kurmamiz gerekiyor. Linux un bu metricler icin endpointi yok bunun icin de bu metricleri push edecek `node exporter` in kurulmasi gerekiyor. Ayni zamanda prometheus kubernetes api ile de konusabiliyor. Bu sekilde de bir dizayn yapabilirsiniz. Daha sonra prometheus a gelen bilgilerin nasil store edilecegini de ayarlamamiz gerekiyor. Eger biz alert gondermek, email gondermek, sms gondermek istiryorsak. Bu kisimda alert de kurmamiz gerekiyor. Prometheus ceklein metriclerin gorsel halde sunulmasinda cok basarili degil. Bunun icin grafanayi kullaniyoruz. Grafana sadace prometheus icin degil herhangi bir data setinizi gorsellestirmek amaciyla kullanilabilmektedir. Prometheus un kurulum asamasindaki bu karmasikligi cozmek icin prometheus helm charti kullanilmaktadir. 
+
+* kube-prometheus-stack kur
+
+```
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+$ helm repo update
+$ helm install kubeprostack --namespace monitoring prometheus-community/kube-prometheus-stack
+```
+
+* Prometheus'u kontrol et
+
+```
+$ kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-prometheus 9090
+```
+
+queries:
+Şu ana kadar oluşturulmuş tüm podlar: ```kube_pod_created```
+
+Namespace'e göre dağılım ^^:```count by (namespace) (kube_pod_created)```
+
+Mevcut çalışan podlar: ```sum by (namespace) (kube_pod_info)```
+
+Ready durumunda olmayan podlar "namespace'e göre dağılım": ```sum by (namespace) (kube_pod_status_ready{condition="false"})```
+
+* Alert manager kontrol et
+
+```
+kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-alertmanager 9093   
+```
+
+* Grafana'a bağlan
+
+```
+kubectl --namespace monitoring port-forward svc/kubeprostack-grafana 8080:80
+```
+username: admin
+
+password: prom-operator
+
+```
+kubectl get secret kubeprostack-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode ; echo  
+```
+
+Kubernetes de operator yontemi: Kubernetes de operatirler olusturabiliyoruz. Benim yani admin in yapacagi isi bu operatorlerle otomatize hale getiriyorum. Benim prometheus stack imi de ayni zamanda bu opearator yonetiyor benim adima. 
+
+Prometheus default olarak 9090 portundan calisir. Kubernetes uzerinde dploy edilmis bir servis objesi uzerinden ulasilir. `kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-prometheus 9090` komutu ile port forward ediyorum ki prometheus a bagalabileyim. 
+
+`kubectl --namespace monitoring port-forward svc/kubeprostack-grafana 8080:80` komutu ile de grafana ya baglanabilmek icin port forward yapiyorum. Burada gorsellestirmek icin pek cok hazir panal mevcut. Bu hazir panellerden monitirong yapabilirsiniz. Sifirdan panel kurmaya gerek yok. Ayrica grafana adresinden olusturulan dashboardlari alarak kullanabilirsiniz. Buradaki dashboardlarin id sini kendi grafanamiza yapistirarak upload eder ve kullanabilirsiniz. 
+
+# Kubernetes de Loglama
+Kubernetes de loglama icin kullanilan iki stack elesticsearch ve kibana. Elasticsearch loglarin search edilmesini saglayan bir tool iken kibana ise bu loglarin gorsellestirilmesini sagliyor. Aslinda elastic ile kubernetes deki metricleri de cekme imkanimiz oluyor ancak bunun icin cok da uygun bir tool degil. Loglari toplamak icin elastic stackin icinde iki tane urun var bunlardan bir tanesi logstation bu elastic in bir urunu. Logstation i deploy ediyorsunuz bu urun her worker node uzerindeki container engine ile haberleserek onun urettigi loglari toplayabiliyor. Diger bir alternatif de fluentd uygulmasi. Bunu yalnizca kubernetes veya elastic ile kullanmak zorunda degilsiniz baska toollarla birlikte de kullanabilirsiniz. Bunu bir deamonset olarak clusterimizdaki worker nodelarimiz uzerine bir daemon olacak sekilde yaratilacak ve containerlarimizin olusturdugu loglari bu fluentd toplayacak yani bir log agent olacak sekilde calisacak ve elasticsearch e gonderecek. Biz bu stack e `elasticsearch fluentd kibana stack` diyouruz. Bunun kurulum asamalari monitoring dosyasi altinda gorulebiliyor.
