@@ -565,20 +565,25 @@ K8s kurulumunda ortamimiza uygun bir CNI plugin i secmemiz sarttir. Kullanabilec
 
 # Service
 Bir dizi pod uzerinde calisan bir uygulamayi ag hizmeti olarak gostermenin soyut bir yolu.
-Bir web sitesi olusturacagimizi hayal edelim. Insanlar bu web sitesine baglanacak ve resim yukleyecek. Yukledikleri resimlere bir filtre ekleyecegiz ve geri dondurecegiz. Biz bu uygulamayi 2 ayri servis olarak tasarladik. Birinci servis frontend adinda olacak ve kullanicilar buraya baglanacak. Bu kismi javascript ile yazdik. 2. kisim ise bu frontend in baglanarak resimleri gonderdigi ve bu resimlere filtre ekleyen yazilim olacak. Bunu da .net de yazdik. Her iki kismi da container image lari haline getirdik, artik k8s uzerinde bunu deploy edebiliriz. 2 tane deployment yaml dosyasi olusturduk ve bu frontend ve backend katmanlarini 3'er pod olacak seklinde k8s uzerinde deploy ettik, senaryomuz bu. Simdi bu senaryonun erisim kismini inceleyelim. Ilk olarak bu 3 frontend poduna benim bir sekilde dis dunyadan baglanilmasini saglamam gerekiyor. Cozmemiz gereken ilk sorun bu. Benim bu podlara dis dunyadan bir sekilde erisim saglamam lazim. Bu sorunu  bir sekilde cozduk diyelim. Kullanicilar bu podlardan birine baglandi ve resmi yukledi. Benim bu forntend uygulamamin resmi islemesi icin backend podlardan birisi ile iletisim kurmasi ve resmi ona gondermesi gerekiyor. Bu kisim sanki daha kolay gibi. Sonucta k8s uzerinden her podun essiz bir ip adresi var ve her pod birbiri ile sikintisiz haberlesebiliyor. Fakat simdi soyle bir sikinti var. 3 frontend pod u deploy edecek sekilde bir deployment objesi olusturdum ve o da 3 pod olusturdu. Ayni sekilde 3 backend podu olusturacak deployment objesi de olusturdum. Benim frontend podlarim backend podlarim ile network uzerinden iletisim kurmalari gerekiyor. Frontend e bir resim yuklendigi zaman bu frontend pod herhangi bir backend pod ile iletisim kurarak ona resmi yollayacak o da isleyip geri yollayacak. Bunun olmasi icin frontend lerin backend podlara nasil ulasabilecegini bilmeleri gerekir. Kisacasi onlarin ip adreslerini bilmeleri lazim. Ben bu sorunu cozmek adina oncelikle tum backend pod larinin ip adreslerini listeledim sonra frontend podlarima tek tek baglandim ve iletisim kumalari gereken ip adreslerini yazilima ekledim ve bu sayade frontendler backendlere erisebildi sorunu simdilik cozdum. Ama simdi soyle bir sikinti var. Bildiginiz gibi k8s cesitli durumlarda bu podlari bu sistemlerden kaldirip yeniden olusturabilir. Ornegin node lardan biri bir sikinti cikardi ve node devre disi kaldi. Backend deployment objesi bu durumu tespit etti ve devre disi kalan node lar uzerinde kalan podlari saglikli node lar uzerinde yeniden olusturdu. Yeniden olusan podlar da yeni ip adresleri aldi. Simdi benim tekrardan frontend lere baglanarak yazilim icerisinde bu ip adreslerini guncellemem gerekecek ve isin kotu tarafi su ki bu durum k8s uzerinde surekli olabilir. Surekli pod silinerek yeniden yaratilabilir. Ya da diyelim ben bu backend deploymenti scale ettim. Artik 4 pod calisiyor bunu da eklemem gerekebilir. Goruldugu gibi benim bu senaryoda cok islem yapmam gerekiyor. Neyse ki bu mekanizmayi cozebilecek bir mekanizma k8s de mevcut.
+Bir web sitesi olusturacagimizi hayal edelim. Insanlar bu web sitesine baglanacak ve resim yukleyecek. Yukledikleri resimlere bir filtre ekleyecegiz ve geri dondurecegiz. Biz bu uygulamayi 2 ayri servis olarak tasarladik. Birinci servis frontend adinda olacak ve kullanicilar buraya baglanacak. Bu kismi javascript ile yazdik. 2. kisim ise bu frontend in baglanarak resimleri gonderdigi ve bu resimlere filtre ekleyen yazilim olacak. Bunu da .net de yazdik. Her iki kismi da container image lari haline getirdik, artik k8s uzerinde bunu deploy edebiliriz. 2 tane deployment yaml dosyasi olusturduk ve bu frontend ve backend katmanlarini 3'er pod olacak seklinde k8s uzerinde deploy ettik, senaryomuz bu. Simdi bu senaryonun erisim kismini inceleyelim. Ilk olarak bu 3 frontend poduna benim bir sekilde dis dunyadan baglanilmasini saglamam gerekiyor. Cozmemiz gereken ilk sorun bu. Benim bu podlara dis dunyadan bir sekilde erisim saglamam lazim. Bu sorunu  bir sekilde cozduk diyelim. Kullanicilar bu podlardan birine baglandi ve resmi yukledi. Benim bu frontend uygulamamin resmi islemesi icin backend podlardan birisi ile iletisim kurmasi ve resmi ona gondermesi gerekiyor. Bu kisim sanki daha kolay gibi. Sonucta k8s uzerinden her podun essiz bir ip adresi var ve her pod birbiri ile sikintisiz haberlesebiliyor. Fakat simdi soyle bir sikinti var. 3 frontend pod u deploy edecek sekilde bir deployment objesi olusturdum ve o da 3 pod olusturdu. Ayni sekilde 3 backend podu olusturacak deployment objesi de olusturdum. Benim frontend podlarim backend podlarim ile network uzerinden iletisim kurmalari gerekiyor. Frontend e bir resim yuklendigi zaman bu frontend pod herhangi bir backend pod ile iletisim kurarak ona resmi yollayacak o da isleyip geri yollayacak. Bunun olmasi icin frontend lerin backend podlara nasil ulasabilecegini bilmeleri gerekir. Kisacasi onlarin ip adreslerini bilmeleri lazim. Ben bu sorunu cozmek adina oncelikle tum backend pod larinin ip adreslerini listeledim sonra frontend podlarima tek tek baglandim ve iletisim kumalari gereken ip adreslerini yazilima ekledim ve bu sayade frontendler backendlere erisebildi sorunu simdilik cozdum. Ama simdi soyle bir sikinti var. Bildiginiz gibi k8s cesitli durumlarda bu podlari bu sistemlerden kaldirip yeniden olusturabilir. Ornegin node lardan biri bir sikinti cikardi ve node devre disi kaldi. Backend deployment objesi bu durumu tespit etti ve devre disi kalan node lar uzerinde kalan podlari saglikli node lar uzerinde yeniden olusturdu. Yeniden olusan podlar da yeni ip adresleri aldi. Simdi benim tekrardan frontend lere baglanarak yazilim icerisinde bu ip adreslerini guncellemem gerekecek ve isin kotu tarafi su ki bu durum k8s uzerinde surekli olabilir. Surekli pod silinerek yeniden yaratilabilir. Ya da diyelim ben bu backend deploymenti scale ettim. Artik 4 pod calisiyor bunu da eklemem gerekebilir. Goruldugu gibi benim bu senaryoda cok islem yapmam gerekiyor. Neyse ki bu mekanizmayi cozebilecek bir mekanizma k8s de mevcut.
+
 K8s servisler bu ve benzeri sikintilari ortadan kaldirmaya yarayan objelerdir. 4 tip servis objesi yaratabiliriz. 
-- `Cluster IP:` Bizler bir cluster ip tipi servis objesi yaratip, bunu label selector ler araciligiyla podlarla iliskilendirebiliriz. Bu objeyi yarattigimiz zaman bu obje cluster icerisindeki tum podlarin ve kaynaklarin cozebilecegi unique bir dns hizmetine sahip olur. Bunun yaninda bizler her k8s hizmeti kurulumunda servis cluster range ip anahtari ile bir sanal ip blogu belirleriz. Ornegin 10.10.0.0/16. Siz bir cluster ip servis objesi yarattiginiz zaman bu objeye bu ip blogundan bir sanal ip adresi atanir ve ismi ile bu ip adresi cluster in dns mekanizmasinda kaydedilir. Bu ip adresi virtual bir ip adresidir herhangi bir interface e map edilmez. Kube-proxy servisi tarafindan tum nodelardaki ip table lara eklenir ve buraya ulasan trafik servisin iliskilendirdigi podlara randomic bir siralama ile yonlendirilir. Yani cluster icerisinden bu ip adresine gonderilen paketler bu servisle iliskilendirilmis podlardan bir tanesine yonlendirilir. Bu bizim iki sikintimizi cozer. Az onceki ornekteki gibi ben bu backend podlarla iliski kuracak bir backend isimli servis yaratir ve frontend lere de backend podlara ulasmak istediginde goturmek gereken adres backend isimli adrestir dersem su olur. Cluster icerisindeki herhangi bir pod backend ismini cozmek istediginde ona cevap olarak bu backend servisinin ip adresi doner. Pod o ip adresine ulasmak istediginde de trafik backend podlarindan bir tanesine yonlendirilir dolayisiyla ben tek tek frontendlere baglanarak her seferinde yeni eklenen podlarin ip adresi bu, eski podlarin ip adresleri bu diye guncelleme yapmam gerekmez. Ona sadece gitmen gereken yer backend derim o trafigi bu ip adresine yollar. Gerisini cluster halleder. Yeni eklenen podlar otomatik olarak bu servise eklenir. Sistemden cikarilan podlar da otomatik olarak bu servisten cikarilir. Yani cluster ip servisleri k8s altinda basit de olsa service discovery ve load balancing hizmetleri kuran obje tipidir. Simdi cluster ip sayesinde forntend backend baglanti sorununu cozduk. Olusturulan servise atanan bir virtual ip adresidir ve yalnizca cluster icinde gecerlidir. Cluster icinde herhangi bir kaynak bu ip adresinin 5000 portuna istek gonderdigi anda bu istek bu servisin selector ile sectigi podlardan birinin ip adresine ayni port uzerinden yonlendirilecek. Ayni cluster icindeki podlar birbirleriyle isimleri uzerinden haberlesebilirler ancak namespace farklilastigi zaman acik ismini belirtmek gerekir. Podun acik ismi de su sekilde yazilmaktadir: isim.namespace_ismi.svc.cluster_domain. bir poddan digerine istek yapildiginda her seferinde olmasa da bu yanit farki podlardan gelir cunku load balancing yapilmaktadir. Burada round robin algoritmasi kullanilarak istekler farkli podlara dagitilmaktadir.
-- `Nodeport:` Ilk sorunumuz neydi. Podlarimiz web sitemizi barindiriyor dolayisiyla bunlarin cluster disindan erisilebiliyor olmasin lazim. Bu sorun da nodeport tipi servis objeleri ile cozeriz. Aynen cluster ip gibi node port da bir servis obje tipidir. Siz bir nodeport servisi yaratip bunu label selectorler araciligiyla podlarla eslestirebilirsiniz. Bu obje yaratildigi zaman su olur 30000-32767 araliginda bir port secilir ve tum worker node larda bu port sizin servisinizde proxy lenir. Kisacasi worker node un ip adresininin bu portuna gelen tum paketler iliskilendirdiginiz podlarin publish ettiginiz podlarina yonlendirilir. Sizler de bu worker node larin onune bir worker load balancer ya da reverse proxy sunucu koyar ve dis dunyadan erisilmesini saglarsaniz buraya ulasacak paketler worker node lara, worker node lara ulasan paketler de podlarin birine ulasarak kullanicilarinizin uygulamaniza erismesini saglarsiniz. 
+1. `Cluster IP:` Bizler bir cluster ip tipi servis objesi yaratip, bunu label selector ler araciligiyla podlarla iliskilendirebiliriz. Bu objeyi yarattigimiz zaman bu obje cluster icerisindeki tum podlarin ve kaynaklarin cozebilecegi unique bir dns hizmetine sahip olur. Bunun yaninda bizler her k8s hizmeti kurulumunda servis cluster range ip anahtari ile bir sanal ip blogu belirleriz. Ornegin 10.10.0.0/16. Siz bir cluster ip servis objesi yarattiginiz zaman bu objeye bu ip blogundan bir sanal ip adresi atanir ve ismi ile bu ip adresi cluster in dns mekanizmasinda kaydedilir. Bu ip adresi virtual bir ip adresidir herhangi bir interface e map edilmez. Kube-proxy servisi tarafindan tum nodelardaki ip table lara eklenir ve buraya ulasan trafik servisin iliskilendirdigi podlara randomic bir siralama ile yonlendirilir. Yani cluster icerisinden bu ip adresine gonderilen paketler bu servisle iliskilendirilmis podlardan bir tanesine yonlendirilir. Bu bizim iki sikintimizi cozer. Az onceki ornekteki gibi ben bu backend podlarla iliski kuracak bir backend isimli servis yaratir ve frontend lere de backend podlara ulasmak istediginde goturmek gereken adres backend isimli adrestir dersem su olur. Cluster icerisindeki herhangi bir pod backend ismini cozmek istediginde ona cevap olarak bu backend servisinin ip adresi doner. Pod o ip adresine ulasmak istediginde de trafik backend podlarindan bir tanesine yonlendirilir dolayisiyla ben tek tek frontendlere baglanarak her seferinde yeni eklenen podlarin ip adresi bu, eski podlarin ip adresleri bu diye guncelleme yapmam gerekmez. Ona sadece gitmen gereken yer backend derim o trafigi bu ip adresine yollar. Gerisini cluster halleder. Yeni eklenen podlar otomatik olarak bu servise eklenir. Sistemden cikarilan podlar da otomatik olarak bu servisten cikarilir. Yani cluster ip servisleri k8s altinda basit de olsa service discovery ve load balancing hizmetleri kuran obje tipidir. Simdi cluster ip sayesinde forntend backend baglanti sorununu cozduk. Olusturulan servise atanan bir virtual ip adresidir ve yalnizca cluster icinde gecerlidir. Cluster icinde herhangi bir kaynak bu ip adresinin 5000 portuna istek gonderdigi anda bu istek bu servisin selector ile sectigi podlardan birinin ip adresine ayni port uzerinden yonlendirilecek. Ayni cluster icindeki podlar birbirleriyle isimleri uzerinden haberlesebilirler ancak namespace farklilastigi zaman acik ismini belirtmek gerekir. Podun acik ismi de su sekilde yazilmaktadir: `isim.namespace_ismi.svc.cluster_domain`. bir poddan digerine istek yapildiginda her seferinde olmasa da bu yanit farki podlardan gelir cunku load balancing yapilmaktadir. Burada round robin algoritmasi kullanilarak istekler farkli podlara dagitilmaktadir.
+
+2. `Nodeport:` Ilk sorunumuz neydi. Podlarimiz web sitemizi barindiriyor dolayisiyla bunlarin cluster disindan erisilebiliyor olmasin lazim. Bu sorun da nodeport tipi servis objeleri ile cozeriz. Aynen cluster ip gibi node port da bir servis obje tipidir. Siz bir nodeport servisi yaratip bunu label selectorler araciligiyla podlarla eslestirebilirsiniz. Bu obje yaratildigi zaman su olur 30000-32767 araliginda bir port secilir ve tum worker node larda bu port sizin servisinizde proxy lenir. Kisacasi worker node un ip adresininin bu portuna gelen tum paketler iliskilendirdiginiz podlarin publish ettiginiz podlarina yonlendirilir. Sizler de bu worker node larin onune bir worker load balancer ya da reverse proxy sunucu koyar ve dis dunyadan erisilmesini saglarsaniz buraya ulasacak paketler worker node lara, worker node lara ulasan paketler de podlarin birine ulasarak kullanicilarinizin uygulamaniza erismesini saglarsiniz. 
 Olusturdugum nodeport service cluster IP den cok farkli degil. Cluster icindeki haberlesmeye imkan taniyor ancak bunun yaninda ek bir sey daha yapiyor: tum worker node larin dis bacaginda 30447 portunu dinlemeye basliyor. Biz herhangi bir worker node un bu portuna ulasir isek trafik frontend portlarindan birine yonlenecek. 
-- `Lod balancer:` Bu tip objeleri sadece azure k8s servis gibi ya da google k8s engine gibi cluster saglayicilari manage k8s servislerinde kullanabiliriz. Bu obje olusturuldugunda cloud servis saglayici dis dunyadan erisilebilecek public bir ip adresine sahip bir load blancer olusturur. Sonrasinda bu load balancer i sizin service objenizle iliskilendirir. Dolayisiyla bu public adresine ulasan paketler iceriden podlara yonlendirilir. Nodeport icin dedim ya worker node larin onune bir load balancer ya da reverse proxy koyar oradan kullanicilara eristirirsiniz. Iste cloud servis saglayicilar bunu otomatik olarak yapiyorlar. Buna da load balancr tipi servis objesi diyoruz. 
-Service dosyasi olustururken name kismi onemli cunku bu isim artik clusterdan bizim ulasacagimiz kisim olacak. Service olustururkenki yaml dosyalarinda spec kisminin altindaki selector arkasina alacagi yani yakalayacgi podlarin labelleri yazilmali. Ports tanimlamasinda ise port bu servisin dinleyecegi port target port ise podlarin expose ettigi port olacak.
+
+3. `Lod balancer:` Bu tip objeleri sadece azure k8s servis gibi ya da google k8s engine gibi cluster saglayicilarin manage k8s servislerinde kullanabiliriz. Bu obje olusturuldugunda cloud servis saglayici dis dunyadan erisilebilecek public bir ip adresine sahip bir load balancer olusturur. Sonrasinda bu load balancer i sizin service objenizle iliskilendirir. Dolayisiyla bu public adresine ulasan paketler iceriden podlara yonlendirilir. Nodeport icin dedim ya worker node larin onune bir load balancer ya da reverse proxy koyar oradan kullanicilara eristirirsiniz. Iste cloud servis saglayicilar bunu otomatik olarak yapiyorlar. Buna da load balancer tipi servis objesi diyoruz. 
+Service dosyasi olustururken name kismi onemli cunku bu isim artik clusterdan bizim ulasacagimiz kisim olacak. Service olustururkenki yaml dosyalarinda spec kisminin altindaki `selector` arkasina alacagi yani yakalayacgi podlarin labelleri yazilmali. Ports tanimlamasinda ise `port` bu servisin dinleyecegi port `targetport` ise podlarin expose ettigi port olacak.
+
 Bu servisi localde kurmak bir ise yaramayacaktir. Bu servis gcp, eks, aks gibi cloud saglayicilarin k8s ortamlarinda ise yarayip sonuc veren bir uygulamadir.
-Kubernetes icerisinde core dns tabanli bir dns hizmeti bulunur ve tum podlar sorgulari buraya gonderir. Bir servis olusturdugunuz zaman onun isim ve IP adresi bu DNS de kaydedilir ve dolayisiyla tum podlar bu isme ait IP adresini ogrenebilirler. Biz backend yazarak cozduk ancak bu servisin adi aslinda `backend.default.svc.cluster.local` yani `isim.namespace_ismi.svc.cluster_domain` bu ayni namespace icinde calisan uygulamalar icin sorun degil baska bir namespacedeki uygulamalar icin tam ismini yazmasi gerekecekti. 
-Deployment konusunda gectigi uzere deployment lar replicasetleri replicasetler de podlari olusturur. Benzer bir durum service icin de gecerli biz bir service olusturdugumuz zaman bu service endpoint adinda bir obje olusturur ve endpoint objesi bizim belirledigimiz selector tarafindan secilen podlarin ip adresini uzerinde barindirir service trafigini nereye yonlendirecegini bu listeye gore duzenler. Yaratilan service arka planda sectigi podlarin ip lerini adresler yani describe komutu ile bu ip adreslerini liste halinde gorebiliriz. Bu listeyi dimanik olarak tutmaktadir. Bir pod terminate oldugunda veya yeni bir pod yaratildiginda bu liste otomatik olarak guncelleniyor. Ekleniyor ya da siliniyor. 
+
+Kubernetes icerisinde `core dns` tabanli bir `dns` hizmeti bulunur ve tum podlar sorgulari buraya gonderir. Bir servis olusturdugunuz zaman onun isim ve IP adresi bu DNS de kaydedilir ve dolayisiyla tum podlar bu isme ait IP adresini ogrenebilirler. Biz backend yazarak cozduk ancak bu servisin adi aslinda `backend.default.svc.cluster.local` yani `isim.namespace_ismi.svc.cluster_domain` bu ayni namespace icinde calisan uygulamalar icin sorun degil baska bir namespacedeki uygulamalar icin tam isminin yazilmasi gerekecekti.
+
+Deployment konusunda gectigi uzere deployment lar replicasetleri replicasetler de podlari olusturur. Benzer bir durum service icin de gecerli biz bir service olusturdugumuz zaman bu service `endpoint` adinda bir obje olusturur ve `endpoint` objesi bizim belirledigimiz selector tarafindan secilen podlarin ip adresini uzerinde barindirir service trafigini nereye yonlendirecegini bu listeye gore duzenler. Yaratilan service arka planda sectigi podlarin ip lerini adresler yani describe komutu ile bu ip adreslerini liste halinde gorebiliriz. Bu listeyi dimanik olarak tutmaktadir. Bir pod terminate oldugunda veya yeni bir pod yaratildiginda bu liste otomatik olarak guncelleniyor. Ekleniyor ya da siliniyor. 
 
 // Bir deployment'in expose edilmesi "imperative olarak service objesinin oluşturulması"
-`kubectl expose deployment "deployment_ismi" --type="service_tipi" --name="servis_ismi"`
-Ör: kubectl expose deployment backend --type=ClusterIP --name=backend
+`kubectl expose deployment "deployment_ismi" --type="service_tipi" --name="servis_ismi"` | `kubectl expose deployment backend --type=ClusterIP --name=backend`
 
 ```yaml
 spec:
@@ -599,21 +604,28 @@ Herhangir network policy yaratmadi iseniz
 1. Her pod diger her pod ile konusabilir
 2. Her pod diger dis dunya ile konusabilir.
 3. Herkes disardan ingress ile ya da loadbalancer ile bu podlara erisebilir.
-Bu davranisi kisitlamak icin network policy lere ihtiyac duyariz
+
+Bu davranisi kisitlamak icin `network policy` lere ihtiyac duyariz
 Biz bir network policy yaratiriz ve daha sonra bu network policy nin hangi podlar uzerinde etkili olacagini pod selector ile seceriz. Yani ilk once tanimlamamiz gereken `podSelector` tanimidir.
-`policyTypes` da tipini belirliyoruz. `Ingress` iceriye dogur demek yani selector ile secilen podlara gelebn trafikle ilgili ayaralar. `Egress` ise secilen podlardan dis dunyayay giden trafigin ayarlarini gosterir. `from` nerenin ingresinden yapailacak olan islemleri gosterir. `ipBlock` hangi ip bloklarindan trafige izin verilmesi gerektigini belirten alana verilen ad. Yani secilen podlara belirlenen ip adresi uzerinden gelecek isteklere `ports` da belirtilen port uzerinden izin ver. `expect` ise haric tutulan io blogunu belirtmek icin kullanilir. `namaspaceSelector` bu secilen podlara bu namespacedeki labeslerini belirttigim tum podlar asagidaki port numarasindan erisebilsin. `podselector` ile dirak pod secerek o podlara network policy eklenebilir. 
+`policyTypes` da tipini belirliyoruz. `Ingress` iceriye dogru demek yani selector ile secilen podlara gelen trafikle ilgili ayarlar. `Egress` ise secilen podlardan dis dunyaya giden trafigin ayarlarini gosterir. `from` nerenin ingresinden yapailacak olan islemleri gosterir. `ipBlock` hangi ip bloklarindan trafige izin verilmesi gerektigini belirten alana verilen ad. Yani secilen podlara belirlenen ip adresi uzerinden gelecek isteklere `ports` da belirtilen port uzerinden izin ver. `expect` ise haric tutulan `io` blogunu belirtmek icin kullanilir. `namespaceSelector` bu secilen podlara bu namespacedeki labeslerini belirttigim tum podlar asagidaki port numarasindan erisebilsin. `podselector` ile direk pod secerek o podlara network policy eklenebilir. 
+
 `egress` de ise dis dunyaya erirsim izinleri tanimlaniyor.
-Ayni poda ferkli network policyler atanabilir. Bu durumda kural su: bu policylerdeki kurallarin birlesimi seklinde assgin edilir.
+Ayni poda farkli network policyler atanabilir. Bu durumda kural su: bu policylerdeki kurallarin birlesimi seklinde asign edilir.
 
 # Livenessprobe
-Kubelet, bir containerin ne zaman yeniden baslatilacagi bilmek icin liveness probe kullanir. Ornegin, liveless probe, bir uygulamanin calistigi ancak ilerleme saglayamadigi bir kilitlenmeyi yakalayabilir. Boyle bir durumda bir container'i yeniden baslatmak, hatalara ragmen uygulamayi daha kullanilabilir hale getirmeye yardimci olabilir.
-Livenessprobe ile container icinde bir komut calistirarak ya da bir http endpoint e request gondererek ya da bir porta tcp connection acarak uygulamamizin dogru calisip calismadigini kontrol etmeye calisiyoruz. Bu sorgulamanin sonucunda bekledigimiz sonucu alirsak container in saglikli oldgunu eger bekledigimiz sonucu alamazsak container da sikinti oldugunu tespit edebiliyoruz. 
-Bazi durumlarda pod icinde uygulama calisiyor olarak gorunse de islevini yerine getirmiyor olabilir. Ornegin bir web sayfasi yayinlayan bir podumuz var. Httpd temelli bir container calisiyor. Bu baslayinca container icindeki httpd deamon ayaga kalkiyor ve bizim web sitemizi sunmaya basliyor. Fakat bir zaman sonra bu servis takilmaya basliyor. Bir hatadan dolayi sayfalari sunmaya devam edemiyor. Ama httpd uygulamasi yani service ayakta service cokmedi ya da kapanmadi ama esas yapmasi gerekn is olan web sitesini yayinlamak, sunma isini yapamiyor. Bu durumda ortamda soyle bir sorun olusuyor. Eger uygulama calismiyor olsa ya da uygulama kapansa kubelet bunu tespit ederek containeri yeniden olusturarak sorunu cozuyor. Fakat uygulama ayakta olmasina ragmen yapmasi gereken isi yapmiyorsa kubelet bunu tespit edemiyor dolayisiyla container i yeniden baslatarak sorunu cozme mekanizmasi calismiyor. Bunun cozumu ise liveness probes dur. 
+Kubelet, bir containerin ne zaman yeniden baslatilacagi bilmek icin `livenessprobe` kullanir. Ornegin, liveless probe, bir uygulamanin calistigi ancak ilerleme saglayamadigi bir kilitlenmeyi yakalayabilir. Boyle bir durumda bir container'i yeniden baslatmak, hatalara ragmen uygulamayi daha kullanilabilir hale getirmeye yardimci olabilir.
+
+*`Livenessprobe` ile container icinde bir komut calistirarak ya da bir http endpoint e request gondererek ya da bir porta tcp connection acarak uygulamamizin dogru calisip calismadigini kontrol etmeye calisiyoruz.* Bu sorgulamanin sonucunda bekledigimiz sonucu alirsak container in saglikli oldugunu, eger bekledigimiz sonucu alamazsak containerda sikinti oldugunu tespit edebiliyoruz. 
+Bazi durumlarda pod icinde uygulama calisiyor olarak gorunse de islevini yerine getirmiyor olabilir. Ornegin bir web sayfasi yayinlayan bir podumuz var. Httpd temelli bir container calisiyor. Bu baslayinca container icindeki httpd daemon ayaga kalkiyor ve bizim web sitemizi sunmaya basliyor. Fakat bir zaman sonra bu servis takilmaya basliyor. Bir hatadan dolayi sayfalari sunmaya devam edemiyor. Ama httpd uygulamasi yani service ayakta service cokmedi ya da kapanmadi ama esas yapmasi gereken is olan web sitesini yayinlamak, sunma isini yapamiyor. Bu durumda ortamda soyle bir sorun olusuyor. Eger uygulama calismiyor olsa ya da uygulama kapansa kubelet bunu tespit ederek containeri yeniden olusturarak sorunu cozuyor. Fakat uygulama ayakta olmasina ragmen yapmasi gereken isi yapmiyorsa kubelet bunu tespit edemiyor dolayisiyla container i yeniden baslatarak sorunu cozme mekanizmasi calismiyor. Bunun cozumu ise liveness probes dur. 
+
 Livenessprobe da bir endpointe httpGet ile istek gonderiyoruz oradan 200 donerse basarili 400 donerse basarisiz olarak gorunuyor. Eger sizin uygulamanizin bir healthcheck endpointi varsa onu denersiniz yoksa direk localhosta gidebilirsiniz. Ya da saglik kontrolunu yapmanin en saglikli oldugu endpoint neresi ise onu denersiniz. Bunu uygulamaya ozel kurgulamaniz gerekir. 
-Livenessprobe yaml dosyasi icerisindeki `initialDelaySeconds` kismi pod olustuktan sonra uygulama hemen ayaga kalkmayabilir on hazirlik yapmasi bir yerlerden dosya cekmesi gerekebilir. Eger livenessprobe hemen baslatilirsa uygulama hazir olmadigindan hata alacak ve uygulama yeniden baslatilacaktir. Bunu onlemek adina `initialDelaySeconds` parametresi ile container basladiktan sonra bekledikten sonra healtcheck e baslamasi gerektigini soyleriz. `periodSeconds` degeri de bu isin kac saniyede bir yapilacagini gosteriyor. Yani container baslatildi delay seconds 3 saniye, 3 saniye bekledi, httpget ile liveness yapmaya basladi; birinci sorgusunu yapti cevap olumlu; 3 sn bekleyecek ve sonra bir sorgu daha iste bu sorgular arasinda kacar saniye bekleyecegi bu `periodSeconds` degeridir. 
+
+Livenessprobe yaml dosyasi icerisindeki `initialDelaySeconds` kismi pod olustuktan sonra uygulama hemen ayaga kalkmayabilir on hazirlik yapmasi bir yerlerden dosya cekmesi gerekebilir. Eger livenessprobe hemen baslatilirsa uygulama hazir olmadigindan hata alacak ve uygulama yeniden baslatilacaktir. Bunu onlemek adina `initialDelaySeconds` parametresi ile container basladiktan sonra bekledikten sonra healtcheck e baslamasi gerektigini soyleriz. `periodSeconds` degeri de bu isin kac saniyede bir yapilacagini gosteriyor. Yani container baslatildi delay seconds 3 saniye, 3 saniye bekledi, httpget ile liveness yapmaya basladi; birinci sorgusunu yapti cevap olumlu; 3 sn bekleyecek ve sonra bir sorgu daha iste bu sorgular arasinda kacar saniye bekleyecegi bu `periodSeconds` degeridir.
+
 Eger bizim uygulamamiz http tabanli bir uygulama degilse bir console uygulamasi ise bunun icin bir script yazar ve bu script ile uygulamamiza uygun sorgu ne ise misal bir dosyanin olup olmadigina bakabiliriz. Iste liveness check alinda httpget disinda ikinci kullanabildigimiz prob olan `exec` bize bu imkani verir. `exec` ile shellde komut ya da uygulama calistiririz. Bu uygulama bize 0 kodu donerse saglikli bunun disinda bir kod donerse sikintili oldugunu anlar ve container i restart eder. 
-`tcpSocket:` probu ise bazen http ya da `exec` probu birseylerin saglikli olup olmadigina yardimci olmayabilir. Mysql veri tabani container i calistiriyoruz. Mysql process i 3306 portundan erisilebilir. Iste bizler tcp socket ile bu porta istek gonderip eger cevap alirsak uygulamnin duzgun calistigini varsayabiliriz. Bu tarz http get ve exec ile sonuc alamayacagimiz durumlar icin tcp portuna sorgulama yontemini izlemek istersek tcp socket portunu kullanabiliriz.
-Uygulamniza yonelik uygun bir prob tanimi yapmalisiniz.
+
+`tcpSocket:` probu ise bazen http ya da `exec` probu birseylerin saglikli olup olmadigina yardimci olmayabilir. Mysql veri tabani container i calistiriyoruz. Mysql process i 3306 portundan erisilebilir. Iste bizler tcp socket ile bu porta istek gonderip eger cevap alirsak uygulamanin duzgun calistigini varsayabiliriz. Bu tarz http get ve exec ile sonuc alamayacagimiz durumlar icin tcp portuna sorgulama yontemini izlemek istersek tcp socket portunu kullanabiliriz.
+Uygulamaniza yonelik uygun bir prob tanimi yapmalisiniz.
 
 ```yaml
 containers:
@@ -633,41 +645,46 @@ containers:
 ```
 
 # Readiness
-Kubelet, bir containerin ne zaman trafigi kabul etmeye hazir oldugunu bilmek icin readiness probelari kullanir. Bir pod tum containerlar hazir oldugunda hazir kabul edilir. Readiness probe sayesinde bir pod hazir olana kadar service arkasina eklenmez.
-3 frontend podumu olusturacak bir deploymentimiz bunlari da dis dunyadan erisilmesini saglayacak load balancer tip bir service imiz oldugunu varsayalim. Bunlari yaml dosyalari araciligiyla olusturduk. Bu deploymet da bir guncelleme yapmak istersek diyelim ki web sitemizin yeni bir image ini olusturduk ve deploymentimizi guncelledik ve rolling update stratejisi secildigi icin de podlar birer birer devreden cikartilip yeni podlar devreye alindi. Ben bu deployment da yeni bir image atadigim zaman k8s hemen bu guncel image ile yeni bir pod olusturacak ve bunu load balancer servisine dahil edecek yani olusturup baslatildigi anda dis dunyaya bunun uzerine trafik akmaya baslayacak. Ya bu benim uygulamam ilk baslatildiginda bir yerlere baglanip bazi dosyalar cekiyor ve sonra web sitesini servis etmeye basliyor ise ya da baska bir nedenden dolayi container baslatilir baslatilmaz bu servis hizmet veremiyorsa arada belirli bir sure gecip bazi islemler yapmasi gerekiyorsa eger durum buysa ben bu podu olusturdugum anda bu podlar load balancer servisinden trafik almaya basladigi icin sikinti olacak. Yani bu pod ayakta, icindeki uygulama calisiyor. Ama daha henuz web sitemi sunmaya hazir degil. Dolayisiyla bu pod henuz load balancer servisine eklenmek icin hazir degil. Peki ben bunun load balancer hizmetinden trafik almaya hazir oldugunu nasil anlayacagim? Readiness ile.
+Kubelet, bir containerin ne zaman trafigi kabul etmeye hazir oldugunu bilmek icin `readiness` probelari kullanir. Bir pod tum containerlar hazir oldugunda hazir kabul edilir. Readiness probe sayesinde bir pod hazir olana kadar service arkasina eklenmez.
+
+3 frontend podumu olusturacak bir deploymentimiz bunlari da dis dunyadan erisilmesini saglayacak load balancer tipi bir service imiz oldugunu varsayalim. Bunlari yaml dosyalari araciligiyla olusturduk. Bu deploymet da bir guncelleme yapmak istersek diyelim ki web sitemizin yeni bir image ini olusturduk ve deploymentimizi guncelledik ve `rollingupdate` stratejisi secildigi icin de podlar birer birer devreden cikartilip yeni podlar devreye alindi. Ben bu deployment da yeni bir image atadigim zaman k8s hemen bu guncel image ile yeni bir pod olusturacak ve bunu load balancer servisine dahil edecek yani olusturup baslatildigi anda dis dunyaya bunun uzerine trafik akmaya baslayacak. Ya bu benim uygulamam ilk baslatildiginda bir yerlere baglanip bazi dosyalar cekiyor ve sonra web sitesini servis etmeye basliyor ise ya da baska bir nedenden dolayi container baslatilir baslatilmaz bu servis hizmet veremiyorsa arada belirli bir sure gecip bazi islemler yapmasi gerekiyorsa eger durum buysa ben bu podu olusturdugum anda bu podlar load balancer servisinden trafik almaya basladigi icin sikinti olacak. Yani bu pod ayakta, icindeki uygulama calisiyor. Ama daha henuz web sitemi sunmaya hazir degil. Dolayisiyla bu pod henuz load balancer servisine eklenmek icin hazir degil. Peki ben bunun load balancer hizmetinden trafik almaya hazir oldugunu nasil anlayacagim? Readiness ile.
+
 Readiness probe lar aynen liveness probe lar gibi olusturulur. `http`, `exec` ya da `tcpsocket` olarak kurgulanabilir. Siz bir readiness check tanimlarsiniz eger bu readiness check olumlu sonuc donuyorsa pod servise eklenir ve trafik alir. Eger bu readiness check fail ederse de bu pod servisten cikarilir.
-Ornege donersek image i guncelledim ve yeni pod olusturuldu pod calismaya basladi ama bu noktada hemen loadbalancer a eklenmedi. Pod icerisinde readiness check calismaya basladi, initial delay suresi kadar bekledi sonra tanimladigimiz prob ile kontrolunu yapti. Olumlu cevap aldigi anda bu pod servise eklenir ve trafik akmaya baslar. Readiness check period seconda belirlenen saniye kadar surede bir bu islemi yapmaya devam eder. Fail edene kadar bu pod servise eklenir. Eger fail ederse de pod servisin endpoint listesinden cikarilir. Readiness chek budur. Pod un servis sunmaya hazir halde oldugunu belirtir. Pod olusturuldu ama pod da readiness tanimi var. Dolayisiyla henuz servise eklenmedi. Initial delay second kadar bekledi ardindan ilk kontrolu yapti. Olumlu cevap aldi ve servise eklenerek trafik almaya basladi. Tam bu noktada eski pod terminate edilmeye baslanir. Bu pod terminate edildiginde dahi halen bu poda trafik gelebilir. Kullanicilar buna baglanmaya devam ederler ve tam islem yaparken pod kapanmaya baslamis olursa bu kullanicilara hata donmek zorunda kaliriz. Bunu engellemek adina bir pod terminate edilecegi zaman bu surede poda yeni trafik gelmemesi icin pod servis arkasindan alinir ve servis ile baglantisi kesilir boylece yeni trafik akmaz fakat k8s yine de bu podu hemen kapatmaz cunku yeni trafik gelmese bile halen bu pod hala eski istekleri islemeye devam ediyor ve bu islemlerin bir sure bitmesinin beklenmesi istenebilir.
-Pod tanimlarinda `terminationGracePeriodSeconds` adinda bir anahtar bulunur ve varsayilan degeri 30sn dir. Siz ya da kubelet bir podu terminate etmek istediginiz zaman bu podun icinde calisan `pid1` process e `skill` yani yaptigin ne varsa hemen birak ve kapan komutu gondermez bunun yerine `sitterm` yani su anda yaptigin islem varsa onlari duzgun sekilde tamamla ve bitirince de kendini kapat sinyali gosterir. Process bu sinyali aldiginda eger ortasinda oldugu bir is varsa onu yapmayi birakmaz. O islemleri tamamlar ve bitince tum baglantilari duzgun sekilde kapatir ve sonrasinda process de kapatilir. Iste `terminattionGracePeriodSeconds` degeri container a duzgun bir sekilde kendini kapatabilmesi icin atadigimiz suredir. Eger container bu sure icerisinde duzgun bir sekilde kapanirsa sikinti olmaz fakat kapanmazsa `skill` gonderilir ve zorla kapatilir. Dolayisiyla sizin uygulamanizin ne kadar sure ile duzgun bir sekiilde kapanabilecegini bilmeniz ve ondan daha uzun sure surecek bir `terminationGracePeriodSeconds` degeri atamaniz gerekmektedir. Ama 30 sn hemen hemen tum islemler icin yeterlidir. 
+
+Ornege donersek image i guncelledim ve yeni pod olusturuldu pod calismaya basladi ama bu noktada hemen loadbalancer a eklenmedi. Pod icerisinde `readiness check` calismaya basladi, `initial delay` suresi kadar bekledi sonra tanimladigimiz prob ile kontrolunu yapti. Olumlu cevap aldigi anda bu pod servise eklenir ve trafik akmaya baslar. `Readiness check` period seconda belirlenen saniye kadar surede bir bu islemi yapmaya devam eder. `Fail` edene kadar bu pod servise eklenir. Eger `fail` ederse de pod servisin endpoint listesinden cikarilir. Readiness chek budur. Pod un servis sunmaya hazir halde oldugunu belirtir. Pod olusturuldu ama pod da readiness tanimi var. Dolayisiyla henuz servise eklenmedi. Initial delay second kadar bekledi ardindan ilk kontrolu yapti. Olumlu cevap aldi ve servise eklenerek trafik almaya basladi. Tam bu noktada eski pod terminate edilmeye baslanir. Bu pod terminate edildiginde dahi halen bu poda trafik gelebilir. Kullanicilar buna baglanmaya devam ederler ve tam islem yaparken pod kapanmaya baslamis olursa bu kullanicilara hata donmek zorunda kaliriz. Bunu engellemek adina bir pod terminate edilecegi zaman bu surede poda yeni trafik gelmemesi icin pod servis arkasindan alinir ve servis ile baglantisi kesilir boylece yeni trafik akmaz fakat k8s yine de bu podu hemen kapatmaz cunku yeni trafik gelmese bile halen bu pod hala eski istekleri islemeye devam ediyor ve bu islemlerin bir sure bitmesinin beklenmesi istenebilir.
+
+Pod tanimlarinda `terminationGracePeriodSeconds` adinda bir anahtar bulunur ve varsayilan degeri `30sn` dir. Siz ya da kubelet bir podu terminate etmek istediginiz zaman bu podun icinde calisan `pid1` process e `skill` yani yaptigin ne varsa hemen birak ve kapan komutu gondermez bunun yerine `sitterm` yani su anda yaptigin islem varsa onlari duzgun sekilde tamamla ve bitirince de kendini kapat sinyali gosterir. Process bu sinyali aldiginda eger ortasinda oldugu bir is varsa onu yapmayi birakmaz. O islemleri tamamlar ve bitince tum baglantilari duzgun sekilde kapatir ve sonrasinda process de kapatilir. Iste `terminattionGracePeriodSeconds` degeri container a duzgun bir sekilde kendini kapatabilmesi icin atadigimiz suredir. Eger container bu sure icerisinde duzgun bir sekilde kapanirsa sikinti olmaz fakat kapanmazsa `skill` gonderilir ve zorla kapatilir. Dolayisiyla sizin uygulamanizin ne kadar sure ile duzgun bir sekilde kapanabilecegini bilmeniz ve ondan daha uzun sure surecek bir `terminationGracePeriodSeconds` degeri atamaniz gerekmektedir. Ama 30 sn hemen hemen tum islemler icin yeterlidir. 
 Yaml dosyalari icinde `liveness` tanimlari ile `readiness` tanimlamalari ayni seklide yapilmaktadir. Yuzde 99 ikisi ayni anda kullanilmaktadir.
 
 ```yaml
 containers:
-      - name: frontend
-        image: ozgurozturknet/k8s:blue
-        ports:
-        - containerPort: 80
-        livenessProbe:
-          httpGet:
-            path: /healthcheck
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 80
-          initialDelaySeconds: 20
-          periodSeconds: 3
+  - name: frontend
+    image: ozgurozturknet/k8s:blue
+    ports:
+    - containerPort: 80
+    livenessProbe:
+      httpGet:
+        path: /healthcheck
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 80
+      initialDelaySeconds: 20
+      periodSeconds: 3
 ```
 
-## Resource limits
-Siz aksini belirtmediginiz surece containerlar uzerinde calistirdiginiz sistemin kaynaklarina sinirsiz bir sekilde erisirler. Eger bir pod tum kaynaklari tuketiyorsa diger podlari etkileyebilir bu nedenle podlarin kullanacagi kaynaklari kisitlamak gerekir. Pod tanimlarinda kullanabildigimiz ``request` ve `limit` tanimlari bize bu imkani verir.
+# Resource limits
+Siz aksini belirtmediginiz surece containerlar uzerinde calistirdiginiz sistemin kaynaklarina sinirsiz bir sekilde erisirler. Eger bir pod tum kaynaklari tuketiyorsa diger podlari etkileyebilir bu nedenle podlarin kullanacagi kaynaklari kisitlamak gerekir. Pod tanimlarinda kullanabildigimiz `request` ve `limit` tanimlari bize bu imkani verir.
 - ***cpu:*** cpu kisitlamalari su sekilde uygulanir her uygulamanin belirli cpu kaynaklari vardir. Bu kaynaklar cloud uzerinde ya da sanal olarak calisan sistemlerde `vcp` olarak bare metal sunucularda da `hyperthread` olarak hesaplanir. Kisacasi core saysindan bahsediyorum. Ben bir pod tanimina cpu: "1" tanimi eklersem. O podun calistigi node uzerindeki corelardan sadece bir tanesini kullanabilecegi anlamina gelir. Bunun bir baska yazim sekli daha vardir. Her pod 1000 ms yani 1000 cpu luk bir guc demektir. Ben eger cpu 100m tanimi yaparsam pod calistigi node uzerindeki bir core un 10 da 1 lik gucune erisebilir anlamina gelecektir. Yani cpu 1 ile cpu 1000m ayni keza 0.1 cpu ile 100m de ayni.
 - ***memory:*** Clusterda mevcut durumda kullanilabilir bellek varsa, bir container belirlenen bellek istegini asabilir. Ancak bir container bellek sinirindan fazlasini kullanmasina izin verilmez. Bir container, sinirindan daha fazla bellek ayirirsa, container sonlandirma icin aday olur. Container, limitinin otesinde bellek tuketmeye devam ederse, container sonlandirilir. Sonlandirilmis bir container yeniden baslatilabiliyorsa diger herhangi bir runtime hatasi turunde oldugu gibi kubelet onu yeniden baslatir.
-Container in kullanacagi max memory i byte cinsinden tanimlayabilirsiniz. Ornegin memory 64m derseniz bu container in en fazla 64mbit memory kullanmaniza izin verdiginiz anlamina gelir. m megabayt, g gigabayt, k kilobaytin kisaltilmasi anlamina gelmektedir. Bunlarin yaninda 2 nin katlarini kullanan gosterim sekli olan  kibibayt KIB, mebibayt MIB, gibibayt GIB tanimlari da desteklenir. 
-- Yaml dosyasi icinde resource kisitlamalarini 2 ayri bolumde tanimlayabiliyoruz. 
-  1. request: k8s bu podu olusturmaya basladigi zaman scheduler bu podun olusturulacagi bir node sececek bu secme asamasinda tanimlanan degerlerin bulundugu bir node uzerinde schedule et yani bu pod un olusturulabilmesi icin node da minimum ne kadar kaynagin olmasi gerektigini belirtiyor, scheduler bu parametreleri dikkate alarak hangi node da scale edilecegini belirliyor eger burada kaynaklarin saglandigi bir node yoksa bu pod olusturulamayacak. 
-  2. limits: bu container in en fazla kullanacagi sistem kaynagi. cpu da belirlenen limitden fazlasina erisilemez ancak memory degerinde tam olarak oyle degil. memory de belirlenen sayi container in kullanabilecegi max ram degeri fakat container bu degere geldigi zaman daha fazlasini kullanamayacak diye bir durum soz konusu degil. `Memory allocation` cpu gibi calismiyor. Bu, sistemden daha fazla ram talebinde bulunabiliyor ve sistem varsayilan olarak bunu engelleme sansina sahip degil. Container daha fazla memory istegine cevap alamadiginda ise bu durumda `OOMKilled` durumuna gelip `restart` edilecek.
+Container in kullanacagi `max memory` i byte cinsinden tanimlayabilirsiniz. Ornegin memory 64m derseniz bu container in en fazla 64mbit memory kullanmaniza izin verdiginiz anlamina gelir. `m` megabayt, `g` gigabayt, `k` kilobaytin kisaltilmasi anlamina gelmektedir. Bunlarin yaninda 2 nin katlarini kullanan gosterim sekli olan  kibibayt `KIB`, mebibayt `MIB`, gibibayt `GIB` tanimlari da desteklenir. 
+
+Yaml dosyasi icinde resource kisitlamalarini 2 ayri bolumde tanimlayabiliyoruz. 
+1. `Request`: k8s bu podu olusturmaya basladigi zaman scheduler bu podun olusturulacagi bir node sececek bu secme asamasinda tanimlanan degerlerin bulundugu bir node uzerinde schedule et yani bu pod un olusturulabilmesi icin node da minimum ne kadar kaynagin olmasi gerektigini belirtiyor, scheduler bu parametreleri dikkate alarak hangi node da scale edilecegini belirliyor eger burada kaynaklarin saglandigi bir node yoksa bu pod olusturulamayacak. 
+2. `Limits`: Bu container in en fazla kullanacagi sistem kaynagi. cpu da belirlenen limitden fazlasina erisilemez ancak memory degerinde tam olarak oyle degil. memory de belirlenen sayi container in kullanabilecegi max ram degeri fakat container bu degere geldigi zaman daha fazlasini kullanamayacak diye bir durum soz konusu degil. `Memory allocation` cpu gibi calismiyor. Bu, sistemden daha fazla ram talebinde bulunabiliyor ve sistem varsayilan olarak bunu engelleme sansina sahip degil. Container daha fazla memory istegine cevap alamadiginda ise bu durumda `OOMKilled` durumuna gelip `restart` edilecek.
 
 ```yaml
 containers:
@@ -683,21 +700,15 @@ containers:
 ```
 
 // Kubernetes pod'lar üstünde cpu ve memory kullanımının kontrol edilmesi.
-$ kubectl top node 
-kubectl top node "node_ismi" ile tekil bakılabilir
+`kubectl top node` | `kubectl top node "node_ismi"` ile tekil bakılabilir
 
-// Kubernetes pod'lar üstünde cpu ve memory kullanımının kontrol edilmesi.
+# Envrionment variable
+Ornegin bir web uygulamasi yaziyoruz ve bu web uygulamasi bir veri tabanina baglanarak uygulamalarini burada sakliyor. Bu uygulamanin baglandigi veri tabaninin sunucu adresini ve kullanici adi, sifre bilgilerini de bu uygulamanin icine gomduk ve bu uygulamayi container haline getirdik ve istedigimiz platformda calistirmaya haziriz. Fakat bu senaryoda 2 sikintimiz var. Biz bu veritabani baglanti bilgilerini bu container imagee icine hard-code olarak yazdik yani bir sekilde container image i ele gecerse bi bilgiler expose olabilir. Diger bir sorun ise ben bu image dan container olusturmaya calistigim zaman her defasinda ayni veri tabanina ayni kullanici adi ve sifre ile baglanmaya calisacak. Benim veri tabani adim test ortamimda ayri prod ortamimda ayri olabilir ben kullanici adi bilgilerini zaman icerisinde guncellemis olabilirim. Ya her ortam icin yeni bilgilerle image olusturacagim ya da container olusturduktan sonra bu bilgileri guncelleyecegim. Her seferinde bunu manuel olarak yapmak mumkun degil. Bunun verine environment variable lar tanimlariz.
 
-$ kubectl top pod 
-kubectl top pod "pod_ismi" ile tekil bakılabilir
+K8s de disaridan bir poda direk olarak erisim saglayamayiz ya load balancer ya da nodeport araciligiyla olur fakat k8s soyle bir imkan sagliyor. kubetcl araciligiyla poda deployment a service e kendi bilgisayarimdan tunel acarak o objenin portuna trafigimi yonlendirebiliyorum. Iste testlerde hizli bir sekilde objelere baglanmamizi saglayan bu ozellige `portforward` diyoruz.
 
-## envrionment variable
-Ornegin bir web uygulamasi yaziyoruz ve bu web uygulamasi bir veri tabanina baglanarak uygulamalarini burada sakliyor. Bu uygulamanin baglandigi veri tabaninin sunucu adresini ve kullanici adi, sifre bilgilerini de bu uygulamanin icine gomduk ve bu uygulamayi container haline getirdik ve istedigimiz platformda calistiraya haziriz. Fakat bu senaryoda 2 sikintimiz var. Biz bu veritabani baglanti bilgilerini bu container imagee icine hard-code olarak yazdik yani bir sekilde container image i ele gecerse bi bilgiler expose olabilir. Diger bir sorun ise ben bu image dan container olusturmaya calistigim zaman her defasinda ayni veri tabanina ayni kullanici adi ve sifre ile baglanmaya calisacak. Benim veri tabani adim test ortamimda ayri prod ortamimda ayri olabilir ben kullanici adi bilgilerini zaman icerisinde guncellemis olabilirim. Ya her ortam icin yeni bilgilerle image olusturacagim ya da container olusturduktan sonra bu bilgileri guncelleyecegim. Her seferinde bunu manuel olarak yapmak mumkun degil. Bunun verine environment variable lar tanimlariz.
-K8s de disaridan bir poda direk olarak erisim saglayamayiz ya load balancer ya da nodeport araciligiyla olur fakat k8s soyle bir imkan sagliyor. kubetcl araciligiyla poda deployment a service e kendi bilgisayarimdan tunel acarak o objenin portuna trafigimi yonlendirebiliyorum. Iste testlerde hizli bir sekilde objelere baglanmamizi saglayan bu ozellige portforward diyoruz. 
 // Kubectl port-forward pod/envpod 8080:80 komutu ile local hostumu envpod unun 80 portuna yonlendirdim.
-kubectl port-forward <pod ismi> <source:target>
-kubectl port-forward pod/envpod 8080:80
-
+`kubectl port-forward <pod ismi> <source:target>` | `kubectl port-forward pod/envpod 8080:80`
 
 ```yaml
 containers:
@@ -715,22 +726,26 @@ containers:
 # Volume
 
 *`Stateless:`* Uzerine yazilan bilginin silinmesi durumunda sorun olmayan uygulama. Mesela onune gelen istege islem yapip gonderen uzerinde veri barindirmayan bir backend uygulamasi. Bu tur uygulamalar container silinip yenisi olustugunda islemeye devam eder. 
-Ornegin bir frontend ve bir web sitemiz oldugunu dusunelim. Kullanicilar bu uygulamaya baglaniyor ve bu uygulamada baska bir yerden resimleri cekerek kullanicilara gosteriyor. Uygulama resim bir defa cektikten sonra bunu bir folder icinde sakliyor ve bir daha resmi cekmesine gerek kalmiyor yani bir nevi kendi uzerinde cacheliyor. Bunu k8s de deploy edecegiz. Bir deployment objesi olusturduk ve bu uygulama bir replica olacak sekilde deploy edildi. Podumuz olusturuldu ve calismaya basladi. Buraya erisebilecek bir service objesi de olusturduk. Boylece bu uygulamaya kullanicilar baglanabildi. Hemen backend uygulamamizi ve service i de olusturduk. Kullanicilar web sitemizi kullanmaya basladilar ve diyelim ki cesitli resimleri sectiler. Bizim uygulamamiz da yapmasi gereken islemlere basladi. Diger servise baglandi bu resimleri cekti isledi ve bagli kullanicilara bunu servis etti ama ayni zamanda bu resimleri container icindeki cache isimli folder a kaydetti. Bir baska kullanici daha ayni resmi istedigi zaman tekrar diger uygulamaya baglanmasina gerek kalmadan cache folder dan cekiyor. Diyelim ki bu pod taniminda `livenessprob` da var bir sikinti cikti ve `livenessprob` fail etti. Bu durumda ne oluyordu `kubelet` devreye giriyordu ve containeri restart ediyordu ama aslinda containerlarda restart diye bir kavram yoktur. k8s bize bunu restart olarak gosterse de olay aslinda olan sey su: kubelet calisan containeri siler ve yeniden bir container olusturur. Ancak container silindigi zaman icindeki veriler de siliniyor. Dolayisiyla yeni container icinde cache foderi bos. Cok buyuk bir sikinti degil sonucta bunlar cache dosyalari tekrar diger servise baglanilarak bunu halledebilirim ancak keske bu cache dosyalari yeni container olusturuldugunda silinmese. Keske ben podun icerisindeki tum containerlarin erisebilecegi ve podun yasam suresi boyunca ayakta kalabilecek bir mekanizmaya sahip olsam da dosyalari buraya yazsam. Boyle bir mekanizma olsa bu cache folderini buraya baglarim ve icerisine yazilan tum dosyalar buraya yazilir. Yeni bir container olustugunda da bu dosyalara erismeye devam ederim. Boylece cache den mahrum kalmam. Bu duruma cozum getiren volume ise `ephemeral` yani gecici volume. 
+Ornegin bir frontend ve bir web sitemiz oldugunu dusunelim. Kullanicilar bu uygulamaya baglaniyor ve bu uygulamada baska bir yerden resimleri cekerek kullanicilara gosteriyor. Uygulama resim bir defa cektikten sonra bunu bir folder icinde sakliyor ve bir daha resmi cekmesine gerek kalmiyor yani bir nevi kendi uzerinde cacheliyor. Bunu k8s de deploy edecegiz. Bir deployment objesi olusturduk ve bu uygulama bir replica olacak sekilde deploy edildi. Podumuz olusturuldu ve calismaya basladi. Buraya erisebilecek bir service objesi de olusturduk. Boylece bu uygulamaya kullanicilar baglanabildi. Hemen backend uygulamamizi ve service i de olusturduk. Kullanicilar web sitemizi kullanmaya basladilar ve diyelim ki cesitli resimleri sectiler. Bizim uygulamamiz da yapmasi gereken islemlere basladi. Diger servise baglandi bu resimleri cekti isledi ve bagli kullanicilara bunu servis etti ama ayni zamanda bu resimleri container icindeki cache isimli folder a kaydetti. Bir baska kullanici daha ayni resmi istedigi zaman tekrar diger uygulamaya baglanmasina gerek kalmadan cache folder dan cekiyor. Diyelim ki bu pod taniminda `livenessprob` da var bir sikinti cikti ve `livenessprob` fail etti. Bu durumda ne oluyordu `kubelet` devreye giriyordu ve containeri restart ediyordu ama aslinda containerlarda restart diye bir kavram yoktur. k8s bize bunu restart olarak gosterse de olay aslinda olan sey su: kubelet calisan containeri siler ve yeniden bir container olusturur. Ancak container silindigi zaman icindeki veriler de siliniyor. Dolayisiyla yeni container icinde cache folderi bos. Cok buyuk bir sikinti degil sonucta bunlar cache dosyalari tekrar diger servise baglanilarak bunu halledebilirim ancak keske bu cache dosyalari yeni container olusturuldugunda silinmese. Keske ben podun icerisindeki tum containerlarin erisebilecegi ve podun yasam suresi boyunca ayakta kalabilecek bir mekanizmaya sahip olsam da dosyalari buraya yazsam. Boyle bir mekanizma olsa bu cache folderini buraya baglarim ve icerisine yazilan tum dosyalar buraya yazilir. Yeni bir container olustugunda da bu dosyalara erismeye devam ederim. Boylece cache den mahrum kalmam. Bu duruma cozum getiren volume ise `ephemeral` yani gecici volume. 
+
 - *`Ephemeral volume:`* Verileri container disinda tutmamiza yarayan volume turleri. 2 tip ephemeral volume vardir
-  *`1. empyDir:`* `emptyDir` volume ilk olarak bir Pod bir node'a atandiginda olusturulur ve bu Pod o node'unda calistigi surece var olur. Adindan da anlasilacagi gibi emptyDir birimi baslangicta bostur. Pod icindeki tum containerlar, emptyDir volumedeki ayni dosyalari okuyabilir ve yazabilir, ancak bu birim her kapsayicida ayni veya farkli yollara mount edilebilir. Bir pod herhangi bir nedenle bir node'dan silindiginde, emptyDir icindeki veriler de kalici olarak silinir. EmptyDir olusturulmasi ile ilgili gerekli tanimlamalari yaptiginiz zaman k8s pod uzerinde bos bir klasor yaratir daha sonra siz bu klasoru konteyner icerisindeki herhangi bir path e mount edebilirsiniz. Ornegin bizim senaryomuzdaki /cache klasorune. Bu containerin bu mount ettiginiz path e yazdiginiz her turlu dosya fiziksel olarak node uzerinde olusturulmus olan bu bos klasore yazilir. Dolayisiyla container silinse bile bu dosyalar silinmez. Yeni container olusturuldugu zaman tekrar bu volume container da ayni path e mount edilir. Bu sayede yeni olusturulmus container da bu dosyalara erismeye devam eder fakat podun yasam suresi sonuna kadar erisilebilir durumdadir. Yani pod silinirse bu volume de silinir. Bu nedenle bu volume lere gecici volume ler denir. Podun yasam suresince containerdan bagimsiz olan volumelerdir.
+  
+  1. `EmpyDir`: `emptyDir` volume ilk olarak bir Pod bir node'a atandiginda olusturulur ve bu Pod o node'unda calistigi surece var olur. Adindan da anlasilacagi gibi emptyDir birimi baslangicta bostur. Pod icindeki tum containerlar, `emptyDir` volumedeki ayni dosyalari okuyabilir ve yazabilir, ancak bu birim her kapsayicida ayni veya farkli yollara mount edilebilir. Bir pod herhangi bir nedenle bir node'dan silindiginde, emptyDir icindeki veriler de kalici olarak silinir. EmptyDir olusturulmasi ile ilgili gerekli tanimlamalari yaptiginiz zaman k8s pod uzerinde bos bir klasor yaratir daha sonra siz bu klasoru konteyner icerisindeki herhangi bir path e mount edebilirsiniz. Ornegin bizim senaryomuzdaki /cache klasorune. Bu containerin bu mount ettiginiz path e yazdiginiz her turlu dosya fiziksel olarak node uzerinde olusturulmus olan bu bos klasore yazilir. Dolayisiyla container silinse bile bu dosyalar silinmez. Yeni container olusturuldugu zaman tekrar bu volume container da ayni path e mount edilir. Bu sayede yeni olusturulmus container da bu dosyalara erismeye devam eder fakat podun yasam suresi sonuna kadar erisilebilir durumdadir. Yani *pod silinirse bu volume de silinir*. Bu nedenle bu volume lere gecici volume ler denir. Podun yasam suresince containerdan bagimsiz olan volumelerdir.
   Ephemeral volumeler ayni podun icerisindeki tum containelerlara ayni anda baglanabilir.
-  *`2.HostPath:`* Bir `hostPath` volume, worker node dosya sisteminden Pod'unuza bir dosya veya dizini baglayabilme imkani verir. Bu cogu podun ihtiyac duyacagi bir sey degildir, ancak bazi uygulamalar icin guclu bir kacis kapisi sunar. Temelde emptydir ile mantik olarak aynidir. Yine siz bir volume yaratilmasi icin bir pod taniminizda gerekli ayarlamalari yaparsiniz fakat bu sefer rastgele bos klasor yaratilmasini soylemek yerine podun olusturulacagi worker node uzerindeki spesifik bir klasoru veya dosyayi belirtirsiniz. Ornegin worker node uzerindeki /tmp/cache dosyasinin volume olarak kullanmasini soyleyebilirsiniz. Daha sonra container icerisindeki bir path e mounth edebilirsiniz. Bu genelde podlarin calistigi worker node lar uzerinde bulunan spesifik folder ya da dosyalara erismesi gerektigi durumlarda isimize yarar. Misal ozel bir path de konuslanmis bir unique soketine container in baglanmasi gerekirse burayi hostpath ile container a mount edebiliriz.
+  
+  2. `HostPath`: Bir `hostPath` volume, worker node dosya sisteminden Pod'unuza bir dosya veya dizini baglayabilme imkani verir. Bu cogu podun ihtiyac duyacagi bir sey degildir, ancak bazi uygulamalar icin guclu bir kacis kapisi sunar. Temelde emptydir ile mantik olarak aynidir. Yine siz bir volume yaratilmasi icin bir pod taniminizda gerekli ayarlamalari yaparsiniz *fakat bu sefer rastgele bos klasor yaratilmasini soylemek yerine podun olusturulacagi worker node uzerindeki spesifik bir klasoru veya dosyayi belirtirsiniz*. Ornegin worker node uzerindeki /tmp/cache dosyasinin volume olarak kullanmasini soyleyebilirsiniz. Daha sonra container icerisindeki bir path e mounth edebilirsiniz. Bu genelde podlarin calistigi worker node lar uzerinde bulunan spesifik folder ya da dosyalara erismesi gerektigi durumlarda isimize yarar. Misal ozel bir path de konuslanmis bir unique soketine container in baglanmasi gerekirse burayi hostpath ile container a mount edebiliriz.
   3 type `hostPath` volume vardir:
-    1. `Directory`: path ini vermis oldugum folder worker node uzerinde zaten var. Zaten var olan bu folder i  volum olarak tanimliyorum. 
+    1. `Directory`: path ini vermis oldugum folder worker node uzerinde zaten var. Zaten var olan bu folder i  volume olarak tanimliyorum. 
     2. `DirectoryOrCache`: Bu folder varsa bunu kullan yoksa bunu olustur.
     3. `FileOrCreate`: Dosya varsa onu kullan yoksa yarat. Ornegin `/cache/config.json` pathini mount edebilirsiniz. 
 Volume yaratirken ilk olarak spec altinda volume tanimi yapmak gerekir. Sonrasinda bu olusturdugumuz volume u containerlarda belirledigimiz path lere mount ederiz.
 
-## secret
-Secretlar, parolalar, OAuth token ve ssh anahtarlari gibi hassas bilgileri depolamaniza ve yonetmenize olanak tanir. Gizli bilgileri bir secret icinde saklamak onu bir pod tanimina veya bir container imajina koymaktan daha guvenli ve esnektir.
+# Secret
+Secretlar, parolalar, Auth token ve ssh anahtarlari gibi hassas bilgileri depolamaniza ve yonetmenize olanak tanir. Gizli bilgileri bir `secret` icinde saklamak onu bir pod tanimina veya bir container imajina koymaktan daha guvenli ve esnektir.
   1. env variable lari yaml dosyalarinda tanimladigimizda bu dosyalara erisebilen herkes bu bilgilere de kolaylikla erisebiliyor.
   2. Verilerin degismesi sifrenin guncellenmesi gerektigi zaman yaml dosyasi icerisinde degisikliklere gitmem gerekiyor. Bu hassas bilgileri bu tanimlamalardan ayirmak gerekiyor bunu da secretlar ile saglayabiliyoruz.
 Verileri secret icerisinde saklar sonrasinda pod a ekleriz. Secretlar da diger objeler gibi yaratabiliriz.
+
 Secret ile pod ayni namespace icinde olmali.
 8 degisik tipte secret yaratabiliriz. `Opaque` bunlardan varsayilan olan turdur. Ama nerdeyse hicbir zaman `Opaque` disinda bir secret tipini kullanmayiz. 
 
@@ -810,39 +825,35 @@ spec:
 Bu secretlar etcd de `base64` olarak tutuluyor. Kendi yonettigimiz clusterlarda manuel olarak bu secretlari encrypt etmemiz gerekiyor. Cloud saglayicilar bunu bizim yerimize otomatik olarak yapiyor. Kendi yonettigimiz clusterlarda bunu manuel olarak devreye almamiz gerekiyor. Siz bir secret olusturdugunuzda diger objelerde oldugu gibi diger kullanicilar da bu secretlara varsayilan olarak erisim hakkina sahip bunu engellemek icin de `rbac` kullaniyoruz.
 
 // Imperative olarak Secret objelerinin oluşturulması (Opaque de olsa imperative yazarken generic olarak yazmak gerekiyor)
-`kubectl create secret generic "secret_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
-Ör: `kubectl create secret generic mysecret --from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
+`kubectl create secret generic "secret_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"` | `kubectl create secret generic mysecret --from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
 
 // Secret objelerinin listelenmesi
 `kubectl get secret`
 
 // Secret objelerinin silinmesi
-`kubectl delete secret "secret_ismi"`
-Ör: `kubectl delete secret my-secret`
+`kubectl delete secret "secret_ismi"` |  `kubectl delete secret my-secret`
 
 
 // Degerlerin dosyadan okunarak secret olusturulmasi
 `kubectl create secret generic mysecret --from-file=db_server=server.txt --from-file=db_username=username.txt --from-file=db_password=password.txt`
 
 // Imperative olarak ConfigMap objelerinin oluşturulması
-`kubectl create configmap "configmap_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
-Ör: `kubectl create configmap myconfigmap--from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
+`kubectl create configmap "configmap_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"` | `kubectl create configmap myconfigmap--from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
 
 //ConfigMap objelerinin listelenmesi
 `kubectl get configmap`
 
 // ConfigMap objelerinin silinmesi
-kubectl delete configmap <configmap_ismi>
-`kubectl delete configmap my-configmap`
+`kubectl delete configmap <configmap_ismi>` |`kubectl delete configmap my-configmap`
 
-## configmap
+# Configmap
 Gizli olmayan verileri anahtar/deger eslenikleri olarak depolamak icin kullanilan bir API nesnesidir. Podlar, ConfigMap'i environment variable, komut satiri argumanlari veya bir volume olarak baglanan yapilandirma dosyalari olarak kullanabilir.
 
 Secretlar ile ayni gorevi gorurler. Olusturulan configmap dosyalarindaki key value ler ile verileri tutup bunlari env var olarak ya da volume olarak podlara aktarabiliriz. Olusturma adimlari da nerede ise birebir aynidir. Sadece `secret` yazilan yerlere `configmap` yazilir. 
 
 - *Peki birebir ayni ise neden iki farkli obje tipi vardir?* Secret, hassas verileri saklamak icin kullanilan objelerdir. Olusturulan secretler base64 encode edilerek `etcd` de saklanir ve ayar yaparsak `etcd` uzerinde encryptsiz sekilde durabilir. `ConfigMap` de ise veriler base64 edilmez ve encrypt etmemize de gerek yoktur. Cunku bizler config map icerisinde gizli olmayan fakat yine de pod tanimimizdan ayirmamiz gereken configurasyon tarzi bilgileri tutariz yani uygulama disinda tutmaniz gereken veri, sifre, ssh anahtari gibi gizli bir veri secret degilse `configMap` uygun olacaktir. Bu ikisinin `etcd` de encoded olarak tutulmasi disinda birebir aynidir. Ilerde secretlarin guncellenmesinin otomatize edilmesi ya da ozel secret store larda ayri tutulmasi gibi ek ozellikler getirilebilir. Bu nedenle en bastan iki farkli obje tipi olusturmus k8s.
 
-Yaml dosyasi secret gibi. tek farki data kismina girmek istedigim bilgileri key=value seklinde girmek ya da settings altinda oldugu gibi birden fazla degeri alt alta girebiliyorum. Poda aktarma kismi secret ile ayni. Bir de secretdaki gibi tip tanimi belirtmeye gerek yok.
+Yaml dosyasi secret gibi. Tek farki data kismina girmek istedigim bilgileri key=value seklinde girmek ya da settings altinda oldugu gibi birden fazla degeri alt alta girebiliyorum. Poda aktarma kismi secret ile ayni. Bir de secretdaki gibi tip tanimi belirtmeye gerek yok.
 
 ```yaml
 apiVersion: v1
@@ -886,19 +897,17 @@ spec:
 ```
 
 // Imperative olarak ConfigMap objelerinin oluşturulması
-`kubectl create configmap "configmap_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"`
-Ör: kubectl create configmap myconfigmap--from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json
+`kubectl create configmap "configmap_ismi" --from-literal="anahtar"="değer" --from-file="anahtar"="değerin_okunacagi_dosya" --from-file="değerin_okunacagi_dosya"` | `kubectl create configmap myconfigmap--from-literal=db_server=db.example.com --from-file=db_server=server.txt --from-file=config.json`
 
 // ConfigMap objelerinin listelenmesi
 `kubectl get configmap`
 
 // ConfigMap objelerinin silinmesi
-`kubectl delete configmap "configmap_ismi"`
-Ör: kubectl delete configmap my-configmap
+`kubectl delete configmap "configmap_ismi"` | `kubectl delete configmap my-configmap`
 
-## Node affinity(yakinlik benzesme)
+# Node affinity(yakinlik benzesme)
 `Node affinity` kavramsal olarak nodeSelector'a benzer ve nodelara atanan etiketlere gore podunuzun hangi node ustunde schedule edilmeye uygun oldugunu kisitlamaniza olanak tanir.
-Podlarimizin uygun worker nodelarda olusturulmasini saglayan k8s ozelligidir. Node selectora cok benzer. Bizler pod umuzu ekler ve podumuzun s\chedule edilecegi node uzerinde ekledigimiz label in olmasini bekleriz. Bunun yaninda bunun olmasini sart kosar ya da tercih ettigimizi belirtiriz.
+Podlarimizin uygun worker nodelarda olusturulmasini saglayan k8s ozelligidir. Node selectora cok benzer. Bizler pod umuzu ekler ve podumuzun schedule edilecegi node uzerinde ekledigimiz label in olmasini bekleriz. Bunun yaninda bunun olmasini sart kosar ya da tercih ettigimizi belirtiriz.
 
 ```yaml
 apiVersion: v1
@@ -966,10 +975,11 @@ Yaml dosyasinda `nodeAffinity` tanimi `affinity` altinda yapiliyor burada iki se
 Mesela podlarimin ssd li worker nodelarda calismasini isteyebilirim. Nodelara label olarak ssd atamasi yaparim ve required alanin da ssd olarak belirlerim ancak burada da sorun su ki bu worker nodelarin kapasitesi doldugu zaman ne yapacaksiniz? O zaman gene de olusturulsun derseniz `prefer` dir. 
 `preferredDuringSchedulingIgnoredDuringExecution` Prefer secenegi su anlama gelir bak burada tanim yapiyorum buna bak bu podu bu tanima uygun bir node uzerinde olustur. Fakat bu tanima uygun bir node bulamazsan da pending de bekleme baska bir node bul. Yine orada olustur prefer taniminda gordugunuz uzere `weight` de girebiliyorum. 1 ile 100 arasinda bir deger girilebiliyor hangisinin oncelikli olarak degerlendirilebicegi belirleniyor. Ornekte 1 ve 2 var sadece. Oncelikli olarak weight i yuksek olan yani 2 olan secenek uygulanacak yoksa 1 inci secenek uygulanacak o da yerine getirilemiyorsa uygun olan herhangi bir worker nodeda olusturulur. Ornegin pod calismaya basladikten sonra ben buradaki label i worker node dan sildim. `Ignoredduringexecution` ise label silinse de bu pod orada calismaya devam etsin anlamina gelmektedir. Bu secenegin baska bir alternatifi yok. Yani `preferedduringexecution` diye bir secenek yok.
 
-## pod affinity
+# Pod affinity
 Pod affinity podunuzun hangi node uzerinde olusturulmaya uygun oldugunu nodelardaki etiketlere gore degil halihazirda nodeda calismakta olan podlardaki etiketlere gore sinirlamaniza olanak tanir.
 Podun uzerinde calistiracagimiz worker node da calisan baska podlarin durumuna gore podun nerede calisip calismamasini isteyecegimiz durumlarda kullaniriz. 
-Ornegin bir azure uzerinde kosan 4 farkli worker node uzerinde 2 farkli AZ uzerinde kosan bir cluserimiz var. Ornegin frontend cache ve veri tabanindan olsan bir uygulamamiz var. Ilk olarak veri tabanimizi deploy edecek pod tanimimizi hazirladik ve k8s api uzerine gonderdik. K8s scheduler isini yapti ve bu podun calisacagi uygun bir node buldu ve varsayalim ki node1 node2 sonra frontend i deploy ettik onu da node3 de schedule etti. Son olarak da cache podumuzu schedule ettik onu da node4 de schedule etti. Buradaki sorun ise frontend ve backend podum ayri AZ uzerinde schedule edildiler. Benim frontend sunumum veri tabani ile surekli gorusuyor ve hemen hemen tum cloud providerlarda 2 AZ arasindaki veri transferi ucrete tabi. Yani ben bu iki podu da ayni AZ uzerinde bulunan worker nodelarda kostursa idim veri transferine para odemeyecektim. Bunun icin `nodeaffinity` yazarak podlari ayni yere toplayabilirim. Ancak bu sefer her seyi manuel ayarlamam gerekir. Eger ben front end tanimina podu olustururken DB poduna bak ve o pod hangi AZ de olustu ise onu da orda olustur der ve sorunu cozerdim. 
+Ornegin bir azure uzerinde kosan 4 farkli worker node uzerinde 2 farkli AZ uzerinde kosan bir cluserimiz var. Ornegin frontend cache ve veri tabanindan olusan bir uygulamamiz var. Ilk olarak veri tabanimizi deploy edecek pod tanimimizi hazirladik ve k8s api uzerine gonderdik. K8s scheduler isini yapti ve bu podun calisacagi uygun bir node buldu ve varsayalim ki node1 node2 sonra frontend i deploy ettik onu da node3 de schedule etti. Son olarak da cache podumuzu schedule ettik onu da node4 de schedule etti. Buradaki sorun ise frontend ve backend podum ayri AZ uzerinde schedule edildiler. Benim frontend sunumum veri tabani ile surekli gorusuyor ve hemen hemen tum cloud providerlarda 2 AZ arasindaki veri transferi ucrete tabi. Yani ben bu iki podu da ayni AZ uzerinde bulunan worker nodelarda kostursa idim veri transferine para odemeyecektim. Bunun icin `nodeaffinity` yazarak podlari ayni yere toplayabilirim. Ancak bu sefer her seyi manuel ayarlamam gerekir. Eger ben front end tanimina podu olustururken DB poduna bak ve o pod hangi AZ de olustu ise onu da orda olustur der ve sorunu cozerdim.
+ 
 Diger bir ornek de cache ile frontend podlari keske ayni makinada olsa cunku bu iki pod arasinda ne kadar az latency olursa performans artar. Eger ben cache pod tanimima frontend poduna bak eger o hangi node da olusturudu ise o node da olustur diye yazsa idim sorun cozulurdu. 
 Nasil node affinity de bir podun o node da olusturulup olusturulmamasi label lara gore secebiliyorsak bunu da o node uzerinde calisan pod olup olmadigina gore secebiliyoruz.
 
@@ -1031,23 +1041,25 @@ spec:
 
 Nodelar uzerinde onceden tanimlanmis pek cok label bulunmaktadir. Her node uzerinde `kubernetes.io/arch`, `kubernetes.io/hostname`, `kubernetes.io/os` isimli labeller bulunmaktadir. `kubernetes.io/arch` node un x64 ya da arch tabanli bir isletim sistemine sahip oldugunu belirtir. Anahtarinin degeri amd64 olabilir isletim sisteminin degerini gosterir. `kubernetes.io/hostname` nodeun hostname degerini alir minikube gibi. `kubernetes.io/os` ise isletim sistemini belirtir, linux degerini alabilir. Bunun yaninda cloud providerlarda `topology.kubernetes.io/region=northeurope`, `topology.kubernetes.io/zone=northeurope-1` nodelarin hangi regionlada ve AZ lerde bulundugu bu labellarla belirtilir. 
 
-Podun tanimlandigi yaml dosyasina bakildiginda. node affinity tanimlarindaki gibi hard yani `required`, soft yani `prefered` olmak uzere iki tanimlama yapilmaktadir. Tek fark burada `topologykey` diye bir deger girilir. topologykey kisminda `kubernetes.io/hostname` secersem bu podlari ayni hostname e sahip nodelar uzerinde calistir demek. Zone secseydim ayni worker node uzerinde olmasina gerek olmayacakti. O zaman ayni AZ deki herhangi bir node uzerinde calismasi gerektigi belirtilir. `Prefer` ise `nodeaffinity` ile ayni yani olsa iyi olur ancak bu sart durum degil. Pod affinity nin bir diger farki ise `antiaffinity` taniminin ayri olarak yapilmasidir. `Nodeantiaffinity` yi not in ile yapabliyorken `pod antianffinity yi ozel olarak tanimlamamaiz gerekiyor. Bu da affinity nin tam tersi. 
+Podun tanimlandigi yaml dosyasina bakildiginda. Node affinity tanimlarindaki gibi hard yani `required`, soft yani `prefered` olmak uzere iki tanimlama yapilmaktadir. Tek fark burada `topologykey` diye bir deger girilir. Topologykey kisminda `kubernetes.io/hostname` secersem bu podlari ayni hostname e sahip nodelar uzerinde calistir demek. Zone secseydim ayni worker node uzerinde olmasina gerek olmayacakti. O zaman ayni AZ deki herhangi bir node uzerinde calismasi gerektigi belirtilir. `Prefer` ise `nodeaffinity` ile ayni yani olsa iyi olur ancak bu sart durum degil. Pod affinity nin bir diger farki ise `antiaffinity` taniminin ayri olarak yapilmasidir. `Nodeantiaffinity` yi not in ile yapabliyorken `pod antianffinity` yi ozel olarak tanimlamamaiz gerekiyor. Bu da affinity nin tam tersi. 
 Bu tanimlamalar buyuk clusterlarda sikca kullanilan bir ozelliktir. Kucuk cluster icin cok da gerekmemektedir.
 
-## taint ve toleration
+# Taint ve toleration
 Taint(leke) anlamina gelir. Siz bir node a anahtar veri eslenigi seklinde bir `taint` ve bu `taint`la birlikte `noschedule`, `prefernoschedule` ya da `noexecute` olmak uzere bir emir eklersiniz. Bu asamadan sonra bu node uzerinde sadece bu taint i yani bozuklugu tolere edebilecek podlar calisabilir. 
-Worker1 blue olarak label landi. Worker2 ise green olarak label landi. Worker3 ise label lanmadi. Blue uygulamamizin blue label lanan node da green uygulamamizin green label lanan node da schedule edilmesini istiyoruz. Buna gore gerekli `pod effinity` ve `node affinity` tanimlamalarini yaptik ve uygulamalari deploy ettik. Baska bir ekip yeni bir pod schedule etti ve 3 pod tum nodelarda schedule edilmeye baslandi. 
+
+Worker1 blue olarak label landi. Worker2 ise green olarak label landi. Worker3 ise label lanmadi. Blue uygulamamizin blue label lanan node da green uygulamamizin green label lanan node da schedule edilmesini istiyoruz. Buna gore gerekli `pod affinity` ve `node affinity` tanimlamalarini yaptik ve uygulamalari deploy ettik. Baska bir ekip yeni bir pod schedule etti ve 3 pod tum nodelarda schedule edilmeye baslandi. 
+
 Mesela 10 tane nodeunuz var bunlardan 3 tanesi cok iyi makinalar ve bu 3 makina musteriye sunulan nodelar olsun istiyorsunuz kalan 7 node ise test ortami olarak kullanacaginiz uygulamalar olsun istiyorsunuz. Yani sadece belirli tipte podlar belirli nodelar uzerinde schedule edilebilsin. 
+
 Ornegin ben `platform=production:NoSchedule` isimli bi taint eklersem bu etiket eklenmemis hicbir pod bu `taint` uzerindeki nodelarda schedule edilemez. Ayni sekilde pod a bu labeli eklersem ve `prefer noschedule` yazarsam bu etiketi tolere edemeyen hicbir pod bu worker node uzerinde schedule edilemez. Ama bunun icin uygun baska bir node bulunamazsa da son secenek olarak bu worker node uzerinde pod calistirilabilir.
+
 `Noexecute` secenegi ise bu tainti tolere edemeyen hicbir pod bu node uzerinde schedule edilemeyecegi gibi mevcut durumda bu worker node uzerinde bu tainti tolere edemeyen podlar da varsa o podlar da o worker node uzerinden silinerek baska uygun nodelar uzerinde yeniden olusturulur. 
 
 // Node'lara taint ekleme.
-`kubectl taint node "node_ismi" "anahtar=değer:eylem"`
-Ör: kubectl taint node minikube platform=production:NoSchedule
+`kubectl taint node "node_ismi" "anahtar=değer:eylem"` | `kubectl taint node minikube platform=production:NoSchedule`
 
 //Node'lardan taint kaldırma.
-`kubectl taint node "node_ismi" "anahtar-"`
-Ör: kubectl taint node minikube platform-
+`kubectl taint node "node_ismi" "anahtar-"` | `kubectl taint node minikube platform-`
 
 Yaml dosyasinda podun birebir tolere edebilmesi icin node da girilen tolerations kisminin aynisi pod daki yaml dosyasinda da olmali.
 - Taint ve toleration node affinity nin yapmis oldugunu yapmaz. Yani bu ozelliklere gore git surada schedule ol demez. *Yani bir pod surada olusturulsun node affinity, worker node unun uzerinde sadece su podlar calisabilsin taint and toleration.*
@@ -1086,12 +1098,15 @@ spec:
     effect: "NoSchedule"
 ```
 
-## DaemonSet
-`DaemonSet`, tum (veya bazi) nodelarin bir podun bir kopyasini calistirmasini saglar. Clustera yeni node eklendikce, onlara podlar da eklenir. Clusterdan node kaldirildiginda, bu podlar da kalidirilir. Bir DaemonSet in silinmesi, olusturdugu Podlari da temizleyecektir.
+# DaemonSet
+`DaemonSet`, tum (veya bazi) nodelarin bir podun bir kopyasini calistirmasini saglar. Clustera yeni node eklendikce, onlara podlar da eklenir. Clusterdan node kaldirildiginda, bu podlar da kalidirilir. Bir DaemonSet in silinmesi, olusturdugu podlari da temizleyecektir.
+
 Deployment objelerine oldukca benzeyen bir k8s objesidir. Bir `daemonset` objesi olusturdugunuz zaman daemonset sistemde template altinda belirttiginiz pod tanimina gore bir pod olusturur. Varsayilan olarak her node uzerinde bir pod olusturulur. Fakat siz bunu degistirerek sadece belirli nodelar uzerinde de olusturulmasini saglayabilirsiniz. Storage provisioinng ve log uygulamalari gibi uygulamalarin her node de kolayca deploy edilmesini saglar. Bu uygulamalar icin DaemonSet kullanmak su avantaji saglar: 
-  1. is basitlesir 
+  1. Is basitlesir 
   2. Yeni node geldiginde uygulamayi orada da olusturur. Yeniden bir islem yapmaniza gerek kalmaz. 
+
 Ornegin 20 worker nodedan olusan bir K8s clusterimiz var. Bizim bu worker nodelarin tamaminda calismasi gereken bir uygulamamiz mevcut. Ornegin biz bu worker nodelarda olusan loglari merkezi bir log sunucusuna gondermek istiyoruz. Her bir worker nodeda da bir uygulama calistiracagiz ve bu uygulama o worker node da olusan loglari toplayacak ve merkezi log sunucusuna gonderecek. Ilk olarak tum worker nodelara baglanarak bu uygulamayi kurabilirim ama bu imkansiz. Ikinci olarak bu uygulamayi container image i haline getiririm ardindan gerekli ayarlarin oldugu 20 pod tanimi yaparim. Her birine node affinity eklerim ve bu podlari ayri ayri worker nodelar uzerinde calisacak sekilde deploy ederim. Bu iki yontem de zahmetli bu durumda yeni node eklersem bu islemleri yeniden yapmak zorunda kalirim.
+
 *Deployment la benzer yaml dosyalari vardir ancak rollout ozelliklerini kullanmiyoruz temel fark bu.* 2 seye dikkat etmek gerekir. daemonset de de `label selector` tanimi vardir ve `daemonset` olusturacagi bu podlari bu `selector` a gore secer. Bu nedenle ayni label taniminin `spec` de de olmasi lazim. Minikube kurdugumuz icin bunu gormedik ama normalde `kubeadm` ile kendi kurdugumuz clusterlarda ya da cloud saglayicilarin  sagladigi clusterlarda master node uzerinde pod calistirmayiz. Master node larda `node-role.kubernets.io/master:NoSchedule` adinda bir `taint` eklidir. Dolayisiyla bunu tolere edecek bir tanim ekli degilse pod bu master node uzerinde schedule edilmez. Eger biz worker node un sadece `daemonset`lerde pod olusturmasini istiyorsak o zaman bir sey eklememize gerek yok. Ama bizim `daemonSet` imizin master node larda da pod olusturmasini istiyorsak o zaman bu toleration u buraya eklemek zorundayiz. 
 
 ```yaml
@@ -1140,22 +1155,26 @@ spec:
           path: /var/lib/docker/containers
 ```
 
-// DaemonSet objelerinin listelenmesi
+// DaemonSet objelerinin listelenmesi 
 `kubectl get daemonset`
 
 // DaemonSet objelerinin silinmesi
-`kubectl delete daemonset "daemonset_ismi"`
-Ör: kubectl delete daemonset my-daemonset
+`kubectl delete daemonset "daemonset_ismi"` | `kubectl delete daemonset my-daemonset`
 
-## Persistent Volume and Persistent Volume Claim
+# Persistent Volume and Persistent Volume Claim
 Pod yasam suresinden daha fazla saklamamiz gereken verileri sakladigimiz ve cluster disinda tuttugumuz volumelere `persistent volume` diyoruz.
 3 nodelu bir cluster uzerinde mysql DB var. Tek deployment olacak bir replicaset tasarladik. Deployment in icerisinde mysql veri tabani dosyalarinin duracagi emptyDir volume olusturmasi icin tanim ekledik. Buna container a mount edecek tanimlari da olusturduktan sorna deployment objemizi de olusturduk. Mysql containlardan olusan podumuz uygun bir node uzerinde olusturuldu. Bu noktada container da sikinti olusturulursa container yeniden baslatilacak ve volume ekledigimiz icin verilerimize birsey olmayacak. Ancak diyelim ki podun calistigi worker node a birsey oldu ve terminate oldu. Podumuz uygun olan baska bir worker node uzerinde yeniden yaratilacak. Bu durum `ephemeral` volume kisminda anlattigim uygulama icin sikinti yaratmazken mysql uygulamasi icin sikinti olusturabilir. Cunku mysql yeniden olusturabilecegimiz degil uzun sure barindirmak zorunda oldugumuz kayitlari tutuyor. Poda ne olursa olsun bu kayitlari kaybetmememiz gerekiyor. Podu olusturduk mysql calisti ve verileri `emptyDir` tipindeki volume e yazmaya basladik. Bu volume fiziksel olarak o container in calistigi worker node uzerinde duruyor artik o worker node a erisilemiyor. Dolayisiyla pod baska bir worker node uzerinde yeniden olusturuldugunda bu dosyalara erisilemeycek. Bunun cozumu clusterin disinda olan ancak tum worker nodelar tarafindan erisilebilen bir klasorde da olusturuyor olabilmemiz lazim. Bunu yaparsak veri devamliligi saglayabiliriz. 
+
 Bunun icin ilk once bir kac ayar yapmamiz gerekiyor: 
-  1. Ilk olarak volume olarak ayarladigimiz depolama birimi ile clusterimizin konusabilmesi gerekiyor. Bunun icin de cluster uzerinde bu depolama biriminin volume driverlarinin yuklenmesi gerekiyor. Kubernetes `nfs` ve `Isqz` gbi universal protokollere ait driverlarin yaninda `azure disk`, `azure file`, `Aws ebs`, `google persistent` disk gibi pek cok storagelarin driverlarini bunyesinde barindirmaktadir. Yani K8s default olarak bunlarla konusabiliyor durumda ancak depolama cozumleri yalnizca bunlarla sinirli degil. K8s bunlarin da disindaki storagelarla konusabilecek cozumleri `Container Storage Interface (CSI)` ile sagliyor.
+
+Ilk olarak volume olarak ayarladigimiz depolama birimi ile clusterimizin konusabilmesi gerekiyor. Bunun icin de cluster uzerinde bu depolama biriminin volume driverlarinin yuklenmesi gerekiyor. Kubernetes `nfs` ve `Isqz` gbi universal protokollere ait driverlarin yaninda `azure disk`, `azure file`, `Aws ebs`, `google persistent` disk gibi pek cok storagelarin driverlarini bunyesinde barindirmaktadir. Yani K8s default olarak bunlarla konusabiliyor durumda ancak depolama cozumleri yalnizca bunlarla sinirli degil. K8s bunlarin da disindaki storagelarla konusabilecek cozumleri `Container Storage Interface (CSI)` ile sagliyor.
+
 CSI istege bagli blok ve dosya depolama sistemlerini K8s gibi Container Orchestration Systems (CO'ler) uzerindeki containerized is yuklerine maruz birakmak icin bir standart olarak gelistirilmistir. Container Stoarge Interface'in benimsenmesiyle K8s volume katmani gercekten genisletilebilir hale geldi. Ucuncu taraf depolama saglayicilari, CSI kullanarak cekirdek K8s koduna dokunmak zorunda kalmadan K8s te yeni depolama sistemlerini aciga cikaran eklentiler yazabilme imkanina kavustu. 
+
 CSI k8s storage altyapsinin nasil ayarlanmasi gerektigini belirten bir standart. Depolama cozumu uretenler bu standarta uyan driverlar yazarak K8s in kendi altyapilari ile de konusabilmelerine imkan saglamaktadir. Ozetle baglanabilecegimiz depolama birimleri nfs, azure, aws, gcp gibi degilse bu sefer kullanilacak storage in `csi` driver ini sisteme yuklemek gerekiyor.
+
 Ilk adim cluster ile depolama aracini birbirine bagliyoruz ve konusabilecek hale getiriyoruz. Sonra depolama birimleri uzerinde k8s de kullanmak uzere depolama birimleri yaratiyoruz. Sonra bu depolama birimlerinin k8s deki karsiliklarini k8s altinda persistent volume olarak bir obje seklinde olustururuz. 
-K8S clusterimiz altinda `nfs` tabanli bir depolama birimi oldugunu varsayalim. k8s altinda nfs driverlari bulundugu icin ek bir driver yuklememize gerek kalmadan bu iki ortam birbiriyle gorusebilir durumda. Sirada bu storage uzerinde bizim erisebilecegimiz bir depolama birimi yaratma isi var. `nfs` cihazina bagalaniyor ve `tmp` diye bir paylasim alani yaratiyorz. Sonrasinda bunun k8s deki karsiligini yaratma isi var bunun karsiligi k8s de `persistent volume` dur. 
+K8S clusterimiz altinda `nfs` tabanli bir depolama birimi oldugunu varsayalim. k8s altinda nfs driverlari bulundugu icin ek bir driver yuklememize gerek kalmadan bu iki ortam birbiriyle gorusebilir durumda. Sirada bu storage uzerinde bizim erisebilecegimiz bir depolama birimi yaratma isi var. `nfs` cihazina baglaniyor ve `tmp` diye bir paylasim alani yaratiyorz. Sonrasinda bunun k8s deki karsiligini yaratma isi var bunun karsiligi k8s de `persistent volume` dur. 
 
 ```yaml
 apiVersion: v1
@@ -1176,13 +1195,14 @@ spec: # depolama unitesine baglanirken kullanilacak driver a gore degisiyor
 ```
 
 Burada olusturulacak yaml dosyasindaki spec kismi baglanilacak driver a gore degisiyor. Driver a gore degismeyen 3 secenek var:  
-  1. `Capacity:` bizim ne kadarlik bir volume yaratmak istedigimzi belirtiyor 5Gi yani 5 gibibayt gibi. 
-  2. `accesModes:` kisminda bu volume un ayni anda birden fazla volume e baglandigi zaman ne sekilde bir davranis sergileyecegini secebiliyrouz. Burada 3 senecek mevcut `readWriteOce:` okuma yazma -teknode, `readOnlyMany:` sadece okuma -birden fazla node, `readWriteMany:` okuma yazma - birden fazla node. Buradki secenekler driver in yeteneklerine ve baglanilacak storage a degisebiliyor. 
-  3. `persistentVolumeReclaimPolicy:` Secenegi ise podumuzun isi bitip birakildiktan sonra bu volume e nasil davranilacagini bildiriyoruz. Burada `retain`: volume kullanildiktan sonra oldugu gibi kaliyor. Bizler bu dosyalari manuel olarak tasiyoruz ve kurtarma imkanina sahip oluyoruz. `recycle` seceneginde icindeki bilgiler siliniyor ancak volume silinmiyor. Volume tekrar kullanilabiliyor. `Delete` ise volume ile is bittiginde tamamen siliyor.
+  1. `Capacity`: bizim ne kadarlik bir volume yaratmak istedigimzi belirtiyor 5Gi yani 5 gibibayt gibi. 
+  2. `AccesModes`: kisminda bu volume un ayni anda birden fazla volume e baglandigi zaman ne sekilde bir davranis sergileyecegini secebiliyrouz. Burada 3 senecek mevcut `readWriteOne` okuma yazma -tek node, `readOnlyMany` sadece okuma -birden fazla node, `readWriteMany` okuma yazma - birden fazla node. Buradaki secenekler driver in yeteneklerine ve baglanilacak storage a degisebiliyor. 
+  3. `persistentVolumeReclaimPolicy`: Secenegi ise podumuzun isi bitip birakildiktan sonra bu volume e nasil davranilacagini bildiriyoruz. Burada `retain`: volume kullanildiktan sonra oldugu gibi kaliyor. Bizler bu dosyalari manuel olarak tasiyoruz ve kurtarma imkanina sahip oluyoruz. `recycle` seceneginde icindeki bilgiler siliniyor ancak volume silinmiyor. Volume tekrar kullanilabiliyor. `Delete` ise volume ile is bittiginde tamamen siliyor.
    
 - Volume olustugunda pod a nasil bagliyoruz. Direk olarak bir persistent volume bir pod ile bagalayamiyoruz. Oncelikle persistent `volume claim` kisaca `pvc` bizlerin sistemde bulunan `pv` lerden isimize yarayan bir tanesini secmemize yani bunu kullanmak adina talep yaratma objesidir. Neden bu talep etme farkli objede tanimlaniyor. Mesela ben developer olabilirim ve yonetme isi farkli bir yonetici tarafindan yapiliyor olabilir. Dolayisiyla o islemleri ben bilemiyor olabilirim.
   
-Peki bu volumeleri pod nasil baglariz? Yaml dosyasinda volume tanimlarinin altinda yeni bir volume olustur ve bunun hedefini persistentVolumeClaim olarak belirler sonrasinda bunu pod altinda gerekli path e mount ederiz. Bu pod olusturuldugu anda bu path devreye girer. Bu podun olusturulacagi worker node uzerinde bu volume ile ilgili ayarlamalar yapilir. Sonucunda bu pod bu path ilgili volume baglanir ve bu path e yazilan dosyalar bu volume e yazilir.
+Peki bu volumeleri poda nasil baglariz? Yaml dosyasinda volume tanimlarinin altinda yeni bir volume olustur ve bunun hedefini `persistentVolumeClaim` olarak belirler sonrasinda bunu pod altinda gerekli path e mount ederiz. Bu pod olusturuldugu anda bu path devreye girer. Bu podun olusturulacagi worker node uzerinde bu volume ile ilgili ayarlamalar yapilir. Sonucunda bu pod bu pathde ilgili volume baglanir ve bu path e yazilan dosyalar bu volume e yazilir.
+
 `Pv` yaratirken label onemli cunku pvc ler bu labellara gore istek yapilmaktadir. Pv lerin yaratilmasina kadar olan kisim system yoneticilerin daha sonra bu `pvc` nin kullanilmasi kismi ise developerlara ait olan bir kisim. 
 
 ```yaml
@@ -1203,7 +1223,7 @@ spec:
       app: mysql # bu pvc bu etikete sahip pv tarafindan saglansin istiyorum.
 ```
 
-- Pod tanimlarinda persistentVolume Claim altinda bir claim olusturuz ve bunu pod altinda gerekli path mount ederiz. Bu pod olusturuldugu anda pv deki tanima gore worker node uzerinde ayarlamalar yapilir. Storage cihazina baglanilir driver yapmasi gerekenleri yapar ve sonunda bu pod icerisindeki container ilgili pathin depolama cihazi uzerinde duran bu volume baglanir. Bu noktadan itibaren bu path e yazilan dosyalar aslinda bu volume e yazilir. Eger bu pod bulundugu node uzerinden baska bir node calisirilirsa ayni islemler burada da gerceklestirlir ve yeni pod a bu volume baglanir.
+Pod tanimlarinda persistentVolume Claim altinda bir claim olusturuz ve bunu pod altinda gerekli path mount ederiz. Bu pod olusturuldugu anda pv deki tanima gore worker node uzerinde ayarlamalar yapilir. Storage cihazina baglanilir driver yapmasi gerekenleri yapar ve sonunda bu pod icerisindeki container ilgili pathin depolama cihazi uzerinde duran bu volume baglanir. Bu noktadan itibaren bu path e yazilan dosyalar aslinda bu volume e yazilir. Eger bu pod bulundugu node uzerinden baska bir node calisirilirsa ayni islemler burada da gerceklestirlir ve yeni pod a bu volume baglanir.
 
 ```yaml
 apiVersion: v1
@@ -1254,36 +1274,40 @@ spec:
 
 // NFS Server 
 `docker volume create nfsvol`
-$ docker network create --driver=bridge --subnet=10.255.255.0/24 --ip-range=10.255.255.0/24 --gateway=10.255.255.10 nfsnet
-$ docker run -dit --privileged --restart unless-stopped -e SHARED_DIRECTORY=/data -v nfsvol:/data --network nfsnet -p 2049:2049 --name nfssrv ozgurozturknet/nfs:latest
+`docker network create --driver=bridge --subnet=10.255.255.0/24 --ip-range=10.255.255.0/24 --gateway=10.255.255.10 nfsnet` |
+`docker run -dit --privileged --restart unless-stopped -e SHARED_DIRECTORY=/data -v nfsvol:/data --network nfsnet -p 2049:2049 --name nfssrv ozgurozturknet/nfs:latest`
 
 // Persistent Volume objelerinin listelenmesi
 `kubectl get pv`
 
 // Persistent Volume objelerinin silinmesi
 `kubectl delete pv "pv_ismi`
-Ör: kubectl delete pv mypv
+`kubectl delete pv mypv`
 
 // Persistent Volume Claim objelerinin listelenmesi
 `kubectl get pvc`
 
 // Persistent Volume objelerinin silinmesi
 `kubectl delete pvc "pvc_ismi`
-Ör: kubectl delete pvc mypvc
+`kubectl delete pvc mypvc`
 
-## Storage Class
+# Storage Class
 Storage class yoneticilerin sunduklari depolama "siniflarini" tanimlamalari icin bir yol saglar. Farkli siniflar, hizmet kalitesi duzeylerine veya yedekleme ilkelerine veya cluster yoneticileri tarafindan belirlenen istege bagli ilkelere eslenebilir. k8s siniflarin neyi temsil ettigi konusunda fikir sahibi degildir. Bu kavram bazen diger depolama sistemlerinde "profiller" olarak adlandirilir. 
+
 10 ayri ekip yonetilen k8s cluser oldugunu dusunun 10'larca farkli node ve 100'lerce pod olusturuluyor. Uygulamalar surekli yaratiliyor siliniyor. Bu durumda her seferinde `pvc` ve `pv` olusturmamiz cok zahmetli olacaktir. Bu soruna cozum olarak `storage class` objesi olusturuldu. 
+
 Pv yi manuel olursturmak yerine claime gore dinamik olusturma imkani getirdi. Bu ozellikle cloud servis saglayicilarin dinamik ortamlarinda her seyi otomatize edebilirken sirf volume olusturma islemini manuel olusturma sacmaligini cozdu. Storage class objelerini baglantimiz olan depolama uniteleri uzerinde ne cesit volume yaratacagimizi belirten templateler olarak dusunebilirsiniz. Ornegin uzerinde hem ssd hem de hdd olan storage oldugunu dusunun. Bu durumda ben yavas diskler uzerinde otomatik volume yaratan yavas isimli bir storage class ve hizli diskler uzerinde volume yaratan hizli isimli 2. bir storage class yaratabilirim. Development ekipleri de uygulamalarinda kullanmak icin volume talep etmek adina olusturduklari `pvc` de uygulamalarinin ihtiyacina gore bu storage class lardan birini secerler ve istedikleri boyutta bir volume storage class objesi tarafindan otomatik olarak olusturulup `pvc` ye bind edilir.
 
 // storage class lari getir
 `kubectl get storageclass`
 
 Iki farkli depolama unitesi icin 4 farkli storage class olusturmus durumdayiz. Bu listedeki provisioner tanimi bizlera hangi tipde cihaz ustunde volume olusturdugumuzu belirtiyor. Kubernetes de default olarak nerdeyse tum cloud saglayicilarin ve bir cok standart protokolun provision tanimlarini kendi uzerinde barindiriyor yani kendi driverlarini kendi uzerinde barindiriyor. Fakat sizlerin baska tipde storage classlarniz varsa onlarin da kendi provisionlarina eklemenize imkan veriyor. Bir tane normal bir tane de premium disk olurturmus. Azure icin bu su demek standart daha yavas ve sla yi daha dusuk, premium ise daha hizli ve sla yi daha yuksek. Depolama urunlerinin sagladiklari turlere gore farkli turlerde volume yaratilmasina imkan sagliyor. Storage class bir template dir. Biz bu template i kullanarak otomatik volume yaraticaz. Ben bunu daha yavas bir sey yaratmak istersem `azurefile` kullan dicem daha hizli bir sey yaratmak istersem `azurefile-premium` kullanicam, yavas bir disk bazli bir storage yaratmak istersem `managed` disk yaraticam, hizli bir ssd yaratmak istersem `managed-premium` yaraticam. Bir cok storage class yaratarak ben depolama unitelerimin degisik ozelliklerine gore pv ler yaratilmasi icin sablonlar olusturabilirim. Diger bir husus `default (default)` yaziyor buna dikkat etmek lazim. `pvc` olusturdugumuz zaman hangi tipde volume istedigimizi storage class belirterek sagliyoruz fakat o kismi bos gecersek de varsayilan olarak hangi storage class kullanilsin secenegini bu sekildee default olarak atayarak saglabiliriz. Yani `pvc` nin icinde isim belirtmez iseniz `default (default)` isimli template kullanilacaktir. Isterseniz default u da degistirebilirsiniz. Diger bir husus `reclapimpolicy` yani bu storage class ile isimiz bittikten sonra ne olacak? Sadece `retain` ve `delete` secenegi mevcut, azure default olarak `delete` secmis. Son olarak `volumebindingmode` kisminda `Immediate` yaziyorsa hemen volume un olusturulup pod a atanmasini soyler. `WaitForCounsumer` ise pod yaratilana kadar beklemesi ve pod yaratildiktan sonra storage class in yaratulmasi gerektigini soyler.
+
 Cloud ortaminda bu secenekleri bilmek gerekmiyor clous servis saglayicilar bunlari otomatik sagliyor ama bu detaylari kendi clusterinizi yaratiyorsaniz olabilir. Ama size saglayan format bunlari size belirtir bilgi verir. 
-pv.yaml dosyalarindan tek farki burada label kullanmiyorum onun yerine kullanmak istedigim storafeClassName yerine statndarddisk yani diskin ozelligini yaziyorum. 
+pv.yaml dosyalarindan tek farki burada label kullanmiyorum onun yerine kullanmak istedigim `storageClassName` yerine `statndarddisk` yani diskin ozelligini yaziyorum. 
 
 Bu file ile kendime ait bir storage class olusturabiliyorum. Aslinda bunu cloud ortaminda calsiyorsaniz gerek yok. Azue in dokumantasyonundan bu ayarlari bakarak olusturdum. Admin olarak tek yapmam gerekiyor. 
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -1315,16 +1339,22 @@ spec:
   storageClassName: "standarddisk"
 ```
 
-## StatefulSet
+# StatefulSet
 1. `StatefulSet` tarafindan olusturulan her pod, stateful set taniminda belirlediginiz pvc'ye gore olusturulan bir pvye sahip olur yani her podun kendine ait bir pv si olur.
 2. StatefulSet altinda podlar sirayla olusturulup sirayla silinir. Ornegin 3 podlu bir stateful set olusturdugunuz zaman oncelikle pod olusturulur. Bu pod ayaga kalkip readiness ve liveness checklerinden gecip islemlerini tamamlamadan bir sonraki pod olusturulamaz. Ne zaman ki bu pod hazir running durumuna gecer o zaman bir sonraki pod olusturulur. Ayni sekilde 3.pod da 2. pod tamamlanmadan olusturulamaz. Tam tersi durumda da bu gecerlidir. Siz 3 podlu bir statefullseti 2. poda indirirseniz k8s random bir pod secip onu silme yoluna gitmez. En son yaratilan pod hangisi ise ilk olarak o silinir.
 3. StefulSet tarafindan olusturulan her poda statefulsetin adi 0-1-2-3 seklinde devam eden sabit bir isim verilir. Isimler random secilmez ve bu isimler ayni zamanda containerin hostname'i olarak da atandigi icin her uygulama bu isimle ulasilabilir.
-Sorun: 3 pod olusturacak bir deployment var. Bu obje bir `replicaset` olusturuyordu ve bu replicaset de bizim belirledigimiz tanima gore de random isimler verilen podlar olusturuyordu. `Scale out` ile `scale in` ile bunlarla oynayabiliyorum ama k8s bunlardan hangisi once yaratilip yaratilmadigina bakmiyor randomly siliyor. Podlar uzerinde bir state tutmadigi icin bu durum sikinti yaratmiyor. Ancak yeni bir nosql veri tabani deploy etmek istiyorsunuz. Bir tane master instance olusturur ve bunun uzerinden cluster olsuturur ardindan bu clustera yeni instancelar eklersiniz. Yazma islemlerini bu master uzerinden yaparken sorgulari herhangi bir isntance a gonderebilirsiniz. Tum veri bu instancelar uzerinde dagitik bir sekilde durur. Boyle bir veri tabani olan apche cassandra yi 3 instance dan olusacak bir cluster olacak sekilde su ana kadar ogrendigimiz obje sekilleri ile k8s e deploy etmeye calisalim. Ilk olarak bu cassandra master instance i deploy edecegiz ardindan buna baglanarak ya da baslangic komutlari ile bunu master haline donusturecek sekilde bir cluster haline getirecegiz. Sonrasinda 2. instance i olusturacagiz ve ardindan 2. instance a baglanip 1. instance daki cassandra cluster a bu 2. instance i dahil edecek ayarlari yapacagiz. sonra 3. instance da da ayni islemleri yapacagiz. Ilk olarak `singleton pod` olacak sekilde olusturmaya karar verdik. Master olacak pod tanimini yaptik icine pvc tanimini ekledik ki cassandra verileri tutabilecek pv ye sahip olabilsin. Pod ayaga kalkti bunu master haline getirecek komutlari ya baslangic olarak ya da sonradan baglanarak halletik. Ardindan 2. bir pod tanimi daha yaptik. Bunu da 2. instance olarak ayaga kaldirdik. Sonra 3. derken cluster ayaga kalkti. Sorun 1: her seyi manuel yaptim. Sonra `singleton pod` olusturduk bu da fail durumu kontrol eden bir mekanizma yok. Son olarak 4. bir instance eklersem yeni pod ve maneul ekleme olacak. Bu sorunu deployment la dener isem bu hepsi birbirinin ayni pod u olusturdu ve hepsi ayni anda olustu ve bu nedenle hangisinin once olsutugunu bilmiyorum neyse birine manuel baglandim ve birini master a cevirdim digerlerini de worker yaparak cluster a kattim. Aradan zaman gecti pod lardan birine ulasilamiyor sonra yeniden olustu ama o zaman bu master pod olursa o zaman cluster coker. Bunlarin hepsi cassandra gibi `stateful` objelerde sorun yaratiyor. Bunun cozumu ise `StatefulSet` objesidir.
-`Stateful` objesi deploymenta cok benzeyen bir obje temelde 3 farki var 1) stateful tarafindan olusturulan her pod `statefulset` taniminda belirlediginiz pvc ye gore olusturulan bir pv ye sahip olur. Yani her pod un kendine ait bir `pv` si bulunur. Bunun yaninda `stateful` altinda pod lar sirayla olusturulurp sirayla silinir. Pod lar silinirken de bu durum aynisidir. Random olarak yapmaz ve son yaratilan pod ilk olarak silinir. Her pod a statefulun adi-0 ve sirayla olaack sekilde sabit bir isim verilir. Isimler ayni zamanda container hostname olarak atandigi icin her uygulama bunlara ulasabilir. Geriye kalan tum ozellikleri deploymentla aynidir. Bu 3 ozellik sayesinde stateful objesi ile yaratmamiz kolaylasir. 
-- Senaryomu `statefulset` objesi ile yapmak istedigimde senaryo soyle ilerleyecektir:
-3 pod olusturacak bir `stateful` objesi deploy ettim. K8s hemen ilk podu ayaga kaldirdi. Ben bu poda bir baslangic scripti eklemistim. Bu script ortamda benim belirledigim isimde bir cluster var mi yok mu bunu konrtole ediyor. Yoksa da bu isimde cluster yaratiyor. Cluster yaratildi. `Liveness` ve `readiness` prob tamamlandi ve hem cluster ve pod hazir. 1. pod saglikli bir sekilde calismaya basladiginda 2. pod olusturulmaya baslandi bunda da script var ancak simdi ortamda cluster mevcut. Dolayisiyla mevcut clustera dahil oldu `liveness` ve `readiness` problar tamamlandi ve bu pod da hazir. 3. pod sonrasinda cluster tamamlandi. Peki cassandra-1 podu silinirse `stateful` objesi ayni podu ayni isimle ayni persistent volume u atayarak ayaga kaldiracak ve sorun olmayacak. Yeni pod eklersem ne olacak yeni olusturacak ve cluster a dahil olacak. Scale down oldugu zaman da en son yaratilan pod silinecek.
 
-Stateful tanimlanmasi deployment a cok benziyor. Relica sayisini belirtiyor ve label selevtor u yaziyoruz. Template kisminda olusturulmak istenen pod tanimini yaziyoruz. Yaml dosyasinda `volumeClaimTemplates` kisminda her pod icin pvc olusturulmasini soyluyorum. Bu pvc lerde standart isimli storage class i kullanarak her bir pod icin birer pv olusturacak. Yani her podun ayni pv ye baglanmasi yerine her poda ayri bir pv yaratilacak. Bunu da yaratacak pvc leri de tempate ile yaratiyouz. Bu template i buraya yaziyoruz ki pvc ler olusturulsun o pvc lerde pv leri olusturacak sonrasinda o podlara tek tek baglayacak. Servis tanimlanmasinda ise clusterIp none diyoruz. Buna `headless` servis diyoruz. Bunu olusturdugumuz anda clusterIp tipi bir servis olusturulacak fakat ona bir ip atanmayacak bu bana su sekilde yardimci oluyor. Ben ne zaman bu servis ismine gormek istersem o bana bu servis altindaki podlardan bir tanesinin ip sini donecek bunun yaninda her bir pod a da `statefulset ismi-<pod olusturma sirasi>.statefulset ismi` ismi seklinde erisme imkani da verecek. Podlar 0 dan baslayarak isimlendirilir. Ready olduktan sonra diger pod olusturulur.
+Sorun: 3 pod olusturacak bir deployment var. Bu obje bir `replicaset` olusturuyordu ve bu replicaset de bizim belirledigimiz tanima gore de random isimler verilen podlar olusturuyordu. `Scale out` ile `scale in` ile bunlarla oynayabiliyorum ama k8s bunlardan hangisi once yaratilip yaratilmadigina bakmiyor randomly siliyor. Podlar uzerinde bir state tutmadigi icin bu durum sikinti yaratmiyor. Ancak yeni bir nosql veri tabani deploy etmek istiyorsunuz. Bir tane master instance olusturur ve bunun uzerinden cluster olsuturur ardindan bu clustera yeni instancelar eklersiniz. Yazma islemlerini bu master uzerinden yaparken sorgulari herhangi bir instance a gonderebilirsiniz. Tum veri bu instancelar uzerinde dagitik bir sekilde durur. Boyle bir veri tabani olan apche cassandra yi 3 instance dan olusacak bir cluster olacak sekilde su ana kadar ogrendigimiz obje sekilleri ile k8s e deploy etmeye calisalim. Ilk olarak bu cassandra master instance i deploy edecegiz ardindan buna baglanarak ya da baslangic komutlari ile bunu master haline donusturecek sekilde bir cluster haline getirecegiz. Sonrasinda 2. instance i olusturacagiz ve ardindan 2. instance a baglanip 1. instance daki cassandra cluster a bu 2. instance i dahil edecek ayarlari yapacagiz. sonra 3. instance da da ayni islemleri yapacagiz. Ilk olarak `singleton pod` olacak sekilde olusturmaya karar verdik. Master olacak pod tanimini yaptik icine pvc tanimini ekledik ki cassandra verileri tutabilecek pv ye sahip olabilsin. Pod ayaga kalkti bunu master haline getirecek komutlari ya baslangic olarak ya da sonradan baglanarak halletik. Ardindan 2. bir pod tanimi daha yaptik. Bunu da 2. instance olarak ayaga kaldirdik. Sonra 3. derken cluster ayaga kalkti. Sorun 1: her seyi manuel yaptim. Sonra `singleton pod` olusturduk bu da fail durumu kontrol eden bir mekanizma yok. Son olarak 4. bir instance eklersem yeni pod ve maneul ekleme olacak. Bu sorunu deployment la dener isem bu hepsi birbirinin ayni pod u olusturdu ve hepsi ayni anda olustu ve bu nedenle hangisinin once olsutugunu bilmiyorum neyse birine manuel baglandim ve birini master a cevirdim digerlerini de worker yaparak cluster a kattim. Aradan zaman gecti pod lardan birine ulasilamiyor sonra yeniden olustu ama o zaman bu master pod olursa o zaman cluster coker. Bunlarin hepsi cassandra gibi `stateful` objelerde sorun yaratiyor. Bunun cozumu ise `StatefulSet` objesidir.
+
+`Stateful` objesi deploymenta cok benzeyen bir obje temelde 3 farki var: 
+1. stateful tarafindan olusturulan her pod `statefulset` taniminda belirlediginiz pvc ye gore olusturulan bir pv ye sahip olur. Yani 
+2. Her pod un kendine ait bir `pv` si bulunur. 
+3. Bunun yaninda `stateful` altinda pod lar sirayla olusturulurp sirayla silinir. Pod lar silinirken de bu durum aynisidir. Random olarak yapmaz ve son yaratilan pod ilk olarak silinir. Her pod a statefulun adi-0 ve sirayla olaack sekilde sabit bir isim verilir. Isimler ayni zamanda container hostname olarak atandigi icin her uygulama bunlara ulasabilir. Geriye kalan tum ozellikleri deploymentla aynidir. Bu 3 ozellik sayesinde stateful objesi ile yaratmamiz kolaylasir. 
+
+Senaryomu `statefulset` objesi ile yapmak istedigimde senaryo soyle ilerleyecektir:
+3 pod olusturacak bir `stateful` objesi deploy ettim. K8s hemen ilk podu ayaga kaldirdi. Ben bu poda bir baslangic scripti eklemistim. Bu script ortamda benim belirledigim isimde bir cluster var mi yok mu bunu konrtol ediyor. Yoksa da bu isimde cluster yaratiyor. Cluster yaratildi. `Liveness` ve `readiness` prob tamamlandi ve hem cluster ve pod hazir. 1. pod saglikli bir sekilde calismaya basladiginda 2. pod olusturulmaya baslandi bunda da script var ancak simdi ortamda cluster mevcut. Dolayisiyla mevcut clustera dahil oldu `liveness` ve `readiness` problar tamamlandi ve bu pod da hazir. 3. pod sonrasinda cluster tamamlandi. Peki cassandra-1 podu silinirse `stateful` objesi ayni podu ayni isimle ayni persistent volume u atayarak ayaga kaldiracak ve sorun olmayacak. Yeni pod eklersem ne olacak yeni olusturacak ve cluster a dahil olacak. Scale down oldugu zaman da en son yaratilan pod silinecek.
+
+Stateful tanimlanmasi deployment a cok benziyor. Replica sayisini belirtiyor ve label selector u yaziyoruz. Template kisminda olusturulmak istenen pod tanimini yaziyoruz. Yaml dosyasinda `volumeClaimTemplates` kisminda her pod icin pvc olusturulmasini soyluyorum. Bu pvc lerde standart isimli storage class i kullanarak her bir pod icin birer pv olusturacak. Yani her podun ayni pv ye baglanmasi yerine her poda ayri bir pv yaratilacak. Bunu da yaratacak pvc leri de tempate ile yaratiyouz. Bu template i buraya yaziyoruz ki pvc ler olusturulsun o pvc lerde pv leri olusturacak sonrasinda o podlara tek tek baglayacak. Servis tanimlanmasinda ise clusterIp none diyoruz. Buna `headless` servis diyoruz. Bunu olusturdugumuz anda clusterIp tipi bir servis olusturulacak fakat ona bir ip atanmayacak bu bana su sekilde yardimci oluyor. Ben ne zaman bu servis ismine gormek istersem o bana bu servis altindaki podlardan bir tanesinin ip sini donecek bunun yaninda her bir pod a da `statefulset ismi-<pod olusturma sirasi>.statefulset ismi` ismi seklinde erisme imkani da verecek. Podlar 0 dan baslayarak isimlendirilir. Ready olduktan sonra diger pod olusturulur.
 
 ```yaml
 apiVersion: v1
@@ -1433,16 +1463,16 @@ spec:
 `kubectl get statefulset`
 
 // StatefulSet objelerinin silinmesi
-`kubectl delete statefulset "statefulset_ismi"`
-Ör: kubectl delete statefulset my-statefulset
+`kubectl delete statefulset "statefulset_ismi"` | `kubectl delete statefulset my-statefulset`
 
-## job
-Bir job objesi, bir veya daha fazla pod olusturur ve belirli sayida pod basariyla sonlandirilana kadar pod yurutmeyi yeniden denemeye devam eder. Job belirtilen sayida podun basariyla tamamlanma durumunu izler. Belirtilen sayida basarili tamamlamaya ulasildiginda, job (yani gorev) tamamlanir. Bir Job un silinmesi olusturdugu podlari temizlemeyecektir. Bu sayede podlar tarafindan olusturulmus loglar kontrol edilebilir.
-- Hangi durumlarda kullanilir? 
+# Job
+Bir job objesi, bir veya daha fazla pod olusturur ve belirli sayida pod basariyla sonlandirilana kadar pod yurutmeyi yeniden denemeye devam eder. Job belirtilen sayida podun basariyla tamamlanma durumunu izler. Belirtilen sayida basarili tamamlamaya ulasildiginda, job (yani gorev) tamamlanir. Bir job un silinmesi olusturdugu podlari temizlemeyecektir. Bu sayede podlar tarafindan olusturulmus loglar kontrol edilebilir.
+
+Hangi durumlarda kullanilir? 
   1. Tek seferlik calisip yapmasi gerekeni yapip kapanan uygulamalari job olarak deploy edebiliriz. ornegin maintaince scriptler. 
   2. Bir kuyruk veya bir bucket da islenmesi gereken pek cok isimiz oldugunda bunlari eritme adina bunlar eriyene kadar calisacak uygulamalari job seklinde deploy ederiz.
 
-Apisi batch/v1, spec kismida 4 secenek var. `paralelism:` pod olusturulma islemini kacar kacar yapacagini. `completions:` job altinda kac tane basarili pod calismasini istiyoruz. Template kisminda container bilgilerini yaziyoruz. Bu ikisinin hemen altinda `backofflimit:` podlar olusturulmaya baslandikten sonra kac sefer fail ederse job u fail et demek. `ActiveDeadlineSeconds` ise job u fail etmeyi second cinsinden belirtiyoruz. 
+Apisi batch/v1, spec kismida 4 secenek var. `paralelism:` pod olusturulma islemini kacar kacar yapacagini. `completions:` job altinda kac tane basarili pod calismasini istiyoruz. Template kisminda container bilgilerini yaziyoruz. Bu ikisinin hemen altinda `backofflimit` podlar olusturulmaya baslandikten sonra kac sefer fail ederse job u fail et demek. `ActiveDeadlineSeconds` ise job u fail etmeyi second cinsinden belirtiyoruz. 
 
 ```yaml
 apiVersion: batch/v1
@@ -1466,21 +1496,19 @@ spec:
 Job yarattiktan sonra isi biten podlari manuel olarak silmek gerekiyor ki yer kaplamasin artik.
 
 // Job objelerinin listelenmesi
-`kubectl get job`#
+`kubectl get job` 
 
 // Job objelerinin silinmesi
-`kubectl delete job "job_ismi`
-Ör: kubectl delete job myjob
+`kubectl delete job "job_ismi` | `kubectl delete job myjob`
 
 // CronJob objelerinin listelenmesi
 `kubectl get cronjob`
 
 //CronJob objelerinin silinmesi
-`kubectl delete cronjob "cronjob_ismi`
-Ör: kubectl delete cronjob mycronjob
+`kubectl delete cronjob "cronjob_ismi` | `kubectl delete cronjob mycronjob`
 
-## CronJob
-Bir `CronJob` objesi bir crontab (cron tablosu) dosyasinin bir satiri gibidir. Belirli bir zamanlamaya gire Cron formatinda yazilmis bir Jobu periyodik olarak calistirir.
+# CronJob
+Bir `CronJob` objesi bir crontab (cron tablosu) dosyasinin bir satiri gibidir. Belirli bir zamanlamaya gore Cron formatinda yazilmis bir Jobu periyodik olarak calistirir.
 
 Job objesini manuel baslatmak yerine her pazar ya da her 5 dk da bir baslatilmasina imkan taniyan bir obje. Linuxdeki crontab in aynisi. 
 
@@ -1519,20 +1547,23 @@ spec:
 # https://crontab.guru/
 ```
 
-## Authorization and authentication
+# Authorization and authentication
 K8s kimlik dogrulama eklentileri araciligiyla API isteklerinin kimligini dogrulamak icin istemci sertifikalari tasiyici belirtecleri bir kimlik dogrulama proxy'si veya HTTP temel kimlik dogrulamasi kullanir.
 Api'de bir kullanici objesi bulunmamasina ragmen, cluster'in certificate authority'si tarafindan imzalanmis gecerli bir sertifika sunan herhangi bir kullanici (CA) kimligi dogrulanmis olarak kabul edilir. Bu yapilandirmada k8s sertifikanin 'konu' kismindaki ortak ad alanindan kullanici adini belirler (or. "/CN=bob")
+
 Oradan, rol tabanli erisim denetimi (RBAC) alt sistemi, kullanicinin bir kaynak uzerinde belirli bir islemi gerceklestirme yetkkisina sahip olup olmadigini belirler.
 
 Her platformun kullanici yaratma ve yonetme servisleri bulunur (IAM). Ancak K8s boyle bir hizmet sunmaz. Kullanici yaratamazsaniz. User objesi bulunmaz. Kimlik olusturma ve dogrulama isi cluster disinda yapilacak sekilde tasarlanmistir. 
 
-x509 client certs, static tiken file, openID connect tokens, webhook token authentication, authenticating proxy gibi altyapilari kullanarak bu isin disarida halledilmesine imkan saglar. K8s kurulumunda kubea-adm ayarlamalarinda bu altyapilardan hangisini kullanacaginizi belirlersiniz. Bu kimlik dogrulama isini bu altyapilara havale edersiniz. Bunun yaninda her k8s clusterinda bir kok sertifika yetkilisi yani `root sertifika authority` altyapisi da bulunur. Bu root sertifikalari tarafindan imzalanan x509 client certifikalari da authentication icin kullanilir. K8s bu ve benzeri uygulamalar tarafindan kimligi dogrulanmis kullanicilarin k8s ile gorusmesina imkan verir. Fakat kimligin dogrulanmasi bir kullanicinin cluster da her seyi yapabilcegi anlamina gelmez. Burada yetkilendirme yani `autherization` kavrami devreye girer. Manuel bir cluster kurmuyorsak cloud servisleri tarafindan bu islemler bizim adimiza otomatik olarak yapilir.
+x509 client certs, static token file, openID connect tokens, webhook token authentication, authenticating proxy gibi altyapilari kullanarak bu isin disarida halledilmesine imkan saglar. K8s kurulumunda kube-adm ayarlamalarinda bu altyapilardan hangisini kullanacaginizi belirlersiniz. Bu kimlik dogrulama isini bu altyapilara havale edersiniz. Bunun yaninda her k8s clusterinda bir kok sertifika yetkilisi yani `root sertifika authority` altyapisi da bulunur. Bu root sertifikalari tarafindan imzalanan x509 client certifikalari da authentication icin kullanilir. K8s bu ve benzeri uygulamalar tarafindan kimligi dogrulanmis kullanicilarin k8s ile gorusmesina imkan verir. Fakat kimligin dogrulanmasi bir kullanicinin cluster da her seyi yapabilcegi anlamina gelmez. Burada yetkilendirme yani `autherization` kavrami devreye girer. Manuel bir cluster kurmuyorsak cloud servisleri tarafindan bu islemler bizim adimiza otomatik olarak yapilir.
 
 Minikube olusturulurken de certifika olusturulur ve kube config dosyasinin icine bu bilgiler girilir. Boylelikle her seferinde bu sertifikalarinizla api-server a istek gondermis olursunuz. Siz gidip bir obje yaratir gibi client sertifikasi yaratamazsiniz.
-Ornegin bir firmada developer olarak ise basladiniz ve k8s clusteriniza baglanmak istiyorsunuz. Admine gittim bu istegimi soyledim. O da bana x500 client certificate leri ile authenticate olacak sekilde calistigini soyledi. Eger ben bir private key ve certificate suging request dosyasi hazirlayip ona gonderirsem o k8s certificate authority sini kullanarak, bunun imzalayarak bana bir certicate yaratabilecegini soyledi. Develepor olarak bunlari olusturalim ilk olarak private key ve csr dosyalarini olusturacagim bir klasor yaratalim. Private key icin openssl uygulamasini kullanmam gerekiyor. Openssl uygulamasi ile bir tane private key olusturdum. `openssl genrsa -out sezginerdem.key 2048` 2. adim olarak bu anahtari kullanarak bir certificate signing request yani csr hazirlamam gerekiyor. Csr benim certifika saglayayiciya bak bu ozelliklerde bana digital certificate sagla dememize imkan saglayan dosyalardir. Bu dosyayi olusturacak ardindan bunu admine gonderecegiz. O da k8s in certificate authority si ile bunu onaylayip imzalayarak bizim certificate imizi olusturacak ve bize bir certificate gonderecek biz de bununla k8s e ulasacagiz. `openssl req -new -key sezginerdem.key -out sezginerdem.csr -subj "/CN=sezgin@drsezginerdem.gmail/O=DevTeam"` kodu ile csr yaratiyorum. Bu kodda openssl ile request yaratmak istedigim icin `req` opsiyonunu kullandim. `-new` ile yeni bir csr olmasini, `-key` ile bu klasorde olan anahtari gosteriyorum, `-out` ile sonucun yazilacagi sezginerdem.csr olmasini istiyorum, -subj ile certifika bilgilerini giriyorum CDN kullanici adi O ise bu kullanicilarin hangi gruplara uye olacagini belirleyecek. k8s kendi uzerinde bir kullanici objesi tutmaz. Sizin hangi kullanici oldugunuzu x500 certifikalarinizi bu alanlardan algilar. Bizler hangi kullanici adina sahip olmak istiyorsak ve bu kullaniciyi eklemek istedigimiz gruplar var ise bunlari `csr` olusturma asamasinda bu sekilde belirtiyoruz. Artik developer olarak benim isim bitti. Bu olusturdugum csr dosyasini k8s admina gonderecegim bundan sonraki islemleri o halledecek. Admin olarak ise yeni bir k8s objesi yaratacagim. Developer in bana vermis oldugu certificate signing request adindaki bu obje ile developerin bize verdigi cse i k8s e gonderecegim. O da bana certifica olusturak. README.md deki adimlari teker teker gerceklestiriyorum. csr objesini olusturdum. 
+
+Ornegin bir firmada developer olarak ise basladiniz ve k8s clusteriniza baglanmak istiyorsunuz. Admine gittim bu istegimi soyledim. O da bana x500 client certificate leri ile authenticate olacak sekilde calistigini soyledi. Eger ben bir private key ve certificate suging request dosyasi hazirlayip ona gonderirsem o k8s certificate authority sini kullanarak, bunun imzalayarak bana bir certicate yaratabilecegini soyledi. Develepor olarak bunlari olusturalim ilk olarak private key ve csr dosyalarini olusturacagim bir klasor yaratalim. Private key icin openssl uygulamasini kullanmam gerekiyor. Openssl uygulamasi ile bir tane private key olusturdum. `openssl genrsa -out sezginerdem.key 2048` 2. adim olarak bu anahtari kullanarak bir certificate signing request yani csr hazirlamam gerekiyor. Csr benim certifika saglayayiciya bak bu ozelliklerde bana digital certificate sagla dememize imkan saglayan dosyalardir. Bu dosyayi olusturacak ardindan bunu admine gonderecegiz. O da k8s in certificate authority si ile bunu onaylayip imzalayarak bizim certificate imizi olusturacak ve bize bir certificate gonderecek biz de bununla k8s e ulasacagiz. `openssl req -new -key sezginerdem.key -out sezginerdem.csr -subj "/CN=sezgin@drsezginerdem.gmail/O=DevTeam"` kodu ile csr yaratiyorum. Bu kodda openssl ile request yaratmak istedigim icin `req` opsiyonunu kullandim. `-new` ile yeni bir csr olmasini, `-key` ile bu klasorde olan anahtari gosteriyorum, `-out` ile sonucun yazilacagi sezginerdem.csr olmasini istiyorum, `-subj` ile certifika bilgilerini giriyorum `CN` kullanici adi `O` ise bu kullanicilarin hangi gruplara uye olacagini belirleyecek. k8s kendi uzerinde bir kullanici objesi tutmaz. Sizin hangi kullanici oldugunuzu x500 certifikalarinizi bu alanlardan algilar. Bizler hangi kullanici adina sahip olmak istiyorsak ve bu kullaniciyi eklemek istedigimiz gruplar var ise bunlari `csr` olusturma asamasinda bu sekilde belirtiyoruz. Artik developer olarak benim isim bitti. Bu olusturdugum `csr` dosyasini k8s admina gonderecegim bundan sonraki islemleri o halledecek. Admin olarak ise yeni bir k8s objesi yaratacagim. Developer in bana vermis oldugu certificate signing request adindaki bu obje ile developerin bize verdigi cse i k8s e gonderecegim. O da bana certifica olusturacak. README.md deki adimlari teker teker gerceklestiriyorum. csr objesini olusturdum. 
 
 //CertificateSigningRequest oluşturma
-`cat <<EOF | kubectl apply -f -
+```bash
+cat <<EOF | kubectl apply -f -
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
@@ -1544,7 +1575,8 @@ spec:
   signerName: kubernetes.io/kube-apiserver-client
   usages:
   - client auth
-EOF`
+EOF
+```
 
 Condition pending durumunda gorunuyor. Bunu onaylamam gerekiyor ki bu islem tamamlansin. 
 `kubectl certificate approve sezginerdem` ile onayliyorum.bu serifikayi yaml dosyasi ile cikariyorum ve decode etmem gerekiyor. 
@@ -1558,7 +1590,8 @@ Bu certificayi developer a email ile gonderdim. Developer bu certifikayi kubecon
 `openssl req -new -key ozgurozturk.key -out ozgurozturk.csr -subj "/CN=ozgur@ozgurozturk.net/O=DevTeam"`
 
 //CertificateSigningRequest oluşturma
-`cat <<EOF | kubectl apply -f -
+```bash
+cat <<EOF | kubectl apply -f -
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
@@ -1570,7 +1603,8 @@ spec:
   signerName: kubernetes.io/kube-apiserver-client
   usages:
   - client auth
-EOF`
+EOF
+```
 
 
 // CSR onaylama ve crt'yi alma
@@ -1583,17 +1617,17 @@ EOF`
 `kubectl config set-context ozgurozturk-context --cluster=minikube --user=ozgur@ozgurozturk.net`
 `kubectl config use-context ozgurozturk-context`
 
-### Authentication
+# Authentication
 All user managed by kube-apiserver, kube-apiserver oncelikle kullaniciyi authencicate eder sonrasinda process requeste bakar. Nasil authenticate eder
   1. Static password file (this is not recommend)
   2. Static token file (this is not recommend)
-  3. certificates
+  3. Certificates
   4. identity services (third party applications like elda, kerberotos etc)
 
 1. Static password file and 2. Static token file: You can use a .csv file for authentication. 
 file has a three coloumns password, username and user ID. And you can use a forth column for group. This file is the same as for static token file. you can write token instead of password. 
 
-## Role Based Acced Control "RBAC"
+# Role Based Acced Control "RBAC"
 AUTHENCICATION != Authorization
 
 `Aurhentication`=kimlik dogrulama --soyledigi kisi mi-- != `authorization`=yetki kontrolu --eyleme yetkisi var mi--
