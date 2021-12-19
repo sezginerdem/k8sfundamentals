@@ -1634,11 +1634,11 @@ AUTHENCICATION != Authorization
 
 `RBAC objeleri:` rol tabanli erisim denetimi (RBAC) kurulusunuzdaki bireysel kullanicilari rollerine dayali olarak bilgisayar veya ag kaynaklarina erisimi duzenleme yontemidir. RBAC yetkilendirmesi yetkilendirme kararlarini yonlendirmek icin rbac.authorization.k8s.io API grubunu kullanir ve Kubernetes API araciligiyla ilkeleri dinamik olarak yapilandirmaniza olanak tanir. 
 
-Bu mekanizma role, role binding ve cluster, cluster role binding objeleri ile calisir. Yapilacabilecek islemleri yani yetkiler role veya cluster role binding objeleri olarak tanimlanir. Daha sonra role binding ve cluster role binding objeleri araciligiyla bu roller servis hesaplari, kullanicilar ya da gruplara bind edilir yani baglanir. Kullanicilar da bagli bulunduklari rollerde belirlenen yetkilere kavusurlar.
+Bu mekanizma `role`, `role binding` ve `cluster`, `cluster role binding` objeleri ile calisir. Yapilacabilecek islemleri yani yetkiler `role` veya `cluster role binding` objeleri olarak tanimlanir. Daha sonra role binding ve cluster role binding objeleri araciligiyla bu roller servis hesaplari, kullanicilar ya da gruplara bind edilir yani baglanir. Kullanicilar da bagli bulunduklari rollerde belirlenen yetkilere kavusurlar.
 
-Ornegin ben default namespace de pod objesi okuyup listeleyebilecek yetkiler belirledigim bir role yaratirim. Daha sonra bir role binding yaratarak kullaniciya bind ederim. Boylelikle bu kullanici default namespace altindaki podlari goruntuleyebilir. Eger bind ettigim role yalnizca bu ise kullanici sadece bu islemi yapabilir. Baska ns de podlari goruntuleyemez. Ya da servis objesi olusturamaz. Kullanicilar sadece bind edildikleri rollerde tanimlanan yetkilere sahip olur. 
+Ornegin ben default namespace de pod objesi okuyup listeleyebilecek yetkiler belirledigim bir `role` yaratirim. Daha sonra bir `role binding` yaratarak kullaniciya `bind` ederim. Boylelikle bu kullanici default namespace altindaki podlari goruntuleyebilir. Eger bind ettigim role yalnizca bu ise kullanici sadece bu islemi yapabilir. Baska ns de podlari goruntuleyemez. Ya da servis objesi olusturamaz. Kullanicilar sadece bind edildikleri rollerde tanimlanan yetkilere sahip olur. 
 
-Role, rolebinding, cluster, cluster binding birer k8s objesidir. Tum objelerde oldugu gibi apiversion, kind, metadata alanlari vardir ayrica rules kisminda ise bu rule atanan yetkiler belirlenir. `Rule` kisminda ilk once `apiGroups` kismi nda hangi api de kullanilacagini belirtiriz. Burasi bos olursa `coreApi` yani v1 api ile ilgili oldugunu, resource ise hangi objeler ile ilgili oldugu ve sub objeler ile ilgili oldugunu, `verbs` ise get, watch, list gibi hangi action lari yapilabilcegi konularina yetki verilir. 
+Role, rolebinding, cluster, cluster binding birer k8s objesidir. Tum objelerde oldugu gibi apiversion, kind, metadata alanlari vardir ayrica rules kisminda ise bu rule atanan yetkiler belirlenir. `Rule` kisminda ilk once `apiGroups` kismi nda hangi api de kullanilacagini belirtiriz. Burasi bos olursa `coreApi` yani v1 api ile ilgili oldugunu, resource ise hangi objeler ile ilgili oldugu ve sub objeler ile ilgili oldugunu, `verbs` ise `get, watch, list` gibi hangi action lari yapilabilcegi konularina yetki verilir. 
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1652,7 +1652,7 @@ rules:
   verbs: ["get", "watch", "list"] # "get", "list", "watch", "post", "put", "create", "update", "patch", "delete"
 ```
 
-Cluster-role ise role objesi ile nerede ise aynidir. Ilk fark obje tipi cluster role ikincisi ise namespace tanimi girilmemis. Role belirledigimiz namespace icin gecerli olan namespace icin yetki vermek icin kullanilir. Cluster role de belirlenen yetkiler ise tum cluster capinda gecerlidir. Yani ben birazdan bu rolu bir kullaniciya baglarsam o kullaniciya bu rolde belirledigim haklar sadece default namespace icin gecerli olur. Fakat cluster-rolu baglarsam hangi ns de oldugu farketmeyecek. Burada tanimladigim yetkiler tum cluster capinda gecerli olacak. Bir diger fark ise su ana kadar gordugunuz her obje mutlaka ns altinda yaratilmali idi. Fakat k8s altinda namespace e bagli olmayan cluster seviyesinde objeler de var. Ornegin node lar da birer k8s objesi ve bunlar herhangi bir ns e bagli degil. Ya da `customResourceDefinition` lar da herhangi bir ns e bagli objeler degil. Bu tarz non ns objelerle ilgili yetkilendirme yaparken de cluster role kullaniyoruz. 
+`Clusterrole` ise role objesi ile nerede ise aynidir. Ilk fark obje tipi cluster role ikincisi ise namespace tanimi girilmemis. Role belirledigimiz namespace icin gecerli olan namespace icin yetki vermek icin kullanilir. Cluster role de belirlenen yetkiler ise tum cluster capinda gecerlidir. Yani ben birazdan bu rolu bir kullaniciya baglarsam o kullaniciya bu rolde belirledigim haklar sadece default namespace icin gecerli olur. Fakat cluster-role u baglarsam hangi ns de oldugu farketmeyecek. Burada tanimladigim yetkiler tum cluster capinda gecerli olacak. Bir diger fark ise su ana kadar gordugunuz her obje mutlaka ns altinda yaratilmali idi. Fakat k8s altinda namespace e bagli olmayan cluster seviyesinde objeler de var. Ornegin node lar da birer k8s objesi ve bunlar herhangi bir ns e bagli degil. Ya da `customResourceDefinition` lar da herhangi bir ns e bagli objeler degil. Bu tarz non ns objelerle ilgili yetkilendirme yaparken de cluster role kullaniyoruz. 
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1683,14 +1683,14 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-## service account
+# Service account
 Kullanici hesaplari insanlar icindir. Service accounts, podlarla calisan processler tarafindan kullanilmak uzere tasarlanmistir.
 
-k8s de deploy ettigimiz uygulamarin da kube-api ile gorusecek cluster uzerinde islem yapmasi gerekebilir. Ornegin k8s uzerinde uygulamalarinizi deploy edecek bir uygulama gelistirdiniz ve bunu bir pod olarak deploy ettiniz. Bun uygulamanin yeni uygulamalar deploy edebilmesi icin k8s api ile konusabilmesi ve deployment islemlerini gerceklestirmesi gerekiyor. Dolayisiyla bir pod uzerinde kosan bu uygulamanin oncelikle bir sekilde `authentication` adimini gecerek kimligini dogrulamasi ve sonrasinda bu islemleri yapabilmesi adina gerekli `authorizationa` yani yetkiye sahip olmasi gerekiyor. Bu ve benzer senaryolarda kullanilabilmesi adina `service account` adinda bir object tipi bulunmakta. Sertifika temelli authentication icin certificate islemleri gerekli uygulamalar icin ise service accountlar var. Yani AWS de role atamak gibi. 
+k8s de deploy ettigimiz uygulamalarin da kube-api ile gorusecek cluster uzerinde islem yapmasi gerekebilir. Ornegin k8s uzerinde uygulamalarinizi deploy edecek bir uygulama gelistirdiniz ve bunu bir pod olarak deploy ettiniz. Bun uygulamanin yeni uygulamalar deploy edebilmesi icin k8s api ile konusabilmesi ve deployment islemlerini gerceklestirmesi gerekiyor. Dolayisiyla bir pod uzerinde kosan bu uygulamanin oncelikle bir sekilde `authentication` adimini gecerek kimligini dogrulamasi ve sonrasinda bu islemleri yapabilmesi adina gerekli `authorization`a yani yetkiye sahip olmasi gerekiyor. Bu ve benzer senaryolarda kullanilabilmesi adina `service account` adinda bir object tipi bulunmakta. Sertifika temelli authentication icin certificate islemleri gerekli uygulamalar icin ise service accountlar var. Yani AWS de role atamak gibi. 
 
 K8s de her namespace icin bir adet `default service account` olusturur. Her poda aksi belirtilmedigi surece bu service account baglanir. Default service account un hicbir yetkisi yoktur. Ama bizler istersek bunlara da role ya da cluster role bind ederek gerekli yetkiyi verebiliriz.
 
-Bir service account olusturdugumuz zaman bu service account icin bir secret olusturulur. Bu secret da 3 bilgi bulunur. Ilki service account un olusturuldugu namespace in adi. Ikinci bilgi ise bizlerin k8s api server ile iletisim kurarken https, tls baglantisi kurmamiz gerektiginden bu baglantinin hata vermemesi adina gerekli serfitika bilgisi. Son olarak da kimlik dogrulamasinda kullanabilecegim bir jwt yani jason web token bilgisi. Certificate tabanli authentication yapabildigimiz gibi http header bilgisine json web tokenlari birer token olarak gomerek de authentication olabiliriz. Her bir service account icin bu 3 bilginin oldugu bir secret yaratilir ve bu secret `var/run/kubernetes.io/serviceaccount` klasorune mount edilir. Boylece podun uzerindeki uygulamaya git buradaki dosyalardan bu degerleri oku ve kullan diyebiliriz.
+Bir service account olusturdugumuz zaman bu service account icin bir secret olusturulur. Bu secret da 3 bilgi bulunur. Ilki service account un olusturuldugu namespace in adi. Ikinci bilgi ise bizlerin k8s api server ile iletisim kurarken https, tls baglantisi kurmamiz gerektiginden bu baglantinin hata vermemesi adina gerekli serfitika bilgisi. Son olarak da kimlik dogrulamasinda kullanabilecegim bir jwt yani json web token bilgisi. Certificate tabanli authentication yapabildigimiz gibi http header bilgisine json web tokenlari birer token olarak gomerek de authenticate olabiliriz. Her bir service account icin bu 3 bilginin oldugu bir secret yaratilir ve bu secret `var/run/kubernetes.io/serviceaccount` klasorune mount edilir. Boylece podun uzerindeki uygulamaya git buradaki dosyalardan bu degerleri oku ve kullan diyebiliriz.
 
 Bu yaml dosyasnda bir service account olusturdum. Daha sonra bu service account u bind edecek bir rol binding olusturdum. Pod taniminda `serviceaccountname` ile hangi poda hangi servisin atanacagini belirtiyorum. Eger bu anahtarda herhangi bir sey belirtilmez ise `default service account` atanacaktir.
 
@@ -1739,22 +1739,22 @@ spec:
     - containerPort: 80
 ```
 
-Her k8s kurulumunda cluster icinden k8s api server a erisilebilsin diye kubernetes isimli bir service yaratilir biz de cluster icindeki bi svc ye gidersek otomatik olarak kube api servere gitmis oluruz.
+Her k8s kurulumunda cluster icinden k8s api server a erisilebilsin diye kubernetes isimli bir service yaratilir. Biz de cluster icindeki bi svc ye gidersek otomatik olarak kube api servere gitmis oluruz.
 
-## Ingress
-`Ingress controller:` L7 application load balancer kavraminin kubernetes spesifikasyonlarina gore calisan ve k8s'de deploy ederek kullanabildigimiz turudur. Nginx, HAproxy, Traefik en bilinen ingress controller uygulamalaridir. 
+# Ingress
+`Ingress controller`: L7 application load balancer kavraminin kubernetes spesifikasyonlarina gore calisan ve k8s'de deploy ederek kullanabildigimiz turudur. Nginx, HAproxy, Traefik en bilinen ingress controller uygulamalaridir. 
 
 Ingress kurulumunu yaptiktan sonra eger cloud ortaminda calisiyorsak bu ingress controller dis dunyaya bir load balancer servisi ile expose oluyor ve public bir ip adresine sahip oluyoruz ve bu noktadan sonra artik dis dunyadan k8s e erisim sadece bu ip adresinden saglaniyor. Sonrasinda bu ingress controllerin configurasyonu yani hangi servise dis dunyadan hangi url e nasil ulasilacak kismini `ingress objeleri` dedigimiz objeler ile belirliyoruz.
 
-`Ingress:` Genellikle HTTP olmak uzere bir clusterdaki servislere harici erisimi yoneten bir API nesnesidir. Yuk dengeleme, SSL sonlandirmasi ve path-name tabanli yonlendirme ozelliklerini destekler. 
+`Ingress`: Genellikle HTTP olmak uzere bir clusterdaki servislere harici erisimi yoneten bir API nesnesidir. Yuk dengeleme, SSL sonlandirmasi ve path-name tabanli yonlendirme ozelliklerini destekler. 
+
 Ingress objeleri bizim ingress controller i k8s objeleri araciligiyla ayarlamamizi sagliyor. L7 application load balancerimiz olan ingress controller a baglanarak www.example.com a gelen uygulamalari a uygulamasina www.example.com/contact a gelen uygulamari b uygulamasina ve www.sezginerdem.com adresine gelen uygulamari ise c uygulamasina yonlendir diye o uygulamanin menulerinin ozelliklerini kullanarak ayar yapmak yerine tum bu istekleri ingress objesi seklinde olusturuyoruz. Deploy ettigimiz zaman ingress controllerlar bu objeyi okuyarak gerekli duzenlemeyi otomatik olarak yapiyor. Ingress controller bizlere L7 ALB lerin sundugu ssl termination, path base routing gibi bir cok ozelligi k8s objeleri olarak deploy edebilmemizi sagliyor.
 
-Iki ingress controller one cikmis durumda nginx ve traefik. Her ingressin kurulumu farklidir. Hepsinin kendi dokumantasyonundan bakmak gerekiyor. Nginx ingress kuruldugu zaman nginx kendine bir ns yaratir ve objelerini burada yaratir. 
-Her ingress in kurulumu farkilidir. Hepsinin kurulumu kendi sayfalarindan nasil kurulacagini gorebilirsiniz. Nginx kurulduktan sonra kendisine bir ns yaratir ve daha sonra kurulacak uygulamalari bu ns uzerinde olusturur. 
+Iki ingress controller one cikmis durumda `nginx` ve `traefik`. Her ingressin kurulumu farklidir. Hepsinin kendi dokumantasyonundan bakmak gerekiyor. Nginx ingress kuruldugu zaman nginx kendine bir ns yaratir ve objelerini burada yaratir. 
 
-Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile expose ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uygulamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adresine giderse b uygulamasi tarafindan sayfa gosteriliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku DNS de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gore url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer  yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var. 
+Aws gibi servis saglayicilari uzerinde kullandigimiz eks kullandigimizi varsayalim. Bunun uzerinde bir uygulama deploy ettik ve uygulamayi da load balancer tipi bir uygulama ile `expose` ettik. Load balancer olusturunca AWS bizim icin bir load balancer yaratiyor ve buna public bir ip atiyordu ve bu ip adresine gelen tum istekleri bu servise yonlendiriyordu. Ben de bu ip adres ile bu servisin domainini DNS ile eslestirerek kullanicilarimin erismesini sagliyordum. Ayni k8s clusteri icerisinde ikinci bir uygulama daha deploy ettigimizi ve ayni sekilde load balancer tipi bir servis ile dis dunyaya actigimizi dusunun ayni surec isyelecek aws bir load balancer daha yaratacak bir tane daha public ip olacak 3. ve 4. de de aynisi olacak. Her bir load balancer icin ayri para odemem gerekiyor. Ikinci sorunda ise benim microservis mimarisinde bir uygulamam var. Bu uygulama da soyle calisiyor eger kullanicilar www.example.com adresiden gelirse a uygulamasi tarafindan sayfa sunuluyor fakat kullanici www.example.com/contact adresine giderse b uygulamasi tarafindan sayfa gosteriliyor bu nedenle mevcut load balancer ile benim bu ortami kurgulamam imkansiz. Cunku DNS de bu sekilde path base bir tanimlama yapamam. Bunun bir sekilde kullanici isteklerini anlamam ve buna gore url i anlama ve arkadaki uygulamaya ya da hangi servise gitmesi gerektigini bilmem gerekiyor yani beni klasik L4 tabanli bir load balancer  yerine L7 tabanli application layer inda calisan bir load balancer a ihtiyacim var.
+
 Bu iki sorun da ingress controller ve ingress objeleri ile cozulmektedir. 
-
 Servisler nodeport tipinde olursa sadece cluster icinden erisim saglanir. Bu servislerin dis dunyadan erisim saglanmasi icin ingress controller yaratilmasi gerekmektedir. Ingress de ayni pod veya servis gibi bir k8s objesidir.
 
 ```yaml
@@ -1785,7 +1785,7 @@ spec:
                   number: 80
 ```
 
-## ImagePullPolicy and Image Secret
+# ImagePullPolicy and Image Secret
 Guvenlik nedeni ile image larinizi private repolarda tutmaniz gerekmektedir. Bu repolardan image cekmek icin authenticate olmak gerekiyor. 
 Private registry lerde image lari tuttugunuz zaman bunlara authenticate olmak gerekir. Bu islemi yapmadan image cekilememektedir. 
 Bu authenticate icin oncelikle bir secret olusturacagim. Bu secret tipi "docker-registry" olacak.
@@ -1806,11 +1806,10 @@ spec:
     - containerPort: 80
   ```
 
-Registrye authenticate olmak icin url, username ve password olmasi gerekiyor. Bunun icin bir secret olusturmamiz ve sonrasinda  bu secreti pod tanimina eklememiz gerekiyor.
+1. Yol: Registrye authenticate olmak icin url, username ve password olmasi gerekiyor. Bunun icin bir secret olusturmamiz ve sonrasinda  bu secreti pod tanimina eklememiz gerekiyor.
 
 // Authetication gerektiren bir Docker registry'den image çekebilmek için oluşturulması gereken secret'in oluşturulması. `docker-registry` tipinde bir secret tipi olusturdum
-`kubectl create secret docker-registry "secret_ismi" --docker-server="registry_url" --docker-username="kullanıcı_adı" --docker-password="şifre"`
-Ör: `kubectl create secret docker-registry regscrt --docker-server=ozgurozturkregistry.azurecr.io --docker-username=ozgurozturkregistry --docker-password=wqRjEDdVhrM9Hj4D=gWwvV3YXyq9Y4ID`
+`kubectl create secret docker-registry "secret_ismi" --docker-server="registry_url" --docker-username="kullanıcı_adı" --docker-password="şifre"` | `kubectl create secret docker-registry regscrt --docker-server=ozgurozturkregistry.azurecr.io --docker-username=ozgurozturkregistry --docker-password=wqRjEDdVhrM9Hj4D=gWwvV3YXyq9Y4ID`
 
 Daha sonra pod tanimimin icine `imagePullSecret` yazarak ve tanimladigim secret ismini alta yazarak authenticate islemini tamamliyorum. 
 
@@ -1833,17 +1832,18 @@ spec:
   - name: regscrt # az once olusturdugum secret ismini buraya yaziyorum
 ```
 
-*2. Yol ise:* Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari `imagePullPolicy` altinda tanimliyoruz. Eger bunun altinda `always` yazili ise her pod olusturulmaya calisildiginda her seferinde bu image cekilecek makinede olup olmadigi onemli degil. `never` secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. `IfNotPresent` da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. `imagePullPolicy` `always` olarak set ediliyor. Fakat `latest` disinda bir sey kullaniliyorsa `imagePullPolicy` set edilmedi ise `IfNotPresent` olarak set edilir. 
+2. Yol ise: Image in cekilmesinde takip edilen 3 tane anahtar mevcut. Bu anahtarlari `imagePullPolicy` altinda tanimliyoruz. Eger bunun altinda `always` yazili ise her pod olusturulmaya calisildiginda her seferinde bu image cekilecek makinede olup olmadigi onemli degil. `never` secili olursa sadece localden cekilecek hicbir zaman repository den cekmeyecek. `IfNotPresent` da ise once locale bakacak yoksa repository e gidecek. Eger latest tagli bir image kullaniyorsaniz. `imagePullPolicy` `always` olarak set ediliyor. Fakat `latest` disinda bir sey kullaniliyorsa `imagePullPolicy` set edilmedi ise `IfNotPresent` olarak set edilir. 
 
-## Static Pod
+# Static Pod
 Kubelet in belirlediginiz bir dosyasina yaml dosyalarini koyarak kubeletin pod yaratma islemine `static pod` denir.
 Boylelikle api serverla konusmadan yalnizca dosyalari klasore ekleyerek pod yaratma islemini gerceklestirmis oluruz.
 *Neden static pod?* Kubernetes kendi de podlarlardan olusmaktadir. Kubernetes kurulumunda ilk once kubelet kurulur bunu da kubeletin default manifest dosyalarinin bulundugu klasorden yapar. Bu dosyanin bulundugu yere yaml dosyalarini koyarsak bu dosyalardan pod olusturulur. Daha sonra kubenetes api uzerinde de aynisini olusturur. Gercek hayatta cok isimize yaramiyor ancak bunu bilmek ve k8s in nasil ayaga kalktigini bilmek adina onemlidir.
 
-etc/kubernetes/manifest dosyasi bu dosyanin default olarak bulundugu path. Ancak isterseniz degistirebilirsiniz.
+`etc/kubernetes/manifest` dosyasi bu dosyanin default olarak bulundugu path. Ancak isterseniz degistirebilirsiniz.
 
-## Helm
+# Helm
 Bir uygualamin kurulusunun paket hale getirilmesini saglayan bir arac. CNCF projesi. Kubernetes uzerinde paket yuklenmesini sagliyor. Choco, brew gibi bir paket yoneticisidir. 
+
 Kubernetesin resmi bir uygulamasi degil ancak nerede ise resmi uygulamasi haline gelmis durumda.
 Paket veya script olarak yuklenebilir. Helmi yuklerken 2 ve 3 versiyonunu yukleyebilirsiniz. Yeni basliyorsaniz helm 3 le devam edin.
 1. `Chart:` Kubernetese yuklediginiz uygulamanizin paketlenmis halidir. Paket hali chart.
@@ -1868,7 +1868,7 @@ Helm ile upgrade ler ya da begenmezsek rollback ler yapabiliyorum. Bu helmin en 
 // node-01 i schedulable hale getirmek
 `kubectl uncordon <node-name>`
 
-## Etcd Backup - Resource Configs
+# Etcd Backup - Resource Configs
 // tum resourcelari yaml dosyasina kaydet
 `kubectl get all --all-namespaces -o yaml > all-deploy-services.yaml`
 
@@ -1883,6 +1883,7 @@ Velero=Kubernetes backup tool
 // etcd snaphotlarini restore etmek
 `service kube-apiserver stop`
 `ETCDCTL_API=3 etcdctl snapshot restore <snapshot name> --data-dir </var/lib/etcd-from-backup(snaphot path)>`
+
 //configure etcd.service file to use the new etcd file dir
 `--data-dir=/var/lib/etcd-from-backup`
 `systemctl daemon-reload`
@@ -1906,7 +1907,7 @@ Velero=Kubernetes backup tool
   --key                           identify secure client using this TLS key file
 
 
-## Monitoring - Prometheus Stack
+# Monitoring - Prometheus Stack
 Kubernetes de 4 farkli yerde monitoring yapilmasi gerekmektedir:
 1. Cluster in durumu. Hangi objeler var neler deploy edilmis
 2. Objelerin bu durumu nedir. Deployment yarattik ama tum replicalar calsiiyor mu, podlar ne kadar cpu tuketiyor
@@ -1916,7 +1917,7 @@ Kubernetes de 4 farkli yerde monitoring yapilmasi gerekmektedir:
 Eger monitoringle ozellikle bir toolunuz yoksa. `k get pods` la kisa bir bilgi alabilirsiniz. Veya `describe` ile ayrintili bilgi alabilirim.
 Metriclerin izlenmesini prometheus sayesinde yapabilrim. Sucunularimizdan gerekli end pointleri bildirerek metricleri toplama islemini prometheus yapar. Bunun bir ati ozelligi bir agent kurmaya ihtiyac duymamasi. Dagitik mimarilerde onemli bir ozellik. Kubernetes in nerdeyse standart monitoring araci haline geldi. 
 
-### Prometheusun kubernetese kurulumu
+# Prometheusun kubernetese kurulumu
 Oncelikle `kube metrics` adli bir arac kurmaniz gerekiyor. Bu kube api ile konusarak objelerimizin durumunu metriclerini alarak bunlari kube api araciligiyla cekiyor ve prometheus un okuyabilcegi bir hale getiriyor. Datayi donusturuyor. Bunun yaninda nodeun cpu, memory gibi metcirleri linux makinasindan cekmek istiyorsak bu sefer nodelarin uzerine node exporteri kurmamiz gerekiyor. Linux un bu metricler icin endpointi yok bunun icin de bu metricleri push edecek `node exporter` in kurulmasi gerekiyor. Ayni zamanda prometheus kubernetes api ile de konusabiliyor. Bu sekilde de bir dizayn yapabilirsiniz. Daha sonra prometheus a gelen bilgilerin nasil store edilecegini de ayarlamamiz gerekiyor. Eger biz alert gondermek, email gondermek, sms gondermek istiryorsak. Bu kisimda alert de kurmamiz gerekiyor. Prometheus ceklein metriclerin gorsel halde sunulmasinda cok basarili degil. Bunun icin grafanayi kullaniyoruz. Grafana sadace prometheus icin degil herhangi bir data setinizi gorsellestirmek amaciyla kullanilabilmektedir. Prometheus un kurulum asamasindaki bu karmasikligi cozmek icin prometheus helm charti kullanilmaktadir. 
 
 * kube-prometheus-stack kur
@@ -1929,9 +1930,7 @@ $ helm install kubeprostack --namespace monitoring prometheus-community/kube-pro
 
 * Prometheus'u kontrol et
 
-```
-$ kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-prometheus 9090
-```
+`kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-prometheus 9090`
 
 queries:
 Şu ana kadar oluşturulmuş tüm podlar: ```kube_pod_created```
@@ -1944,22 +1943,16 @@ Ready durumunda olmayan podlar "namespace'e göre dağılım": ```sum by (namesp
 
 * Alert manager kontrol et
 
-```
-kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-alertmanager 9093   
-```
+`kubectl --namespace monitoring port-forward svc/kubeprostack-kube-promethe-alertmanager 9093`
 
 * Grafana'a bağlan
 
-```
-kubectl --namespace monitoring port-forward svc/kubeprostack-grafana 8080:80
-```
+`kubectl --namespace monitoring port-forward svc/kubeprostack-grafana 8080:80`
 username: admin
 
 password: prom-operator
 
-```
-kubectl get secret kubeprostack-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode ; echo  
-```
+`kubectl get secret kubeprostack-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode ; echo`
 
 Kubernetes de operator yontemi: Kubernetes de operatirler olusturabiliyoruz. Benim yani admin in yapacagi isi bu operatorlerle otomatize hale getiriyorum. Benim prometheus stack imi de ayni zamanda bu opearator yonetiyor benim adima. 
 
